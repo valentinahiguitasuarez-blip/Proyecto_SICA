@@ -354,13 +354,15 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                     <div class="profile-ficha-picker" data-fichas='<?= e(json_encode(array_map(static function (array $ficha): array {
                         return [
                             'id' => (string)$ficha['id_ficha'],
+                            'programa' => (string)$ficha['nombre_programa'],
+                            'jornada' => (string)$ficha['nombre_jornada'],
                             'label' => $ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada'],
                         ];
                     }, $fichas), JSON_UNESCAPED_UNICODE)) ?>'>
-                        <input type="search" id="fichaSearch" class="profile-ficha-search" value="<?= e($fichaActualLabel) ?>" placeholder="Escribe 306, ADSO, MIXTA..." autocomplete="off" required>
+                        <input type="search" id="fichaSearch" class="profile-ficha-search" value="<?= e($fichaActualLabel) ?>" placeholder="Busca por ficha, programa o jornada" autocomplete="off" required>
                         <div id="fichaResults" class="profile-ficha-results" hidden></div>
                     </div>
-                    <small>Escribe 306 y apareceran las fichas que empiezan por 306; tambien puedes buscar por programa o jornada.</small>
+                    <small>Escribe el numero de ficha y apareceran las relacionadas; tambien puedes buscar por programa o jornada.</small>
                 </label>
 
                 <div class="profile-readonly-line">
@@ -422,12 +424,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const query = search.value.trim().toLowerCase();
         hidden.value = '';
 
-        if (query.length < 2) {
+        const isNumericSearch = /^[0-9]+$/.test(query);
+        if (query.length === 0 || (!isNumericSearch && query.length < 2)) {
             closeResults();
             return;
         }
 
-        const isNumericSearch = /^[0-9]+$/.test(query);
         const matches = fichas
             .filter(function (ficha) {
                 if (isNumericSearch) {
@@ -435,8 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 return ficha.label.toLowerCase().includes(query);
-            })
-            .slice(0, 12);
+            });
 
         if (matches.length === 0) {
             results.innerHTML = '<span class="empty-result">No se encontraron fichas.</span>';
@@ -447,8 +448,19 @@ document.addEventListener('DOMContentLoaded', function () {
         results.innerHTML = '';
         matches.forEach(function (ficha) {
             const button = document.createElement('button');
+            const code = document.createElement('strong');
+            const program = document.createElement('span');
+            const shift = document.createElement('em');
+
             button.type = 'button';
-            button.textContent = ficha.label;
+            button.className = 'profile-ficha-option';
+            code.textContent = ficha.id;
+            program.textContent = ficha.programa;
+            shift.textContent = ficha.jornada;
+
+            button.appendChild(code);
+            button.appendChild(program);
+            button.appendChild(shift);
             button.addEventListener('click', function () {
                 chooseFicha(ficha);
             });

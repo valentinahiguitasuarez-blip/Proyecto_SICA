@@ -193,7 +193,6 @@ $nombreCompleto = trim($nombre . ' ' . $apellido);
 $iniciales = mb_strtoupper(mb_substr($nombre, 0, 1, 'UTF-8') . mb_substr($apellido, 0, 1, 'UTF-8'), 'UTF-8');
 $iniciales = $iniciales !== '' ? $iniciales : 'A';
 $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : '';
-$fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)($perfil['nombre_programa'] ?? '') . ' - ' . (string)($perfil['nombre_jornada'] ?? ''));
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -350,21 +349,15 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                 </label>
                 <label class="profile-wide-field">
                     <span>Ficha, programa y jornada</span>
-                    <input type="hidden" id="idFichaPerfil" name="id_ficha" value="<?= e($perfil['id_ficha']) ?>">
-                    <div class="profile-ficha-picker" data-fichas='<?= e(json_encode(array_map(static function (array $ficha): array {
-                        return [
-                            'id' => (string)$ficha['id_ficha'],
-                            'label' => $ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada'],
-                        ];
-                    }, $fichas), JSON_UNESCAPED_UNICODE)) ?>'>
-                        <input type="search" id="fichaSearch" class="profile-ficha-search" list="fichasPerfilList" value="<?= e($fichaActualLabel) ?>" placeholder="Busca por ficha, programa o jornada" autocomplete="off" required>
-                        <datalist id="fichasPerfilList">
-                            <?php foreach ($fichas as $ficha): ?>
-                                <option value="<?= e($ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada']) ?>"></option>
-                            <?php endforeach; ?>
-                        </datalist>
-                    </div>
-                    <small>Escribe el numero de ficha y apareceran las relacionadas; tambien puedes buscar por programa o jornada.</small>
+                    <select name="id_ficha" required>
+                        <option value="">Selecciona una ficha</option>
+                        <?php foreach ($fichas as $ficha): ?>
+                            <option value="<?= e($ficha['id_ficha']) ?>" <?= ((int)$perfil['id_ficha'] === (int)$ficha['id_ficha']) ? 'selected' : '' ?>>
+                                <?= e($ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small>Selecciona la ficha correspondiente con su programa y jornada.</small>
                 </label>
 
                 <div class="profile-readonly-line">
@@ -391,43 +384,5 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
         </section>
     </section>
 </main>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const search = document.getElementById('fichaSearch');
-    const hidden = document.getElementById('idFichaPerfil');
-    const picker = document.querySelector('.profile-ficha-picker');
-
-    if (!search || !hidden || !picker) {
-        return;
-    }
-
-    let fichas = [];
-    try {
-        fichas = JSON.parse(picker.dataset.fichas || '[]');
-    } catch (error) {
-        fichas = [];
-    }
-
-    const syncFicha = function () {
-        const selected = fichas.find(function (ficha) {
-            return ficha.label === search.value;
-        });
-
-        if (selected) {
-            hidden.value = selected.id;
-            search.setCustomValidity('');
-            return;
-        }
-
-        hidden.value = '';
-        search.setCustomValidity('Selecciona una ficha de la lista.');
-    };
-
-    search.addEventListener('input', syncFicha);
-    search.addEventListener('change', syncFicha);
-    search.form.addEventListener('submit', syncFicha);
-});
-</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

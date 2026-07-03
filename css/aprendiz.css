@@ -1438,17 +1438,6 @@ body {
     font-weight: 600;
 }
 
-.profile-ficha-search {
-    padding-right: 40px;
-    background:
-        linear-gradient(90deg, transparent, transparent),
-        #ffffff;
-}
-
-.profile-ficha-picker {
-    position: relative;
-}
-
 .profile-form label small {
     color: var(--ap-muted);
     font-size: 12px;

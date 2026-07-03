@@ -6,8 +6,6 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../includes/paths.php';
 require_once __DIR__ . '/../includes/login_notifications.php';
 
-const LOGIN_MAX_ATTEMPTS = 5;
-const LOGIN_LOCK_SECONDS = 300;
 const LOGIN_GENERIC_ERROR = 'Correo o contrasena incorrectos.';
 
 function redirectLogin(): never
@@ -16,17 +14,8 @@ function redirectLogin(): never
     exit;
 }
 
-function failLogin(string $message = LOGIN_GENERIC_ERROR, ?string $correo = null, bool $countAttempt = true): never
+function failLogin(string $message = LOGIN_GENERIC_ERROR, ?string $correo = null): never
 {
-    if ($countAttempt) {
-        $_SESSION['login_attempts'] = (int)($_SESSION['login_attempts'] ?? 0) + 1;
-        $_SESSION['login_last_attempt'] = time();
-
-        if ($_SESSION['login_attempts'] >= LOGIN_MAX_ATTEMPTS) {
-            $_SESSION['login_locked_until'] = time() + LOGIN_LOCK_SECONDS;
-        }
-    }
-
     $_SESSION['login_error'] = $message;
 
     if ($correo !== null) {
@@ -40,25 +29,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     redirectLogin();
 }
 
-$lockedUntil = (int)($_SESSION['login_locked_until'] ?? 0);
-if ($lockedUntil > time()) {
-    $remainingMinutes = (int)ceil(($lockedUntil - time()) / 60);
-    failLogin(
-        'Demasiados intentos. Intenta nuevamente en ' . $remainingMinutes . ' minuto(s).',
-        null,
-        false
-    );
-}
-
-if ($lockedUntil > 0 && $lockedUntil <= time()) {
-    unset($_SESSION['login_attempts'], $_SESSION['login_locked_until'], $_SESSION['login_last_attempt']);
-}
-
 $csrf = $_POST['csrf_login'] ?? '';
 $sessionCsrf = $_SESSION['csrf_login'] ?? '';
 if (!is_string($csrf) || !is_string($sessionCsrf) || $sessionCsrf === '' || !hash_equals($sessionCsrf, $csrf)) {
     unset($_SESSION['csrf_login']);
-    failLogin('La sesion expiro. Recarga la pagina e intenta de nuevo.', null, false);
+    failLogin('La sesion expiro. Recarga la pagina e intenta de nuevo.');
 }
 
 $correo = trim((string)filter_input(INPUT_POST, 'correo', FILTER_UNSAFE_RAW));
@@ -101,9 +76,6 @@ if (!$usuario || !password_verify($contrasena, (string)$usuario['contrasena'])) 
 session_regenerate_id(true);
 unset(
     $_SESSION['csrf_login'],
-    $_SESSION['login_attempts'],
-    $_SESSION['login_locked_until'],
-    $_SESSION['login_last_attempt'],
     $_SESSION['login_old_correo']
 );
 

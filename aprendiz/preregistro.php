@@ -337,21 +337,27 @@ if ($eventoSeleccionado > 0) {
                     <?php else: ?>
                         <label class="event-select-field">
                             <span>Evento disponible</span>
-                            <select name="id_evento" required <?= !$eventosFormulario ? 'disabled' : '' ?>>
-                                <option value="">Selecciona un evento</option>
-                                <?php foreach ($eventosFormulario as $evento): ?>
-                                    <?php
-                                    $fechaEvento = new DateTime((string)$evento['fecha_evento']);
-                                    $optionText = $evento['nombre_evento'] . ' - ' . $fechaEvento->format('d/m') . ' ' . substr((string)$evento['hora_inicio'], 0, 5);
-                                    if (!empty($evento['id_preregistro'])) {
-                                        $optionText .= ' - registrado';
-                                    }
-                                    ?>
-                                    <option value="<?= htmlspecialchars((string)$evento['id_evento'], ENT_QUOTES, 'UTF-8') ?>">
-                                        <?= htmlspecialchars($optionText, ENT_QUOTES, 'UTF-8') ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <input type="hidden" id="idEventoPreregistro" name="id_evento" value="">
+                            <div class="searchable-select event-search-select <?= !$eventosFormulario ? 'disabled' : '' ?>" data-options='<?= htmlspecialchars(json_encode(array_map(static function (array $evento): array {
+                                $fechaEvento = new DateTime((string)$evento['fecha_evento']);
+                                $hora = substr((string)$evento['hora_inicio'], 0, 5);
+                                $estado = !empty($evento['id_preregistro']) ? 'registrado' : 'disponible';
+                                return [
+                                    'value' => (string)$evento['id_evento'],
+                                    'code' => $fechaEvento->format('d/m'),
+                                    'title' => (string)$evento['nombre_evento'],
+                                    'meta' => $hora . ' - ' . $estado,
+                                    'label' => $evento['nombre_evento'] . ' - ' . $fechaEvento->format('d/m') . ' ' . $hora . ($estado === 'registrado' ? ' - registrado' : ''),
+                                ];
+                            }, $eventosFormulario), JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'>
+                                <span class="searchable-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M10.5 4a6.5 6.5 0 0 1 5.15 10.46l3.44 3.45-1.18 1.18-3.45-3.44A6.5 6.5 0 1 1 10.5 4Zm0 1.7a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6Z" fill="currentColor"/>
+                                    </svg>
+                                </span>
+                                <input type="search" id="eventoSearch" class="searchable-input" placeholder="Busca o selecciona un evento" autocomplete="off" required <?= !$eventosFormulario ? 'disabled' : '' ?>>
+                                <div class="searchable-results" hidden></div>
+                            </div>
                         </label>
                     <?php endif; ?>
                     <button type="submit" <?= !$eventosFormulario ? 'disabled' : '' ?>>
@@ -438,5 +444,106 @@ if ($eventoSeleccionado > 0) {
         </section>
     </section>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectBox = document.querySelector('.event-search-select');
+    const search = document.getElementById('eventoSearch');
+    const hidden = document.getElementById('idEventoPreregistro');
+    const results = selectBox ? selectBox.querySelector('.searchable-results') : null;
+
+    if (!selectBox || !search || !hidden || !results || search.disabled) {
+        return;
+    }
+
+    let options = [];
+    try {
+        options = JSON.parse(selectBox.dataset.options || '[]');
+    } catch (error) {
+        options = [];
+    }
+
+    const closeResults = function () {
+        results.hidden = true;
+        results.innerHTML = '';
+    };
+
+    const selectOption = function (option) {
+        search.value = option.label;
+        hidden.value = option.value;
+        search.setCustomValidity('');
+        closeResults();
+    };
+
+    const renderResults = function () {
+        const query = search.value.trim().toLowerCase();
+        hidden.value = '';
+        search.setCustomValidity('');
+
+        const matches = options.filter(function (option) {
+            return query === '' || option.label.toLowerCase().includes(query);
+        });
+
+        if (matches.length === 0) {
+            results.innerHTML = '<span class="searchable-empty">No se encontraron eventos.</span>';
+            results.hidden = false;
+            return;
+        }
+
+        results.innerHTML = '';
+        matches.forEach(function (option) {
+            const button = document.createElement('button');
+            const code = document.createElement('strong');
+            const title = document.createElement('span');
+            const meta = document.createElement('em');
+
+            button.type = 'button';
+            code.textContent = option.code;
+            title.textContent = option.title;
+            meta.textContent = option.meta;
+
+            button.appendChild(code);
+            button.appendChild(title);
+            button.appendChild(meta);
+            button.addEventListener('click', function () {
+                selectOption(option);
+            });
+            results.appendChild(button);
+        });
+        results.hidden = false;
+    };
+
+    const validateSelection = function () {
+        const selected = options.find(function (option) {
+            return option.label === search.value;
+        });
+
+        if (selected) {
+            hidden.value = selected.value;
+            search.setCustomValidity('');
+            return true;
+        }
+
+        hidden.value = '';
+        search.setCustomValidity('Selecciona un evento de la lista.');
+        return false;
+    };
+
+    search.addEventListener('input', renderResults);
+    search.addEventListener('focus', renderResults);
+    search.addEventListener('change', validateSelection);
+    document.addEventListener('click', function (event) {
+        if (!selectBox.contains(event.target)) {
+            closeResults();
+        }
+    });
+    search.form.addEventListener('submit', function (event) {
+        if (!validateSelection()) {
+            event.preventDefault();
+            search.reportValidity();
+        }
+    });
+});
+</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

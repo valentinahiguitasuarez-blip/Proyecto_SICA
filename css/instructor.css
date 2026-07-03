@@ -44,6 +44,7 @@ body {
 
 .instructor-brand,
 .instructor-person,
+.instructor-id-card,
 .instructor-nav a,
 .instructor-logout,
 .top-action,
@@ -114,6 +115,15 @@ body {
     height: 58px;
     border-radius: 50%;
     font-size: 17px;
+    overflow: hidden;
+}
+
+.instructor-avatar img,
+.instructor-id-photo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
 }
 
 .instructor-person div {
@@ -174,6 +184,115 @@ body {
 .instructor-nav a.active {
     background: var(--ins-blue);
     box-shadow: 0 12px 26px rgba(22, 93, 255, 0.24);
+}
+
+.instructor-id-card {
+    padding: 16px;
+    border: 1px solid rgba(145, 184, 255, 0.18);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04)),
+        rgba(255, 255, 255, 0.07);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.16);
+}
+
+.instructor-sidebar-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #91b8ff;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.instructor-photo-card {
+    position: relative;
+    min-height: 154px;
+    margin: 12px 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background:
+        linear-gradient(120deg, rgba(145, 184, 255, 0.22), rgba(57, 198, 165, 0.17)),
+        rgba(255, 255, 255, 0.06);
+}
+
+.instructor-photo-card::before {
+    content: "";
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+}
+
+.instructor-id-photo {
+    position: relative;
+    z-index: 1;
+    width: 92px;
+    height: 104px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    color: #ffffff;
+    background:
+        radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.28) 0 18%, transparent 19%),
+        linear-gradient(180deg, #91b8ff 0 48%, #163052 49% 100%);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+}
+
+.instructor-id-photo span {
+    margin-top: 40px;
+    font-size: 30px;
+    font-weight: 900;
+}
+
+.instructor-scan {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 42%;
+    z-index: 2;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.88), transparent);
+    animation: instructorIdScan 3.6s ease-in-out infinite;
+}
+
+.instructor-id-copy strong,
+.instructor-id-copy small {
+    display: block;
+}
+
+.instructor-id-copy strong {
+    color: #ffffff;
+    font-size: 19px;
+    line-height: 1.2;
+}
+
+.instructor-id-copy small {
+    margin-top: 5px;
+    color: #cbdaf0;
+    font-weight: 800;
+}
+
+.instructor-profile-link {
+    min-height: 42px;
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--ins-blue);
+    box-shadow: 0 14px 28px rgba(22, 93, 255, 0.24);
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.instructor-profile-link:hover,
+.instructor-profile-link:focus {
+    color: #ffffff;
+    background: #2c6eff;
 }
 
 .instructor-logout {
@@ -365,6 +484,17 @@ body {
     color: var(--ins-blue);
     font-size: 42px;
     line-height: 1;
+}
+
+@keyframes instructorIdScan {
+    0%, 100% {
+        transform: translateY(-42px);
+        opacity: 0.42;
+    }
+    50% {
+        transform: translateY(42px);
+        opacity: 1;
+    }
 }
 
 .action-grid {

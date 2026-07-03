@@ -62,6 +62,7 @@ function instructor_layout_start(string $active): void
     $name = instructor_full_name($user);
     $mail = (string)($user['correo'] ?? '');
     $initials = instructor_initials($user);
+    $photo = (string)($user['foto_perfil'] ?? '');
     $items = [
         'dashboard' => ['IN', 'Dashboard', 'instructor/index.php'],
         'disponibilidad' => ['DI', 'Disponibilidad', 'instructor/disponibilidad.php'],
@@ -82,7 +83,13 @@ function instructor_layout_start(string $active): void
             </a>
 
             <section class="instructor-person">
-                <div class="instructor-avatar"><?= instructor_h($initials) ?></div>
+                <div class="instructor-avatar">
+                    <?php if ($photo !== ''): ?>
+                        <img src="<?= instructor_h(app_url($photo)) ?>" alt="">
+                    <?php else: ?>
+                        <?= instructor_h($initials) ?>
+                    <?php endif; ?>
+                </div>
                 <div>
                     <strong><?= instructor_h($name) ?></strong>
                     <small><?= instructor_h($mail) ?></small>
@@ -97,6 +104,25 @@ function instructor_layout_start(string $active): void
                     </a>
                 <?php endforeach; ?>
             </nav>
+
+            <section class="instructor-id-card" aria-label="Credencial del instructor">
+                <span class="instructor-sidebar-label">Credencial del instructor</span>
+                <div class="instructor-photo-card">
+                    <div class="instructor-id-photo" aria-hidden="true">
+                        <?php if ($photo !== ''): ?>
+                            <img src="<?= instructor_h(app_url($photo)) ?>" alt="">
+                        <?php else: ?>
+                            <span><?= instructor_h($initials) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="instructor-scan" aria-hidden="true"></div>
+                </div>
+                <div class="instructor-id-copy">
+                    <strong><?= instructor_h($name) ?></strong>
+                    <small>Instructor activo</small>
+                </div>
+                <a class="instructor-profile-link" href="<?= instructor_h(app_url('instructor/perfil.php')) ?>">Ver perfil</a>
+            </section>
 
             <a class="instructor-logout" href="<?= instructor_h(app_url('login/logout.php')) ?>">
                 <span aria-hidden="true">SL</span>

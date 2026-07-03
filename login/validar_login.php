@@ -52,7 +52,7 @@ if (strlen($contrasena) < 6 || strlen($contrasena) > 72) {
     failLogin('La contrasena debe tener entre 6 y 72 caracteres.', $correo);
 }
 
-$sql = 'SELECT u.id_documento, u.nombre, u.apellido, u.correo, u.contrasena, u.id_rol,
+$sql = 'SELECT u.id_documento, u.nombre, u.apellido, u.correo, u.contrasena, u.id_rol, u.foto_perfil,
                r.nombre_rol, e.nombre_estado
         FROM usuario u
         INNER JOIN rol r ON r.id_rol = u.id_rol
@@ -84,6 +84,7 @@ $_SESSION['usuario'] = [
     'nombre' => $usuario['nombre'],
     'apellido' => $usuario['apellido'],
     'correo' => $usuario['correo'],
+    'foto_perfil' => $usuario['foto_perfil'] ?? '',
     'id_rol' => (int)$usuario['id_rol'],
     'rol' => $usuario['nombre_rol'],
 ];

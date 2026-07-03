@@ -351,22 +351,18 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                 <label class="profile-wide-field">
                     <span>Ficha, programa y jornada</span>
                     <input type="hidden" id="idFichaPerfil" name="id_ficha" value="<?= e($perfil['id_ficha']) ?>">
-                    <div class="searchable-select" data-options='<?= e(json_encode(array_map(static function (array $ficha): array {
+                    <div class="profile-ficha-picker" data-fichas='<?= e(json_encode(array_map(static function (array $ficha): array {
                         return [
-                            'value' => (string)$ficha['id_ficha'],
-                            'code' => (string)$ficha['id_ficha'],
-                            'title' => (string)$ficha['nombre_programa'],
-                            'meta' => (string)$ficha['nombre_jornada'],
+                            'id' => (string)$ficha['id_ficha'],
                             'label' => $ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada'],
                         ];
                     }, $fichas), JSON_UNESCAPED_UNICODE)) ?>'>
-                        <span class="searchable-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="18" height="18">
-                                <path d="M10.5 4a6.5 6.5 0 0 1 5.15 10.46l3.44 3.45-1.18 1.18-3.45-3.44A6.5 6.5 0 1 1 10.5 4Zm0 1.7a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6Z" fill="currentColor"/>
-                            </svg>
-                        </span>
-                        <input type="search" id="fichaSearch" class="searchable-input profile-ficha-search" value="<?= e($fichaActualLabel) ?>" placeholder="Busca por ficha, programa o jornada" autocomplete="off" required>
-                        <div class="searchable-results" hidden></div>
+                        <input type="search" id="fichaSearch" class="profile-ficha-search" list="fichasPerfilList" value="<?= e($fichaActualLabel) ?>" placeholder="Busca por ficha, programa o jornada" autocomplete="off" required>
+                        <datalist id="fichasPerfilList">
+                            <?php foreach ($fichas as $ficha): ?>
+                                <option value="<?= e($ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada']) ?>"></option>
+                            <?php endforeach; ?>
+                        </datalist>
                     </div>
                     <small>Escribe el numero de ficha y apareceran las relacionadas; tambien puedes buscar por programa o jornada.</small>
                 </label>
@@ -400,111 +396,37 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
 document.addEventListener('DOMContentLoaded', function () {
     const search = document.getElementById('fichaSearch');
     const hidden = document.getElementById('idFichaPerfil');
-    const picker = search ? search.closest('.searchable-select') : null;
-    const results = picker ? picker.querySelector('.searchable-results') : null;
+    const picker = document.querySelector('.profile-ficha-picker');
 
-    if (!search || !hidden || !picker || !results) {
+    if (!search || !hidden || !picker) {
         return;
     }
 
-    let options = [];
+    let fichas = [];
     try {
-        options = JSON.parse(picker.dataset.options || '[]');
+        fichas = JSON.parse(picker.dataset.fichas || '[]');
     } catch (error) {
-        options = [];
+        fichas = [];
     }
 
-    const closeResults = function () {
-        results.hidden = true;
-        results.innerHTML = '';
-    };
-
-    const selectOption = function (option) {
-        search.value = option.label;
-        hidden.value = option.value;
-        search.setCustomValidity('');
-        closeResults();
-    };
-
-    const renderResults = function () {
-        const query = search.value.trim().toLowerCase();
-        hidden.value = '';
-        search.setCustomValidity('');
-
-        const numeric = /^[0-9]+$/.test(query);
-        const matches = options.filter(function (option) {
-            if (query === '') {
-                return true;
-            }
-
-            if (numeric) {
-                return String(option.value).startsWith(query);
-            }
-
-            return option.label.toLowerCase().includes(query);
-        });
-
-        if (matches.length === 0) {
-            results.innerHTML = '<span class="searchable-empty">No se encontraron resultados.</span>';
-            results.hidden = false;
-            return;
-        }
-
-        results.innerHTML = '';
-        matches.forEach(function (option) {
-            const button = document.createElement('button');
-            const code = document.createElement('strong');
-            const title = document.createElement('span');
-            const meta = document.createElement('em');
-
-            button.type = 'button';
-            code.textContent = option.code || option.value;
-            title.textContent = option.title || option.label;
-            meta.textContent = option.meta || '';
-
-            button.appendChild(code);
-            button.appendChild(title);
-            if (option.meta) {
-                button.appendChild(meta);
-            }
-            button.addEventListener('click', function () {
-                selectOption(option);
-            });
-            results.appendChild(button);
-        });
-        results.hidden = false;
-    };
-
-    const validateSelection = function () {
-        const selected = options.find(function (option) {
-            return option.label === search.value;
+    const syncFicha = function () {
+        const selected = fichas.find(function (ficha) {
+            return ficha.label === search.value;
         });
 
         if (selected) {
-            hidden.value = selected.value;
+            hidden.value = selected.id;
             search.setCustomValidity('');
-            return true;
+            return;
         }
 
         hidden.value = '';
         search.setCustomValidity('Selecciona una ficha de la lista.');
-        return false;
     };
 
-    search.addEventListener('input', renderResults);
-    search.addEventListener('focus', renderResults);
-    search.addEventListener('change', validateSelection);
-    document.addEventListener('click', function (event) {
-        if (!picker.contains(event.target)) {
-            closeResults();
-        }
-    });
-    search.form.addEventListener('submit', function (event) {
-        if (!validateSelection()) {
-            event.preventDefault();
-            search.reportValidity();
-        }
-    });
+    search.addEventListener('input', syncFicha);
+    search.addEventListener('change', syncFicha);
+    search.form.addEventListener('submit', syncFicha);
 });
 </script>
 

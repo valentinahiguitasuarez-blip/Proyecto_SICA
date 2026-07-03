@@ -1137,124 +1137,6 @@ body {
     color: #111827;
 }
 
-.searchable-select {
-    position: relative;
-    width: 100%;
-}
-
-.searchable-icon {
-    position: absolute;
-    left: 13px;
-    top: 50%;
-    z-index: 2;
-    display: inline-flex;
-    color: #73819a;
-    pointer-events: none;
-    transform: translateY(-50%);
-}
-
-.searchable-input {
-    width: 100%;
-    min-height: 48px;
-    padding: 0 14px 0 42px;
-    border: 1px solid var(--ap-line);
-    border-radius: 8px;
-    color: var(--ap-ink);
-    background: #ffffff;
-    font-family: "Segoe UI", Arial, sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    outline: 0;
-}
-
-.searchable-input:focus {
-    border-color: rgba(3, 1, 210, 0.55);
-    box-shadow: 0 0 0 3px rgba(3, 1, 210, 0.08);
-}
-
-.event-select-field .searchable-input {
-    min-height: 42px;
-}
-
-.searchable-results {
-    position: absolute;
-    z-index: 40;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    max-height: 320px;
-    overflow-y: auto;
-    border: 1px solid var(--ap-line);
-    border-radius: 8px;
-    background: #ffffff;
-    box-shadow: 0 18px 38px rgba(17, 24, 39, 0.16);
-}
-
-.searchable-results button,
-.searchable-empty {
-    width: 100%;
-    min-height: 52px;
-    display: grid;
-    grid-template-columns: 76px minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: center;
-    padding: 10px 12px;
-    border: 0;
-    border-bottom: 1px solid #eef2f7;
-    color: var(--ap-ink);
-    background: #ffffff;
-    font-family: "Segoe UI", Arial, sans-serif;
-    text-align: left;
-}
-
-.searchable-results button:hover,
-.searchable-results button:focus {
-    outline: 0;
-    background: #f8fafc;
-}
-
-.searchable-results strong {
-    color: var(--ap-blue);
-    font-size: 14px;
-    font-weight: 900;
-}
-
-.searchable-results span {
-    min-width: 0;
-    color: var(--ap-ink);
-    font-size: 14px;
-    font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.searchable-results em {
-    min-height: 26px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 9px;
-    border-radius: 999px;
-    color: #08734b;
-    background: rgba(25, 185, 120, 0.12);
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 900;
-    white-space: nowrap;
-}
-
-.searchable-empty {
-    display: block;
-    min-height: auto;
-    color: var(--ap-muted);
-    font-weight: 700;
-}
-
-.searchable-select.disabled {
-    opacity: 0.58;
-}
-
 .preregister-form button {
     min-height: 68px;
     padding: 0 18px;
@@ -1554,6 +1436,17 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
+}
+
+.profile-ficha-search {
+    padding-right: 40px;
+    background:
+        linear-gradient(90deg, transparent, transparent),
+        #ffffff;
+}
+
+.profile-ficha-picker {
+    position: relative;
 }
 
 .profile-form label small {

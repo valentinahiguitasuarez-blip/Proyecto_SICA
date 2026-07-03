@@ -1083,10 +1083,26 @@ body {
 }
 
 .form-readonly strong,
-.form-input-field input {
+.form-input-field input,
+.fixed-event-field strong {
     color: var(--ap-ink);
     font-size: 15px;
     line-height: 1.25;
+}
+
+.fixed-event-field {
+    border-color: rgba(25, 185, 120, 0.26);
+    background: linear-gradient(135deg, rgba(25, 185, 120, 0.08), #ffffff);
+}
+
+.fixed-event-field strong {
+    font-weight: 900;
+}
+
+.fixed-event-field small {
+    color: var(--ap-muted);
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .form-input-field input {

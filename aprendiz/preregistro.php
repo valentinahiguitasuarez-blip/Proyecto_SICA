@@ -171,6 +171,15 @@ $totalPreregistros = count($preregistros);
 $pendientes = count(array_filter($preregistros, static fn(array $item): bool => (string)$item['asistencia'] === 'Pendiente'));
 $asistidos = count(array_filter($preregistros, static fn(array $item): bool => asistenciaTexto((string)$item['asistencia']) === 'Asistio'));
 $certificados = count(array_filter($preregistros, static fn(array $item): bool => !empty($item['ruta_certificado'])));
+$eventoFijo = null;
+if ($eventoSeleccionado > 0) {
+    foreach ($eventosFormulario as $evento) {
+        if ((int)$evento['id_evento'] === $eventoSeleccionado) {
+            $eventoFijo = $evento;
+            break;
+        }
+    }
+}
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -314,24 +323,37 @@ $certificados = count(array_filter($preregistros, static fn(array $item): bool =
                         <span>Jornada</span>
                         <input type="text" name="jornada_visible" value="<?= htmlspecialchars($jornadaAprendiz, ENT_QUOTES, 'UTF-8') ?>" required maxlength="40">
                     </label>
-                    <label class="event-select-field">
-                        <span>Evento disponible</span>
-                        <select name="id_evento" required <?= !$eventosFormulario ? 'disabled' : '' ?>>
-                            <option value="">Selecciona un evento</option>
-                            <?php foreach ($eventosFormulario as $evento): ?>
-                                <?php
-                                $fechaEvento = new DateTime((string)$evento['fecha_evento']);
-                                $optionText = $evento['nombre_evento'] . ' - ' . $fechaEvento->format('d/m') . ' ' . substr((string)$evento['hora_inicio'], 0, 5);
-                                if (!empty($evento['id_preregistro'])) {
-                                    $optionText .= ' - registrado';
-                                }
-                                ?>
-                                <option value="<?= htmlspecialchars((string)$evento['id_evento'], ENT_QUOTES, 'UTF-8') ?>" <?= (int)$evento['id_evento'] === $eventoSeleccionado ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($optionText, ENT_QUOTES, 'UTF-8') ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </label>
+                    <?php if ($eventoFijo): ?>
+                        <?php
+                        $fechaEventoFijo = new DateTime((string)$eventoFijo['fecha_evento']);
+                        $eventoFijoTexto = $eventoFijo['nombre_evento'] . ' - ' . $fechaEventoFijo->format('d/m') . ' ' . substr((string)$eventoFijo['hora_inicio'], 0, 5);
+                        ?>
+                        <label class="event-select-field fixed-event-field">
+                            <span>Evento seleccionado</span>
+                            <input type="hidden" name="id_evento" value="<?= htmlspecialchars((string)$eventoFijo['id_evento'], ENT_QUOTES, 'UTF-8') ?>">
+                            <strong><?= htmlspecialchars($eventoFijoTexto, ENT_QUOTES, 'UTF-8') ?></strong>
+                            <small>Este evento viene desde el boton Pre-registrarme y no se puede modificar aqui.</small>
+                        </label>
+                    <?php else: ?>
+                        <label class="event-select-field">
+                            <span>Evento disponible</span>
+                            <select name="id_evento" required <?= !$eventosFormulario ? 'disabled' : '' ?>>
+                                <option value="">Selecciona un evento</option>
+                                <?php foreach ($eventosFormulario as $evento): ?>
+                                    <?php
+                                    $fechaEvento = new DateTime((string)$evento['fecha_evento']);
+                                    $optionText = $evento['nombre_evento'] . ' - ' . $fechaEvento->format('d/m') . ' ' . substr((string)$evento['hora_inicio'], 0, 5);
+                                    if (!empty($evento['id_preregistro'])) {
+                                        $optionText .= ' - registrado';
+                                    }
+                                    ?>
+                                    <option value="<?= htmlspecialchars((string)$evento['id_evento'], ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= htmlspecialchars($optionText, ENT_QUOTES, 'UTF-8') ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                    <?php endif; ?>
                     <button type="submit" <?= !$eventosFormulario ? 'disabled' : '' ?>>
                         Enviar pre-registro
                     </button>

@@ -15,11 +15,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const modalMarkup = '<div class="logout-confirm-overlay" id="logoutConfirmModal" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle">' +
             '<div class="logout-confirm-dialog">' +
+            '<div class="logout-confirm-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" width="28" height="28">' +
+            '<path d="M10.75 4.75a.75.75 0 0 1 .75-.75h6.75C19.22 4 20 4.78 20 5.75v12.5c0 .97-.78 1.75-1.75 1.75H11.5a.75.75 0 0 1 0-1.5h6.75a.25.25 0 0 0 .25-.25V5.75a.25.25 0 0 0-.25-.25H11.5a.75.75 0 0 1-.75-.75Zm-3.28 3.72a.75.75 0 0 1 1.06 1.06L6.81 11.25h7.44a.75.75 0 0 1 0 1.5H6.81l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06l3-3Z" fill="currentColor"/>' +
+            '</svg>' +
+            '</div>' +
+            '<p class="logout-confirm-kicker">Salida segura</p>' +
             '<h3 id="logoutConfirmTitle">Cerrar sesión</h3>' +
-            '<p>¿Seguro que deseas cerrar tu sesión?</p>' +
+            '<p>Tu sesión se cerrará en este dispositivo. Podrás ingresar nuevamente con tu correo y contraseña.</p>' +
             '<div class="logout-confirm-actions">' +
-            '<button type="button" class="btn btn-outline-secondary" id="logoutCancelButton">Cancelar</button>' +
-            '<button type="button" class="btn btn-danger" id="logoutConfirmButton">Sí, cerrar sesión</button>' +
+            '<button type="button" class="logout-cancel-btn" id="logoutCancelButton">Cancelar</button>' +
+            '<button type="button" class="logout-confirm-btn" id="logoutConfirmButton">Sí, cerrar sesión</button>' +
             '</div>' +
             '</div>' +
             '</div>';

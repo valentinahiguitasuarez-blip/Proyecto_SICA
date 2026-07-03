@@ -24,6 +24,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $apellido = trim((string)($_POST['apellido'] ?? ''));
     $correo = mb_strtolower(trim((string)($_POST['correo'] ?? '')), 'UTF-8');
     $telefono = trim((string)($_POST['telefono'] ?? ''));
+    $contrasena = trim((string)($_POST['contrasena'] ?? ''));
+    $confirmarContrasena = trim((string)($_POST['confirmar_contrasena'] ?? ''));
 
     try {
         if (!hash_equals((string)$_SESSION['csrf_instructor_profile'], $csrf)) {
@@ -34,6 +36,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
         if ($telefono !== '' && !preg_match('/^[0-9+\s-]{7,15}$/', $telefono)) {
             throw new RuntimeException('El telefono solo debe contener numeros, espacios, + o guiones.');
+        }
+        if ($contrasena !== '' || $confirmarContrasena !== '') {
+            if (strlen($contrasena) < 6 || strlen($contrasena) > 72) {
+                throw new RuntimeException('La contraseña debe tener entre 6 y 72 caracteres.');
+            }
+            if ($contrasena !== $confirmarContrasena) {
+                throw new RuntimeException('Las contraseñas no coinciden.');
+            }
         }
 
         $fotoPerfil = null;
@@ -64,9 +74,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
 
         $fotoSql = $fotoPerfil !== null ? ', foto_perfil = :foto' : '';
+        $passwordSql = $contrasena !== '' ? ', contrasena = :contrasena' : '';
         $stmt = $pdo->prepare(
             'UPDATE usuario
-             SET nombre = :nombre, apellido = :apellido, correo = :correo, telefono = :telefono' . $fotoSql . '
+             SET nombre = :nombre, apellido = :apellido, correo = :correo, telefono = :telefono' . $fotoSql . $passwordSql . '
              WHERE id_documento = :id'
         );
         $params = [
@@ -78,6 +89,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         ];
         if ($fotoPerfil !== null) {
             $params[':foto'] = $fotoPerfil;
+        }
+        if ($contrasena !== '') {
+            $params[':contrasena'] = password_hash($contrasena, PASSWORD_DEFAULT);
         }
         $stmt->execute($params);
 
@@ -186,6 +200,9 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
         <label><span>Apellido</span><input type="text" name="apellido" value="<?= instructor_h($perfil['apellido']) ?>" maxlength="50" required></label>
         <label><span>Correo personal</span><input type="email" name="correo" value="<?= instructor_h($perfil['correo']) ?>" maxlength="100" required></label>
         <label><span>Telefono</span><input type="tel" name="telefono" value="<?= instructor_h($perfil['telefono'] ?? '') ?>" maxlength="15"></label>
+        <label><span>Nueva contraseña</span><input type="password" name="contrasena" maxlength="72" autocomplete="new-password"></label>
+        <label><span>Confirmar contraseña</span><input type="password" name="confirmar_contrasena" maxlength="72" autocomplete="new-password"></label>
+        <small class="field-hint">Déjala en blanco si no deseas cambiarla.</small>
         <label><span>Documento</span><input type="text" value="<?= instructor_h($perfil['id_documento']) ?>" readonly></label>
         <label><span>Rol asignado</span><input type="text" value="<?= instructor_h($perfil['nombre_rol']) ?>" readonly></label>
 

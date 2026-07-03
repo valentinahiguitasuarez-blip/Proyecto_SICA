@@ -44,6 +44,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $apellidoPost = trim((string)($_POST['apellido'] ?? ''));
     $correoPost = trim((string)($_POST['correo'] ?? ''));
     $telefonoPost = trim((string)($_POST['telefono'] ?? ''));
+    $contrasenaPost = trim((string)($_POST['contrasena'] ?? ''));
+    $confirmarContrasenaPost = trim((string)($_POST['confirmar_contrasena'] ?? ''));
     $fichaPost = (int)($_POST['id_ficha'] ?? 0);
 
     if (!hash_equals((string)$_SESSION['csrf_perfil'], $csrf)) {
@@ -56,101 +58,118 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $_SESSION['profile_message'] = 'El telefono solo debe contener numeros, espacios, + o guiones.';
         $_SESSION['profile_message_type'] = 'danger';
     } else {
-        try {
-            $fotoPerfil = null;
-            $fichaExiste = false;
-            foreach ($fichas as $ficha) {
-                if ((int)$ficha['id_ficha'] === $fichaPost) {
-                    $fichaExiste = true;
-                    break;
-                }
+        $passwordChangeRequested = $contrasenaPost !== '' || $confirmarContrasenaPost !== '';
+        if ($passwordChangeRequested) {
+            if (strlen($contrasenaPost) < 6 || strlen($contrasenaPost) > 72) {
+                $_SESSION['profile_message'] = 'La contraseña debe tener entre 6 y 72 caracteres.';
+                $_SESSION['profile_message_type'] = 'danger';
+            } elseif ($contrasenaPost !== $confirmarContrasenaPost) {
+                $_SESSION['profile_message'] = 'Las contraseñas no coinciden.';
+                $_SESSION['profile_message_type'] = 'danger';
             }
+        }
 
-            if (!$fichaExiste) {
-                throw new RuntimeException('Ficha no valida.');
-            }
-
-            if (!empty($_FILES['foto_perfil']['name'])) {
-                if (($_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-                    throw new RuntimeException('No fue posible cargar la foto.');
+        if (($profileMessage = $_SESSION['profile_message'] ?? '') === '') {
+            try {
+                $fotoPerfil = null;
+                $fichaExiste = false;
+                foreach ($fichas as $ficha) {
+                    if ((int)$ficha['id_ficha'] === $fichaPost) {
+                        $fichaExiste = true;
+                        break;
+                    }
                 }
 
-                if ((int)($_FILES['foto_perfil']['size'] ?? 0) > 2 * 1024 * 1024) {
-                    throw new RuntimeException('La foto no puede superar 2 MB.');
+                if (!$fichaExiste) {
+                    throw new RuntimeException('Ficha no valida.');
                 }
 
-                $tmpName = (string)($_FILES['foto_perfil']['tmp_name'] ?? '');
-                $finfo = new finfo(FILEINFO_MIME_TYPE);
-                $mime = (string)$finfo->file($tmpName);
-                $extensiones = [
-                    'image/jpeg' => 'jpg',
-                    'image/png' => 'png',
-                    'image/webp' => 'webp',
+                if (!empty($_FILES['foto_perfil']['name'])) {
+                    if (($_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                        throw new RuntimeException('No fue posible cargar la foto.');
+                    }
+
+                    if ((int)($_FILES['foto_perfil']['size'] ?? 0) > 2 * 1024 * 1024) {
+                        throw new RuntimeException('La foto no puede superar 2 MB.');
+                    }
+
+                    $tmpName = (string)($_FILES['foto_perfil']['tmp_name'] ?? '');
+                    $finfo = new finfo(FILEINFO_MIME_TYPE);
+                    $mime = (string)$finfo->file($tmpName);
+                    $extensiones = [
+                        'image/jpeg' => 'jpg',
+                        'image/png' => 'png',
+                        'image/webp' => 'webp',
+                    ];
+
+                    if (!array_key_exists($mime, $extensiones)) {
+                        throw new RuntimeException('La foto debe ser JPG, PNG o WebP.');
+                    }
+
+                    $uploadDir = __DIR__ . '/../uploads/perfiles';
+                    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+                        throw new RuntimeException('No se pudo preparar la carpeta de fotos.');
+                    }
+
+                    $fileName = 'aprendiz_' . $idDocumento . '_' . time() . '.' . $extensiones[$mime];
+                    $destination = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
+                    if (!move_uploaded_file($tmpName, $destination)) {
+                        throw new RuntimeException('No se pudo guardar la foto.');
+                    }
+
+                    $fotoPerfil = 'uploads/perfiles/' . $fileName;
+                }
+
+                $fotoSql = $fotoPerfil !== null ? ', foto_perfil = :foto_perfil' : '';
+                $passwordSql = $contrasenaPost !== '' ? ', contrasena = :contrasena' : '';
+                $updateStmt = $pdo->prepare(
+                    'UPDATE usuario
+                     SET nombre = :nombre,
+                         apellido = :apellido,
+                         correo = :correo,
+                         telefono = :telefono,
+                         id_ficha = :id_ficha' . $fotoSql . $passwordSql . '
+                     WHERE id_documento = :id_documento'
+                );
+                $params = [
+                    ':nombre' => $nombrePost,
+                    ':apellido' => $apellidoPost,
+                    ':correo' => $correoPost,
+                    ':telefono' => $telefonoPost !== '' ? $telefonoPost : null,
+                    ':id_ficha' => $fichaPost,
+                    ':id_documento' => $idDocumento,
                 ];
 
-                if (!array_key_exists($mime, $extensiones)) {
-                    throw new RuntimeException('La foto debe ser JPG, PNG o WebP.');
+                if ($fotoPerfil !== null) {
+                    $params[':foto_perfil'] = $fotoPerfil;
+                }
+                if ($contrasenaPost !== '') {
+                    $params[':contrasena'] = password_hash($contrasenaPost, PASSWORD_DEFAULT);
                 }
 
-                $uploadDir = __DIR__ . '/../uploads/perfiles';
-                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-                    throw new RuntimeException('No se pudo preparar la carpeta de fotos.');
+                $updateStmt->execute($params);
+
+                $_SESSION['usuario']['nombre'] = $nombrePost;
+                $_SESSION['usuario']['apellido'] = $apellidoPost;
+                $_SESSION['usuario']['correo'] = $correoPost;
+                $_SESSION['usuario']['telefono'] = $telefonoPost;
+                $_SESSION['usuario']['id_ficha'] = $fichaPost;
+                if ($fotoPerfil !== null) {
+                    $_SESSION['usuario']['foto_perfil'] = $fotoPerfil;
                 }
-
-                $fileName = 'aprendiz_' . $idDocumento . '_' . time() . '.' . $extensiones[$mime];
-                $destination = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
-                if (!move_uploaded_file($tmpName, $destination)) {
-                    throw new RuntimeException('No se pudo guardar la foto.');
-                }
-
-                $fotoPerfil = 'uploads/perfiles/' . $fileName;
+                $_SESSION['profile_message'] = 'Perfil actualizado correctamente.';
+                $_SESSION['profile_message_type'] = 'success';
+            } catch (PDOException $exception) {
+                $_SESSION['profile_message'] = $exception->getCode() === '23000'
+                    ? 'Ese correo ya esta registrado por otro usuario.'
+                    : 'No fue posible guardar el perfil.';
+                $_SESSION['profile_message_type'] = 'danger';
+                error_log('SICA perfil: error actualizando usuario: ' . $exception->getMessage());
+            } catch (Throwable $exception) {
+                $_SESSION['profile_message'] = 'No fue posible guardar el perfil.';
+                $_SESSION['profile_message_type'] = 'danger';
+                error_log('SICA perfil: ' . $exception->getMessage());
             }
-
-            $fotoSql = $fotoPerfil !== null ? ', foto_perfil = :foto_perfil' : '';
-            $updateStmt = $pdo->prepare(
-                'UPDATE usuario
-                 SET nombre = :nombre,
-                     apellido = :apellido,
-                     correo = :correo,
-                     telefono = :telefono,
-                     id_ficha = :id_ficha' . $fotoSql . '
-                 WHERE id_documento = :id_documento'
-            );
-            $params = [
-                ':nombre' => $nombrePost,
-                ':apellido' => $apellidoPost,
-                ':correo' => $correoPost,
-                ':telefono' => $telefonoPost !== '' ? $telefonoPost : null,
-                ':id_ficha' => $fichaPost,
-                ':id_documento' => $idDocumento,
-            ];
-
-            if ($fotoPerfil !== null) {
-                $params[':foto_perfil'] = $fotoPerfil;
-            }
-
-            $updateStmt->execute($params);
-
-            $_SESSION['usuario']['nombre'] = $nombrePost;
-            $_SESSION['usuario']['apellido'] = $apellidoPost;
-            $_SESSION['usuario']['correo'] = $correoPost;
-            $_SESSION['usuario']['telefono'] = $telefonoPost;
-            $_SESSION['usuario']['id_ficha'] = $fichaPost;
-            if ($fotoPerfil !== null) {
-                $_SESSION['usuario']['foto_perfil'] = $fotoPerfil;
-            }
-            $_SESSION['profile_message'] = 'Perfil actualizado correctamente.';
-            $_SESSION['profile_message_type'] = 'success';
-        } catch (PDOException $exception) {
-            $_SESSION['profile_message'] = $exception->getCode() === '23000'
-                ? 'Ese correo ya esta registrado por otro usuario.'
-                : 'No fue posible guardar el perfil.';
-            $_SESSION['profile_message_type'] = 'danger';
-            error_log('SICA perfil: error actualizando usuario: ' . $exception->getMessage());
-        } catch (Throwable $exception) {
-            $_SESSION['profile_message'] = 'No fue posible guardar el perfil.';
-            $_SESSION['profile_message_type'] = 'danger';
-            error_log('SICA perfil: ' . $exception->getMessage());
         }
     }
 
@@ -342,6 +361,15 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                     <span>Telefono</span>
                     <input type="tel" name="telefono" value="<?= e($perfil['telefono'] ?? '') ?>" maxlength="15">
                 </label>
+                <label>
+                    <span>Nueva contraseña</span>
+                    <input type="password" name="contrasena" maxlength="72" autocomplete="new-password">
+                </label>
+                <label>
+                    <span>Confirmar contraseña</span>
+                    <input type="password" name="confirmar_contrasena" maxlength="72" autocomplete="new-password">
+                </label>
+                <small class="field-hint">Déjala en blanco si no deseas cambiarla.</small>
                 <label>
                     <span>Documento</span>
                     <input type="text" value="<?= e($perfil['id_documento']) ?>" readonly>

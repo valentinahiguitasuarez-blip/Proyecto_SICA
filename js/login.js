@@ -8,6 +8,82 @@ document.addEventListener('DOMContentLoaded', function () {
     const themeLight = document.querySelector('.theme-light');
     const themeDark = document.querySelector('.theme-dark');
 
+    const ensureLogoutModal = function () {
+        if (document.getElementById('logoutConfirmModal')) {
+            return document.getElementById('logoutConfirmModal');
+        }
+
+        const modalMarkup = '<div class="logout-confirm-overlay" id="logoutConfirmModal" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle">' +
+            '<div class="logout-confirm-dialog">' +
+            '<h3 id="logoutConfirmTitle">Cerrar sesión</h3>' +
+            '<p>¿Seguro que deseas cerrar tu sesión?</p>' +
+            '<div class="logout-confirm-actions">' +
+            '<button type="button" class="btn btn-outline-secondary" id="logoutCancelButton">Cancelar</button>' +
+            '<button type="button" class="btn btn-danger" id="logoutConfirmButton">Sí, cerrar sesión</button>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+
+        document.body.insertAdjacentHTML('beforeend', modalMarkup);
+        return document.getElementById('logoutConfirmModal');
+    };
+
+    let pendingLogoutUrl = '';
+
+    const closeLogoutModal = function () {
+        const modal = document.getElementById('logoutConfirmModal');
+        if (modal) {
+            modal.classList.remove('is-open');
+        }
+        document.body.classList.remove('logout-modal-open');
+        pendingLogoutUrl = '';
+    };
+
+    const openLogoutModal = function (url) {
+        const modal = ensureLogoutModal();
+        pendingLogoutUrl = url;
+        modal.classList.add('is-open');
+        document.body.classList.add('logout-modal-open');
+    };
+
+    const modal = ensureLogoutModal();
+    const cancelButton = document.getElementById('logoutCancelButton');
+    const confirmButton = document.getElementById('logoutConfirmButton');
+
+    if (cancelButton) {
+        cancelButton.addEventListener('click', closeLogoutModal);
+    }
+
+    if (confirmButton) {
+        confirmButton.addEventListener('click', function () {
+            if (pendingLogoutUrl) {
+                window.location.href = pendingLogoutUrl;
+            }
+            closeLogoutModal();
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closeLogoutModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeLogoutModal();
+        }
+    });
+
+    document.querySelectorAll('a[href*="login/logout.php"]').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            openLogoutModal(link.getAttribute('href') || 'login/logout.php');
+        });
+    });
+
     const applyTheme = function (theme) {
         const nextTheme = theme === 'dark' ? 'dark' : 'light';
         document.body.dataset.theme = nextTheme;

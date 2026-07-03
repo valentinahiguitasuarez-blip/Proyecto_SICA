@@ -5,7 +5,7 @@ require_once __DIR__ . '/paths.php';
 require_once __DIR__ . '/login_notifications.php';
 require_once __DIR__ . '/smtp_mailer.php';
 
-function sendPasswordResetMail(array $usuario, string $resetUrl): bool
+function sendPasswordResetMail(array $usuario, string $code): bool
 {
     $to = (string)($usuario['correo'] ?? '');
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -15,10 +15,11 @@ function sendPasswordResetMail(array $usuario, string $resetUrl): bool
     $nombre = trim((string)($usuario['nombre'] ?? '') . ' ' . (string)($usuario['apellido'] ?? ''));
     $nombre = $nombre !== '' ? $nombre : 'usuario';
 
-    $subject = 'Restablecer contrasena - SICA';
+    $subject = 'Codigo para restablecer contrasena - SICA';
     $message = "Hola {$nombre},\n\n"
         . "Recibimos una solicitud para restablecer la contrasena de tu cuenta SICA.\n\n"
-        . "Usa este enlace durante los proximos 30 minutos:\n{$resetUrl}\n\n"
+        . "Tu codigo de verificacion es: {$code}\n\n"
+        . "Este codigo vence en 15 minutos. Escribelo en SICA para crear una nueva contrasena.\n\n"
         . "Si no solicitaste este cambio, ignora este mensaje.\n\n"
         . "Equipo SICA";
 

@@ -8,7 +8,6 @@ session_start();
 $pageTitle = 'Recuperar contrasena - SICA';
 $message = '';
 $messageType = 'info';
-$devResetUrl = '';
 $oldCorreo = '';
 
 if (empty($_SESSION['csrf_recover'])) {
@@ -41,9 +40,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $usuario = $stmt->fetch();
 
         if ($usuario) {
-            $token = bin2hex(random_bytes(32));
-            $tokenHash = hash('sha256', $token);
-            $expiresAt = (new DateTimeImmutable('+30 minutes'))->format('Y-m-d H:i:s');
+            $expiresAt = (new DateTimeImmutable('+15 minutes'))->format('Y-m-d H:i:s');
+            $code = '';
+            $tokenHash = '';
+
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                $candidateCode = (string)random_int(100000, 999999);
+                $candidateHash = hash('sha256', (string)$usuario['id_documento'] . '|' . $candidateCode);
+                $exists = $pdo->prepare('SELECT id_reset FROM password_reset WHERE token_hash = :token_hash LIMIT 1');
+                $exists->execute([':token_hash' => $candidateHash]);
+
+                if (!$exists->fetch()) {
+                    $code = $candidateCode;
+                    $tokenHash = $candidateHash;
+                    break;
+                }
+            }
+
+            if ($code === '' || $tokenHash === '') {
+                error_log('SICA: no se pudo generar codigo unico de recuperacion para ' . $oldCorreo);
+                $_SESSION['reset_notice'] = 'Si el correo existe, enviaremos un codigo de 6 digitos para restablecer la contrasena.';
+                header('Location: ' . app_url('login/restablecer.php?correo=' . rawurlencode($oldCorreo)));
+                exit;
+            }
 
             $pdo->prepare('UPDATE password_reset SET usado = 1 WHERE id_documento = :id_documento AND usado = 0')
                 ->execute([':id_documento' => $usuario['id_documento']]);
@@ -58,17 +77,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 ':fecha_expiracion' => $expiresAt,
             ]);
 
-            $resetUrl = app_absolute_url('login/restablecer.php?token=' . $token);
-            $sent = sendPasswordResetMail($usuario, $resetUrl);
+            $sent = sendPasswordResetMail($usuario, $code);
 
             if (!$sent) {
-                $devResetUrl = $resetUrl;
                 error_log('SICA: no se pudo enviar correo de recuperacion a ' . $oldCorreo);
             }
         }
 
-        $message = 'Si el correo existe, enviaremos un enlace para restablecer la contrasena.';
-        $messageType = 'success';
+        $_SESSION['reset_notice'] = 'Si el correo existe, enviaremos un codigo de 6 digitos para restablecer la contrasena.';
+        header('Location: ' . app_url('login/restablecer.php?correo=' . rawurlencode($oldCorreo)));
+        exit;
     }
 }
 ?>
@@ -82,19 +100,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             </div>
             <header class="login-header">
                 <h1>Recuperar contrase&ntilde;a</h1>
-                <p>Ingresa tu correo personal y te enviaremos un enlace seguro.</p>
+                <p>Ingresa tu correo personal y te enviaremos un codigo seguro.</p>
             </header>
 
             <?php if ($message !== ''): ?>
                 <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?> shadow-sm" role="alert">
                     <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($devResetUrl !== ''): ?>
-                <div class="alert alert-warning shadow-sm" role="alert">
-                    XAMPP puede no enviar correos sin SMTP. Enlace de prueba:
-                    <a href="<?= htmlspecialchars($devResetUrl, ENT_QUOTES, 'UTF-8') ?>">restablecer contrase&ntilde;a</a>
                 </div>
             <?php endif; ?>
 
@@ -108,7 +119,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     </span>
                     <input type="email" class="form-control" name="correo" placeholder="Correo personal" value="<?= htmlspecialchars($oldCorreo, ENT_QUOTES, 'UTF-8') ?>" required maxlength="100">
                 </div>
-                <button type="submit" class="login-submit">Enviar enlace</button>
+                <button type="submit" class="login-submit">Enviar codigo</button>
             </form>
 
             <p class="login-register"><a href="<?= htmlspecialchars(app_url('login/index.php'), ENT_QUOTES, 'UTF-8') ?>">Volver al inicio de sesi&oacute;n</a></p>

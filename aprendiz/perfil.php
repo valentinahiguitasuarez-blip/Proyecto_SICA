@@ -44,8 +44,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $apellidoPost = trim((string)($_POST['apellido'] ?? ''));
     $correoPost = trim((string)($_POST['correo'] ?? ''));
     $telefonoPost = trim((string)($_POST['telefono'] ?? ''));
-    $contrasenaPost = (string)($_POST['contrasena'] ?? '');
-    $confirmarContrasenaPost = (string)($_POST['confirmar_contrasena'] ?? '');
     $fichaPost = (int)($_POST['id_ficha'] ?? 0);
 
     if (!hash_equals((string)$_SESSION['csrf_perfil'], $csrf)) {
@@ -58,20 +56,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $_SESSION['profile_message'] = 'El telefono solo debe contener numeros, espacios, + o guiones.';
         $_SESSION['profile_message_type'] = 'danger';
     } else {
-        $passwordChangeRequested = $contrasenaPost !== '' || $confirmarContrasenaPost !== '';
-        if ($passwordChangeRequested) {
-            if ($contrasenaPost === '' || $confirmarContrasenaPost === '') {
-                $_SESSION['profile_message'] = 'Completa la nueva contraseña y su confirmación.';
-                $_SESSION['profile_message_type'] = 'danger';
-            } elseif (strlen($contrasenaPost) < 6 || strlen($contrasenaPost) > 72) {
-                $_SESSION['profile_message'] = 'La contraseña debe tener entre 6 y 72 caracteres.';
-                $_SESSION['profile_message_type'] = 'danger';
-            } elseif ($contrasenaPost !== $confirmarContrasenaPost) {
-                $_SESSION['profile_message'] = 'Las contraseñas no coinciden.';
-                $_SESSION['profile_message_type'] = 'danger';
-            }
-        }
-
         if (($profileMessage = $_SESSION['profile_message'] ?? '') === '') {
             try {
                 $fotoPerfil = null;
@@ -124,14 +108,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 }
 
                 $fotoSql = $fotoPerfil !== null ? ', foto_perfil = :foto_perfil' : '';
-                $passwordSql = $contrasenaPost !== '' ? ', contrasena = :contrasena' : '';
                 $updateStmt = $pdo->prepare(
                     'UPDATE usuario
                      SET nombre = :nombre,
                          apellido = :apellido,
                          correo = :correo,
                          telefono = :telefono,
-                         id_ficha = :id_ficha' . $fotoSql . $passwordSql . '
+                         id_ficha = :id_ficha' . $fotoSql . '
                      WHERE id_documento = :id_documento'
                 );
                 $params = [
@@ -145,9 +128,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
                 if ($fotoPerfil !== null) {
                     $params[':foto_perfil'] = $fotoPerfil;
-                }
-                if ($contrasenaPost !== '') {
-                    $params[':contrasena'] = password_hash($contrasenaPost, PASSWORD_DEFAULT);
                 }
 
                 $updateStmt->execute($params);
@@ -364,15 +344,6 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                     <span>Telefono</span>
                     <input type="tel" name="telefono" value="<?= e($perfil['telefono'] ?? '') ?>" maxlength="15">
                 </label>
-                <label class="profile-password-field">
-                    <span>Nueva contraseña</span>
-                    <input type="password" name="contrasena" minlength="6" maxlength="72" autocomplete="new-password" placeholder="Entre 6 y 72 caracteres">
-                </label>
-                <label class="profile-password-field">
-                    <span>Confirmar contraseña</span>
-                    <input type="password" name="confirmar_contrasena" minlength="6" maxlength="72" autocomplete="new-password" placeholder="Repite la nueva contraseña">
-                </label>
-                <small class="field-hint profile-password-hint">Déjalas en blanco si no deseas cambiarla. Para actualizarla, escribe la misma contraseña en ambos campos.</small>
                 <label>
                     <span>Documento</span>
                     <input type="text" value="<?= e($perfil['id_documento']) ?>" readonly>

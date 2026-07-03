@@ -1869,26 +1869,48 @@ body {
     background: rgba(245, 158, 11, 0.13);
 }
 
-.certificate-card.waiting .certificate-status,
-.certificate-action span {
+.certificate-card.waiting .certificate-status {
     color: var(--ap-muted);
     background: #eef2f7;
 }
 
 .certificate-action {
     display: grid;
+    align-content: start;
     gap: 8px;
 }
 
-.certificate-action span {
-    min-height: 44px;
+.certificate-action-label {
+    min-height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 14px;
-    border-radius: 8px;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: #08734b;
+    background: rgba(25, 185, 120, 0.12);
+    font-size: 12px;
     font-weight: 900;
     text-align: center;
+}
+
+.certificate-action-label.muted {
+    color: #64748b;
+    background: #eef2f7;
+}
+
+.certificate-action small {
+    color: var(--ap-muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.certificate-action a.secondary {
+    min-height: 40px;
+    color: var(--ap-blue);
+    background: rgba(3, 1, 210, 0.06);
 }
 
 @media (max-width: 1050px) {

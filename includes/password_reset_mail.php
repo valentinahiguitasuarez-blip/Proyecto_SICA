@@ -15,12 +15,15 @@ function sendPasswordResetMail(array $usuario, string $code): bool
     $nombre = trim((string)($usuario['nombre'] ?? '') . ' ' . (string)($usuario['apellido'] ?? ''));
     $nombre = $nombre !== '' ? $nombre : 'usuario';
 
-    $subject = 'Codigo para restablecer contrasena - SICA';
+    $subject = 'Tu codigo SICA es ' . $code;
     $message = "Hola {$nombre},\n\n"
         . "Recibimos una solicitud para restablecer la contrasena de tu cuenta SICA.\n\n"
-        . "Tu codigo de verificacion es: {$code}\n\n"
-        . "Este codigo vence en 15 minutos. Escribelo en SICA para crear una nueva contrasena.\n\n"
-        . "Si no solicitaste este cambio, ignora este mensaje.\n\n"
+        . "CODIGO DE SEGURIDAD\n"
+        . "{$code}\n\n"
+        . "Usa este codigo en la pantalla de recuperacion para crear tu nueva contrasena.\n"
+        . "Vence en 15 minutos.\n\n"
+        . "Importante: si solicitaste varios codigos, usa solo el mas reciente. Los codigos anteriores quedan desactivados.\n\n"
+        . "Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n"
         . "Equipo SICA";
 
     try {

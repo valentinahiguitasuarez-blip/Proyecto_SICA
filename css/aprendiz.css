@@ -1420,6 +1420,23 @@ body {
     gap: 7px;
 }
 
+.profile-password-field {
+    padding: 12px;
+    border: 1px solid rgba(3, 1, 210, 0.10);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(3, 1, 210, 0.04), rgba(25, 185, 120, 0.04));
+}
+
+.profile-password-hint {
+    grid-column: 1 / -1;
+    margin-top: -8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--ap-muted);
+    background: #f8fafc;
+    font-weight: 800;
+}
+
 .profile-wide-field {
     grid-column: 1 / -1;
 }

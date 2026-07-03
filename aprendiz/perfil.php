@@ -44,8 +44,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $apellidoPost = trim((string)($_POST['apellido'] ?? ''));
     $correoPost = trim((string)($_POST['correo'] ?? ''));
     $telefonoPost = trim((string)($_POST['telefono'] ?? ''));
-    $contrasenaPost = trim((string)($_POST['contrasena'] ?? ''));
-    $confirmarContrasenaPost = trim((string)($_POST['confirmar_contrasena'] ?? ''));
+    $contrasenaPost = (string)($_POST['contrasena'] ?? '');
+    $confirmarContrasenaPost = (string)($_POST['confirmar_contrasena'] ?? '');
     $fichaPost = (int)($_POST['id_ficha'] ?? 0);
 
     if (!hash_equals((string)$_SESSION['csrf_perfil'], $csrf)) {
@@ -60,7 +60,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     } else {
         $passwordChangeRequested = $contrasenaPost !== '' || $confirmarContrasenaPost !== '';
         if ($passwordChangeRequested) {
-            if (strlen($contrasenaPost) < 6 || strlen($contrasenaPost) > 72) {
+            if ($contrasenaPost === '' || $confirmarContrasenaPost === '') {
+                $_SESSION['profile_message'] = 'Completa la nueva contraseña y su confirmación.';
+                $_SESSION['profile_message_type'] = 'danger';
+            } elseif (strlen($contrasenaPost) < 6 || strlen($contrasenaPost) > 72) {
                 $_SESSION['profile_message'] = 'La contraseña debe tener entre 6 y 72 caracteres.';
                 $_SESSION['profile_message_type'] = 'danger';
             } elseif ($contrasenaPost !== $confirmarContrasenaPost) {
@@ -361,15 +364,15 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                     <span>Telefono</span>
                     <input type="tel" name="telefono" value="<?= e($perfil['telefono'] ?? '') ?>" maxlength="15">
                 </label>
-                <label>
+                <label class="profile-password-field">
                     <span>Nueva contraseña</span>
-                    <input type="password" name="contrasena" maxlength="72" autocomplete="new-password">
+                    <input type="password" name="contrasena" minlength="6" maxlength="72" autocomplete="new-password" placeholder="Entre 6 y 72 caracteres">
                 </label>
-                <label>
+                <label class="profile-password-field">
                     <span>Confirmar contraseña</span>
-                    <input type="password" name="confirmar_contrasena" maxlength="72" autocomplete="new-password">
+                    <input type="password" name="confirmar_contrasena" minlength="6" maxlength="72" autocomplete="new-password" placeholder="Repite la nueva contraseña">
                 </label>
-                <small class="field-hint">Déjala en blanco si no deseas cambiarla.</small>
+                <small class="field-hint profile-password-hint">Déjalas en blanco si no deseas cambiarla. Para actualizarla, escribe la misma contraseña en ambos campos.</small>
                 <label>
                     <span>Documento</span>
                     <input type="text" value="<?= e($perfil['id_documento']) ?>" readonly>

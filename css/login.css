@@ -297,6 +297,20 @@ body.logout-modal-open {
     box-shadow: 0 0 0 4px rgba(37, 99, 255, 0.12);
 }
 
+.login-field .form-control.is-valid,
+.was-validated .login-field .form-control:valid {
+    border-color: #18a86b;
+    background-image: none !important;
+    background-color: #fbfffd;
+    padding-right: 44px;
+    box-shadow: 0 0 0 4px rgba(24, 168, 107, 0.08);
+}
+
+.password-field .form-control.is-valid,
+.was-validated .password-field .form-control:valid {
+    padding-right: 54px;
+}
+
 .field-icon {
     position: absolute;
     top: 13px;
@@ -545,6 +559,14 @@ body[data-theme="dark"] .login-field .form-control {
     background: #111a2d;
     border-color: #2a3853;
     box-shadow: 0 2px 9px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="dark"] .login-field .form-control.is-valid,
+body[data-theme="dark"] .was-validated .login-field .form-control:valid {
+    border-color: #34d399;
+    background-image: none !important;
+    background-color: #10231f;
+    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.11);
 }
 
 body[data-theme="dark"] .login-field .form-control::placeholder {

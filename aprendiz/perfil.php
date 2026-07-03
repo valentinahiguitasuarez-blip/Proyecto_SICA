@@ -354,13 +354,15 @@ $fichaActualLabel = trim((string)($perfil['id_ficha'] ?? '') . ' - ' . (string)(
                     <div class="profile-ficha-picker" data-fichas='<?= e(json_encode(array_map(static function (array $ficha): array {
                         return [
                             'id' => (string)$ficha['id_ficha'],
-                            'programa' => (string)$ficha['nombre_programa'],
-                            'jornada' => (string)$ficha['nombre_jornada'],
                             'label' => $ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada'],
                         ];
                     }, $fichas), JSON_UNESCAPED_UNICODE)) ?>'>
-                        <input type="search" id="fichaSearch" class="profile-ficha-search" value="<?= e($fichaActualLabel) ?>" placeholder="Busca por ficha, programa o jornada" autocomplete="off" required>
-                        <div id="fichaResults" class="profile-ficha-results" hidden></div>
+                        <input type="search" id="fichaSearch" class="profile-ficha-search" list="fichasPerfilList" value="<?= e($fichaActualLabel) ?>" placeholder="Busca por ficha, programa o jornada" autocomplete="off" required>
+                        <datalist id="fichasPerfilList">
+                            <?php foreach ($fichas as $ficha): ?>
+                                <option value="<?= e($ficha['id_ficha'] . ' - ' . $ficha['nombre_programa'] . ' - ' . $ficha['nombre_jornada']) ?>"></option>
+                            <?php endforeach; ?>
+                        </datalist>
                     </div>
                     <small>Escribe el numero de ficha y apareceran las relacionadas; tambien puedes buscar por programa o jornada.</small>
                 </label>
@@ -395,9 +397,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const search = document.getElementById('fichaSearch');
     const hidden = document.getElementById('idFichaPerfil');
     const picker = document.querySelector('.profile-ficha-picker');
-    const results = document.getElementById('fichaResults');
 
-    if (!search || !hidden || !picker || !results) {
+    if (!search || !hidden || !picker) {
         return;
     }
 
@@ -408,67 +409,6 @@ document.addEventListener('DOMContentLoaded', function () {
         fichas = [];
     }
 
-    const closeResults = function () {
-        results.hidden = true;
-        results.innerHTML = '';
-    };
-
-    const chooseFicha = function (ficha) {
-        search.value = ficha.label;
-        hidden.value = ficha.id;
-        search.setCustomValidity('');
-        closeResults();
-    };
-
-    const renderResults = function () {
-        const query = search.value.trim().toLowerCase();
-        hidden.value = '';
-
-        const isNumericSearch = /^[0-9]+$/.test(query);
-        if (query.length === 0 || (!isNumericSearch && query.length < 2)) {
-            closeResults();
-            return;
-        }
-
-        const matches = fichas
-            .filter(function (ficha) {
-                if (isNumericSearch) {
-                    return ficha.id.startsWith(query);
-                }
-
-                return ficha.label.toLowerCase().includes(query);
-            });
-
-        if (matches.length === 0) {
-            results.innerHTML = '<span class="empty-result">No se encontraron fichas.</span>';
-            results.hidden = false;
-            return;
-        }
-
-        results.innerHTML = '';
-        matches.forEach(function (ficha) {
-            const button = document.createElement('button');
-            const code = document.createElement('strong');
-            const program = document.createElement('span');
-            const shift = document.createElement('em');
-
-            button.type = 'button';
-            button.className = 'profile-ficha-option';
-            code.textContent = ficha.id;
-            program.textContent = ficha.programa;
-            shift.textContent = ficha.jornada;
-
-            button.appendChild(code);
-            button.appendChild(program);
-            button.appendChild(shift);
-            button.addEventListener('click', function () {
-                chooseFicha(ficha);
-            });
-            results.appendChild(button);
-        });
-        results.hidden = false;
-    };
-
     const syncFicha = function () {
         const selected = fichas.find(function (ficha) {
             return ficha.label === search.value;
@@ -477,18 +417,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selected) {
             hidden.value = selected.id;
             search.setCustomValidity('');
-        } else {
-            search.setCustomValidity('Selecciona una ficha de la lista.');
+            return;
         }
+
+        hidden.value = '';
+        search.setCustomValidity('Selecciona una ficha de la lista.');
     };
 
-    search.addEventListener('input', renderResults);
-    search.addEventListener('focus', renderResults);
-    document.addEventListener('click', function (event) {
-        if (!picker.contains(event.target)) {
-            closeResults();
-        }
-    });
+    search.addEventListener('input', syncFicha);
+    search.addEventListener('change', syncFicha);
     search.form.addEventListener('submit', syncFicha);
 });
 </script>

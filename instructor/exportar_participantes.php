@@ -39,31 +39,62 @@ function instructor_pdf_text(string $value): string
 }
 
 if ($tipo === 'pdf') {
-    $lines = '';
-    $y = 690;
-    foreach (array_slice($participantes, 0, 24) as $index => $p) {
-        $nombre = trim((string)$p['nombre'] . ' ' . (string)$p['apellido']);
-        $text = sprintf('%02d  %s  %s  %s', $index + 1, $p['id_documento'], $nombre, $p['asistencia']);
-        $lines .= "BT /F1 9 Tf 52 {$y} Td (" . instructor_pdf_text($text) . ") Tj ET\n";
-        $y -= 22;
+    $chunks = array_chunk($participantes, 24);
+    $pageCount = count($chunks);
+    $total = count($participantes);
+
+    $contentStreams = [];
+    foreach ($chunks as $pageIndex => $chunk) {
+        $lines = '';
+        $y = 690;
+        $indexBase = $pageIndex * 24;
+        foreach ($chunk as $localIndex => $p) {
+            $nombre = trim((string)$p['nombre'] . ' ' . (string)$p['apellido']);
+            $num = $indexBase + $localIndex + 1;
+            $text = sprintf('%02d  %s  %s  %s', $num, $p['id_documento'], $nombre, $p['asistencia']);
+            $lines .= "BT /F1 9 Tf 52 {$y} Td (" . instructor_pdf_text($text) . ") Tj ET\n";
+            $y -= 22;
+        }
+
+        $title = 'Participantes - ' . (string)$evento['nombre_evento'];
+        $stream = "q 0.96 0.98 1 rg 0 0 595 842 re f Q\n";
+        $stream .= "q 1 1 1 rg 36 36 523 770 re f Q\n";
+        $stream .= "q 0.09 0.36 1 rg 36 782 523 24 re f Q\n";
+        $stream .= "BT /F2 20 Tf 52 742 Td (" . instructor_pdf_text('SICA - Participantes registrados') . ") Tj ET\n";
+        $stream .= "BT /F1 11 Tf 52 720 Td (" . instructor_pdf_text($title) . ") Tj ET\n";
+        // Page X of Y at top-right
+        $stream .= "BT /F1 10 Tf 440 742 Td (" . instructor_pdf_text('Página ' . ($pageIndex + 1) . ' de ' . $pageCount) . ") Tj ET\n";
+        $stream .= "BT /F1 10 Tf 52 704 Td (" . instructor_pdf_text('Total: ' . $total) . ") Tj ET\n";
+        $stream .= $lines;
+
+        $contentStreams[] = $stream;
     }
 
-    $title = 'Participantes - ' . (string)$evento['nombre_evento'];
-    $stream = "q 0.96 0.98 1 rg 0 0 595 842 re f Q\n";
-    $stream .= "q 1 1 1 rg 36 36 523 770 re f Q\n";
-    $stream .= "q 0.09 0.36 1 rg 36 782 523 24 re f Q\n";
-    $stream .= "BT /F2 20 Tf 52 742 Td (" . instructor_pdf_text('SICA - Participantes registrados') . ") Tj ET\n";
-    $stream .= "BT /F1 11 Tf 52 720 Td (" . instructor_pdf_text($title) . ") Tj ET\n";
-    $stream .= "BT /F1 10 Tf 52 704 Td (" . instructor_pdf_text('Total: ' . count($participantes)) . ") Tj ET\n";
-    $stream .= $lines;
-
     $objects = [];
+    // Catalog and Pages
     $objects[] = '<< /Type /Catalog /Pages 2 0 R >>';
-    $objects[] = '<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
-    $objects[] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>';
+    // build Kids array referencing page objects that will start at obj 3
+    $kids = [];
+    for ($i = 0; $i < $pageCount; $i++) {
+        $kids[] = (3 + $i) . ' 0 R';
+    }
+    $objects[] = '<< /Type /Pages /Kids [' . implode(' ', $kids) . '] /Count ' . $pageCount . ' >>';
+
+    // Page objects (they will reference content objects placed after fonts)
+    for ($i = 0; $i < $pageCount; $i++) {
+        // content object index = 2 (Pages) + pageCount + 2 (fonts) + (i+1)
+        $contentIndex = 2 + $pageCount + 2 + ($i + 1);
+        $objects[] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents ' . $contentIndex . ' 0 R >>';
+    }
+
+    // Fonts
     $objects[] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
     $objects[] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
-    $objects[] = '<< /Length ' . strlen($stream) . " >>\nstream\n" . $stream . "endstream";
+
+    // Content streams
+    foreach ($contentStreams as $stream) {
+        $objects[] = '<< /Length ' . strlen($stream) . " >>\nstream\n" . $stream . "endstream";
+    }
 
     $pdf = "%PDF-1.4\n";
     $offsets = [0];

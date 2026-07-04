@@ -46,7 +46,10 @@ $participantesDestacados = $eventoDestacado
         <h1>Bienvenido, <?= instructor_h($nombre) ?></h1>
         <span>Consulta disponibilidad, solicita auditorios y administra la asistencia de tus eventos.</span>
     </div>
-    <a class="top-action" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
+    <div class="topbar-actions">
+        <a class="top-action" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
+        <a class="danger-btn" href="<?= instructor_h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
+    </div>
 </header>
 
 <section class="dashboard-hero">

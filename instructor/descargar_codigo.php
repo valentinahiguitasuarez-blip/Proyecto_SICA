@@ -17,7 +17,11 @@ if (!$evento) {
     exit('Codigo no disponible.');
 }
 
-$svg = instructor_download_qr_svg((string)$evento['codigo_evento'], (string)$evento['nombre_evento']);
+$svg = instructor_download_qr_svg(
+    (string)$evento['codigo_evento'],
+    (string)$evento['nombre_evento'],
+    instructor_event_qr_payload($evento)
+);
 header('Content-Type: image/svg+xml; charset=UTF-8');
 header('Content-Disposition: attachment; filename="codigo-sica-' . preg_replace('/[^A-Za-z0-9_-]/', '', (string)$evento['codigo_evento']) . '.svg"');
 echo $svg;

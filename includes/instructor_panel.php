@@ -123,11 +123,6 @@ function instructor_layout_start(string $active): void
                 </div>
                 <a class="instructor-profile-link" href="<?= instructor_h(app_url('instructor/perfil.php')) ?>">Ver perfil</a>
             </section>
-
-            <a class="instructor-logout" href="<?= instructor_h(app_url('login/logout.php')) ?>">
-                <span aria-hidden="true">SL</span>
-                Cerrar sesion
-            </a>
         </aside>
 
         <section class="instructor-main">
@@ -168,26 +163,41 @@ function instructor_event_query(): string
             INNER JOIN estado es ON es.id_estado = e.id_estado';
 }
 
-function instructor_download_qr_svg(string $code, string $title = 'Codigo SICA'): string
+function instructor_event_qr_payload(array $evento): string
 {
-    $seed = crc32($code);
-    $cells = '';
-    for ($y = 0; $y < 17; $y++) {
-        for ($x = 0; $x < 17; $x++) {
-            $finder = ($x < 5 && $y < 5) || ($x > 11 && $y < 5) || ($x < 5 && $y > 11);
-            $bit = (($seed >> (($x + $y * 3) % 24)) + $x * 7 + $y * 11) % 5 < 2;
-            if ($finder || $bit) {
-                $cells .= '<rect x="' . (28 + $x * 10) . '" y="' . (38 + $y * 10) . '" width="8" height="8" rx="1" fill="#0e1a2f"/>';
-            }
-        }
+    $path = 'aprendiz/preregistro.php?evento=' . (int)$evento['id_evento']
+        . '&codigo=' . rawurlencode((string)$evento['codigo_evento']);
+    $configPath = __DIR__ . '/../config/app.php';
+    $config = is_file($configPath) ? require $configPath : [];
+    $baseUrl = rtrim((string)($config['base_url'] ?? ''), '/');
+
+    if ($baseUrl !== '') {
+        return $baseUrl . '/' . ltrim($path, '/');
     }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+    return $scheme . '://' . $host . app_url($path);
+}
+
+function instructor_qr_image_url(string $payload, int $size = 220): string
+{
+    $size = max(120, min(600, $size));
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=' . $size . 'x' . $size
+        . '&format=svg&margin=12&data=' . rawurlencode($payload);
+}
+
+function instructor_download_qr_svg(string $code, string $title = 'Codigo SICA', ?string $payload = null): string
+{
+    $payload = $payload ?? $code;
+    $qrUrl = instructor_qr_image_url($payload, 190);
 
     return '<svg xmlns="http://www.w3.org/2000/svg" width="260" height="320" viewBox="0 0 260 320">'
         . '<rect width="260" height="320" rx="18" fill="#f7fbff"/>'
         . '<rect x="16" y="16" width="228" height="288" rx="14" fill="#ffffff" stroke="#dbe6f0"/>'
         . '<text x="130" y="30" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#165dff">SICA</text>'
+        . '<image href="' . instructor_h($qrUrl) . '" x="35" y="42" width="190" height="190"/>'
         . '<text x="130" y="232" text-anchor="middle" font-family="Arial" font-size="18" font-weight="800" fill="#0e1a2f">' . instructor_h($code) . '</text>'
         . '<text x="130" y="260" text-anchor="middle" font-family="Arial" font-size="12" fill="#65748b">' . instructor_h($title) . '</text>'
-        . $cells
         . '</svg>';
 }

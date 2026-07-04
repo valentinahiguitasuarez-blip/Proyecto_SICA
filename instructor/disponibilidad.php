@@ -120,7 +120,9 @@ foreach ($events as $event) {
         <h1>Calendario de auditorios</h1>
         <span>Selecciona una fecha libre y envia tu solicitud desde esta pantalla.</span>
     </div>
-    <a class="top-action" href="<?= instructor_h(app_url('instructor/mis_solicitudes.php')) ?>">Mis solicitudes</a>
+    <div class="topbar-actions">
+        <a class="top-action" href="<?= instructor_h(app_url('instructor/mis_solicitudes.php')) ?>">Mis solicitudes</a>
+    </div>
 </header>
 
 <?php if ($message !== ''): ?><div class="form-message <?= instructor_h($messageType) ?>"><?= instructor_h($message) ?></div><?php endif; ?>

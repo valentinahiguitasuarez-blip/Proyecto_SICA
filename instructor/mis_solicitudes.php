@@ -27,7 +27,9 @@ $solicitudes = instructor_rows($pdo, instructor_event_query() . $where . ' ORDER
         <h1>Historial de reservas</h1>
         <span>Consulta estados, observaciones y detalles de tus solicitudes de auditorio.</span>
     </div>
-    <a class="top-action" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
+    <div class="topbar-actions">
+        <a class="top-action" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
+    </div>
 </header>
 
 <section class="panel">

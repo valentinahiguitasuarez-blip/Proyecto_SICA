@@ -200,9 +200,6 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
         <label><span>Apellido</span><input type="text" name="apellido" value="<?= instructor_h($perfil['apellido']) ?>" maxlength="50" required></label>
         <label><span>Correo personal</span><input type="email" name="correo" value="<?= instructor_h($perfil['correo']) ?>" maxlength="100" required></label>
         <label><span>Telefono</span><input type="tel" name="telefono" value="<?= instructor_h($perfil['telefono'] ?? '') ?>" maxlength="15"></label>
-        <label><span>Nueva contraseña</span><input type="password" name="contrasena" maxlength="72" autocomplete="new-password"></label>
-        <label><span>Confirmar contraseña</span><input type="password" name="confirmar_contrasena" maxlength="72" autocomplete="new-password"></label>
-        <small class="field-hint">Déjala en blanco si no deseas cambiarla.</small>
         <label><span>Documento</span><input type="text" value="<?= instructor_h($perfil['id_documento']) ?>" readonly></label>
         <label><span>Rol asignado</span><input type="text" value="<?= instructor_h($perfil['nombre_rol']) ?>" readonly></label>
 

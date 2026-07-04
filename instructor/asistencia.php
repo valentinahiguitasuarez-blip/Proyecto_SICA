@@ -19,6 +19,8 @@ foreach ($eventos as $item) {
     }
 }
 $participantes = $evento ? instructor_scalar($pdo, 'SELECT COUNT(*) FROM preregistro WHERE id_evento = :id', [':id' => (int)$evento['id_evento']]) : 0;
+$qrPayload = $evento ? instructor_event_qr_payload($evento) : '';
+$qrImageUrl = $evento ? instructor_qr_image_url($qrPayload, 240) : '';
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 <?php instructor_layout_start('asistencia'); ?>
@@ -61,9 +63,10 @@ $participantes = $evento ? instructor_scalar($pdo, 'SELECT COUNT(*) FROM preregi
     <aside class="panel">
         <?php if ($evento): ?>
             <div class="qr-card <?= (string)$evento['estado'] !== 'Activo' ? 'locked' : '' ?>">
-                <?= instructor_download_qr_svg((string)$evento['codigo_evento'], (string)$evento['nombre_evento']) ?>
+                <img src="<?= instructor_h($qrImageUrl) ?>" alt="Codigo QR del evento <?= instructor_h($evento['nombre_evento']) ?>">
                 <strong><?= instructor_h($evento['codigo_evento']) ?></strong>
                 <span class="panel-subtitle"><?= instructor_h($evento['nombre_evento']) ?></span>
+                <small>Al escanearlo abre el pre-registro del aprendiz para este evento.</small>
                 <?php if ((string)$evento['estado'] === 'Activo'): ?>
                     <a class="primary-btn" href="<?= instructor_h(app_url('instructor/descargar_codigo.php?evento=' . (int)$evento['id_evento'])) ?>">Descargar QR</a>
                 <?php else: ?>

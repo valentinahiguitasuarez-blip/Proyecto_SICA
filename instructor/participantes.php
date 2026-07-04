@@ -97,6 +97,47 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $_SESSION['participants_message'] = 'Participante eliminado correctamente.';
             $_SESSION['participants_message_type'] = 'success';
         }
+        elseif ($action === 'add_ficha') {
+            $idFicha = (int)($_POST['id_ficha'] ?? 0);
+            if ($idFicha <= 0) {
+                throw new RuntimeException('Ficha inválida.');
+            }
+
+            // select learners in that ficha who match role and are active and not already preregistered
+            $sel = $pdo->prepare("SELECT u.id_documento
+                FROM usuario u
+                INNER JOIN rol r ON r.id_rol = u.id_rol
+                LEFT JOIN estado es ON es.id_estado = u.id_estado
+                WHERE u.id_ficha = :idf
+                  AND (u.id_rol = 4 OR LOWER(r.nombre_rol) LIKE '%aprendiz%')
+                  AND (es.nombre_estado IS NULL OR es.nombre_estado = 'Activo')
+                  AND NOT EXISTS (
+                      SELECT 1 FROM preregistro px WHERE px.id_evento = :evento AND px.id_documento = u.id_documento
+                  )");
+            $sel->execute([':idf' => $idFicha, ':evento' => $eventId]);
+            $rows = $sel->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!$rows) {
+                $_SESSION['participants_message'] = 'No hay aprendices disponibles en esa ficha para agregar.';
+                $_SESSION['participants_message_type'] = 'warning';
+            } else {
+                $pdo->beginTransaction();
+                try {
+                    $ins = $pdo->prepare('INSERT INTO preregistro (id_documento, id_evento, fecha_registro, asistencia) VALUES (:documento, :evento, CURDATE(), :asistencia)');
+                    $count = 0;
+                    foreach ($rows as $doc) {
+                        $ins->execute([':documento' => $doc, ':evento' => $eventId, ':asistencia' => 'Pendiente']);
+                        $count += $ins->rowCount();
+                    }
+                    $pdo->commit();
+                    $_SESSION['participants_message'] = "Se agregaron {$count} aprendices de la ficha al evento.";
+                    $_SESSION['participants_message_type'] = 'success';
+                } catch (Throwable $e) {
+                    $pdo->rollBack();
+                    throw $e;
+                }
+            }
+        }
     } catch (Throwable $exception) {
         $_SESSION['participants_message'] = $exception->getMessage();
         $_SESSION['participants_message_type'] = 'danger';
@@ -194,24 +235,42 @@ if ($evento) {
         <?php if ($vista === 'registrados'): ?>
         <div class="request-list">
             <?php if (!$participantes): ?><div class="empty-state">Todavia no hay aprendices pre-registrados para este evento.</div><?php endif; ?>
-            <!-- Metrics summary -->
-            <div class="metric-grid" style="margin-bottom:12px;">
-                <?php
+            <?php
+                // Attendance progress and ordering
                 $totalRegs = count($participantes);
                 $pendientes = count(array_filter($participantes, function($p){ return (string)$p['asistencia'] === 'Pendiente'; }));
                 $confirmadas = $totalRegs - $pendientes;
-                ?>
-                <article class="metric-tile blue"><span>Total registrados</span><strong><?= instructor_h($totalRegs) ?></strong><small>Participantes</small></article>
-                <article class="metric-tile green"><span>Asistencia confirmada</span><strong><?= instructor_h($confirmadas) ?></strong><small>Confirmados</small></article>
-                <article class="metric-tile amber"><span>Pendientes</span><strong><?= instructor_h($pendientes) ?></strong><small>En espera</small></article>
+
+                // Partition by hora: arrived (hora not null) and not arrived (asistencia Pendiente and hora null)
+                $arrived = array_filter($participantes, function($p){ return !empty($p['hora']); });
+                $notArrived = array_filter($participantes, function($p){ return empty($p['hora']) || (string)$p['asistencia'] === 'Pendiente'; });
+
+                // sort arrived by hora DESC (most recent first)
+                usort($arrived, function($a, $b){
+                    $ta = strtotime((string)($a['hora'] ?? '00:00:00')) ?: 0;
+                    $tb = strtotime((string)($b['hora'] ?? '00:00:00')) ?: 0;
+                    return $tb <=> $ta;
+                });
+            ?>
+
+            <!-- Progress bar -->
+            <div style="margin-bottom:12px;">
+                <?php $pct = $totalRegs > 0 ? (int)round(($confirmadas / $totalRegs) * 100) : 0; ?>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                    <div><strong><?= instructor_h($confirmadas) ?></strong> de <?= instructor_h($totalRegs) ?> asistieron (<?= instructor_h($pct) ?>%)</div>
+                    <div style="flex:1; margin-left:16px; background:#eee; height:10px; border-radius:6px; overflow:hidden;"><div style="height:100%; width:<?= instructor_h((string)$pct) ?>%; background:var(--ins-green, #10b981);"></div></div>
+                </div>
             </div>
-            <?php foreach ($participantes as $index => $participante): ?>
-                <?php $full = trim((string)$participante['nombre'] . ' ' . (string)$participante['apellido']); ?>
+
+            <?php if (empty($arrived) && empty($notArrived)): ?><div class="empty-state">Todavia no hay aprendices pre-registrados para este evento.</div><?php endif; ?>
+
+            <?php $counter = 0; ?>
+            <?php foreach ($arrived as $participante): $counter++; $full = trim((string)$participante['nombre'] . ' ' . (string)$participante['apellido']); ?>
                 <article class="participant-row">
-                    <b><?= instructor_h($index + 1) ?></b>
+                    <b><?= instructor_h($counter) ?></b>
                     <div>
                         <strong><?= instructor_h($full) ?></strong>
-                        <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?></small>
+                        <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?> · Llegada <?= instructor_h(substr((string)$participante['hora'],0,5)) ?></small>
                     </div>
                     <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
                     <form method="post" style="margin-left:12px;" onsubmit="return confirm('Eliminar participante?');">
@@ -223,6 +282,27 @@ if ($evento) {
                     </form>
                 </article>
             <?php endforeach; ?>
+
+            <?php if (!empty($notArrived)): ?>
+                <h3 style="margin-top:12px;">Aún no han llegado</h3>
+                <?php foreach ($notArrived as $participante): $counter++; $full = trim((string)$participante['nombre'] . ' ' . (string)$participante['apellido']); ?>
+                    <article class="participant-row">
+                        <b><?= instructor_h($counter) ?></b>
+                        <div>
+                            <strong><?= instructor_h($full) ?></strong>
+                            <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?></small>
+                        </div>
+                        <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
+                        <form method="post" style="margin-left:12px;" onsubmit="return confirm('Eliminar participante?');">
+                            <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                            <input type="hidden" name="action" value="remove_participant">
+                            <input type="hidden" name="id_preregistro" value="<?= instructor_h($participante['id_preregistro']) ?>">
+                            <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                            <button class="danger-btn" type="submit">Eliminar</button>
+                        </form>
+                    </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
     </article>
@@ -257,26 +337,51 @@ if ($evento) {
             <div class="available-learners">
                 <?php if (!$aprendicesDisponibles): ?>
                     <div class="empty-state">No hay aprendices disponibles para agregar a este evento.</div>
-                <?php endif; ?>
-                <?php foreach ($aprendicesDisponibles as $aprendiz): ?>
-                    <?php $full = trim((string)$aprendiz['nombre'] . ' ' . (string)$aprendiz['apellido']); ?>
-                    <form class="available-learner-row" method="post">
-                        <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
-                        <input type="hidden" name="action" value="add_participant">
-                        <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
-                        <input type="hidden" name="id_documento" value="<?= instructor_h($aprendiz['id_documento']) ?>">
-                        <b><?= instructor_h(mb_strtoupper(mb_substr((string)$aprendiz['nombre'], 0, 1, 'UTF-8') . mb_substr((string)$aprendiz['apellido'], 0, 1, 'UTF-8'), 'UTF-8')) ?></b>
-                        <div>
-                            <strong><?= instructor_h($full !== '' ? $full : 'Aprendiz SICA') ?></strong>
-                            <small>
-                                Ficha <?= instructor_h($aprendiz['id_ficha'] ?? 'N/A') ?>
-                                · <?= instructor_h($aprendiz['nombre_programa'] ?? 'Programa no asignado') ?>
-                                · <?= instructor_h($aprendiz['correo']) ?>
-                            </small>
+                <?php else: ?>
+                    <?php
+                        // group by id_ficha
+                        $groups = [];
+                        foreach ($aprendicesDisponibles as $a) {
+                            $key = $a['id_ficha'] ?? 'sin_ficha';
+                            if (!isset($groups[$key])) $groups[$key] = [];
+                            $groups[$key][] = $a;
+                        }
+                    ?>
+                    <?php foreach ($groups as $ficha => $members): ?>
+                        <?php $first = $members[0]; $fichaLabel = $ficha === 'sin_ficha' ? 'Sin ficha' : $ficha; ?>
+                        <div style="border:1px solid #eee; padding:8px; margin-bottom:8px; border-radius:6px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <div><strong>Ficha <?= instructor_h($fichaLabel) ?></strong><div style="font-size:13px;color:#666;"><?= instructor_h($first['nombre_programa'] ?? 'Programa no asignado') ?></div></div>
+                                <form method="post" onsubmit="return confirm('Agregar toda la ficha al evento?');">
+                                    <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                                    <input type="hidden" name="action" value="add_ficha">
+                                    <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                                    <input type="hidden" name="id_ficha" value="<?= instructor_h($ficha) ?>">
+                                    <button class="secondary-btn" type="submit">Agregar toda la ficha</button>
+                                </form>
+                            </div>
+
+                            <?php foreach ($members as $aprendiz): $full = trim((string)$aprendiz['nombre'] . ' ' . (string)$aprendiz['apellido']); ?>
+                                <form class="available-learner-row" method="post">
+                                    <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                                    <input type="hidden" name="action" value="add_participant">
+                                    <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                                    <input type="hidden" name="id_documento" value="<?= instructor_h($aprendiz['id_documento']) ?>">
+                                    <b><?= instructor_h(mb_strtoupper(mb_substr((string)$aprendiz['nombre'], 0, 1, 'UTF-8') . mb_substr((string)$aprendiz['apellido'], 0, 1, 'UTF-8'), 'UTF-8')) ?></b>
+                                    <div>
+                                        <strong><?= instructor_h($full !== '' ? $full : 'Aprendiz SICA') ?></strong>
+                                        <small>
+                                            Ficha <?= instructor_h($aprendiz['id_ficha'] ?? 'N/A') ?>
+                                            · <?= instructor_h($aprendiz['nombre_programa'] ?? 'Programa no asignado') ?>
+                                            · <?= instructor_h($aprendiz['correo']) ?>
+                                        </small>
+                                    </div>
+                                    <button class="secondary-btn" type="submit">Agregar</button>
+                                </form>
+                            <?php endforeach; ?>
                         </div>
-                        <button class="secondary-btn" type="submit">Agregar</button>
-                    </form>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </section>

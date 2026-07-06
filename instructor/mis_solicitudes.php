@@ -90,6 +90,44 @@ $solicitudes = array_merge($upcoming, $historical);
         <article class="metric-tile green"><span>Finalizados</span><strong><?= instructor_h($counts['Finalizado'] ?? 0) ?></strong><small>Completados</small></article>
     </div>
 
+    <?php if (!empty($_GET['preview'])): ?>
+    <div class="panel" style="margin-bottom:12px;">
+        <div class="panel-head"><div><p class="eyebrow">Vista previa</p><h2>Ejemplos de estado</h2></div></div>
+        <div style="padding:12px;">
+            <p>Esta vista previa muestra una tarjeta <strong>Cancelado</strong> y otra <strong>Finalizado</strong> para ver el estilo.</p>
+            <article class="request-row" style="background:#fff;">
+                <div class="request-date"><strong>12</strong><span>Jul</span></div>
+                <div style="flex:1;">
+                    <h3 style="margin:0">Evento ejemplo - Cancelado</h3>
+                    <small>Auditorio Demo / Taller - 09:00 a 11:00</small>
+                    <div class="stepper" aria-hidden="true" style="margin-top:8px;">
+                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
+                        <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
+                        <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Cancelado</div></div>
+                        <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                    </div>
+                </div>
+                <a class="status-pill <?= instructor_h(instructor_status_class('Cancelado')) ?>">Cancelado</a>
+            </article>
+
+            <article class="request-row" style="background:#fff; margin-top:10px;">
+                <div class="request-date"><strong>20</strong><span>Jul</span></div>
+                <div style="flex:1;">
+                    <h3 style="margin:0">Evento ejemplo - Finalizado</h3>
+                    <small>Auditorio Demo / Conferencia - 14:00 a 16:00</small>
+                    <div class="stepper" aria-hidden="true" style="margin-top:8px;">
+                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
+                        <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
+                        <div class="step complete step-decision"><div class="dot"></div><div class="label">Aprobado</div></div>
+                        <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                    </div>
+                </div>
+                <a class="status-pill <?= instructor_h(instructor_status_class('Finalizado')) ?>">Finalizado</a>
+            </article>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <style>
     /* Alerts and small utilities */
     .obs-banner { background: var(--ins-red-soft, #fdecea); color: var(--ins-red, #c0392b); padding:8px 12px; border-radius:6px; margin-bottom:8px; }

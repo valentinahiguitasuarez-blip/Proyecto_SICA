@@ -104,7 +104,7 @@ $solicitudes = array_merge($upcoming, $historical);
                         <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
                         <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
                         <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Decisión</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                        <div class="step"><div class="dot"></div><div class="label">Notificado</div></div>
                     </div>
                 </div>
                 <a class="status-pill <?= instructor_h(instructor_status_class('Cancelado')) ?>">Cancelado</a>
@@ -182,11 +182,17 @@ $solicitudes = array_merge($upcoming, $historical);
                   $estado = (string)($evento['estado'] ?? '');
                   $hasCoord = !empty($evento['id_coordinador']);
                   $hasDecision = $hasCoord && !empty($evento['fecha_aprobacion']);
-                  if (in_array($estado, ['Finalizado','Cancelado'], true)) {
-                      $hasDecision = true;
-                  }
+                  $isPendiente = $estado === 'Pendiente';
                   $isActivo = $estado === 'Activo';
                   $isCancelado = $estado === 'Cancelado';
+                  $isFinalizado = $estado === 'Finalizado';
+                  if (in_array($estado, ['Activo','Cancelado','Finalizado'], true)) {
+                      $hasDecision = true;
+                  }
+                  $stepRevisionClass = $isPendiente ? 'step active' : 'step complete';
+                  $stepDecisionClass = 'step' . ($hasDecision ? ' complete step-decision' : '');
+                  $stepDecisionClass .= ($hasDecision && $isCancelado) ? ' cancel' : '';
+                  $stepNotificadoClass = 'step' . ($isFinalizado ? ' complete' : '');
                   $aprobDate = null;
                   try { if (!empty($evento['fecha_aprobacion'])) $aprobDate = new DateTime((string)$evento['fecha_aprobacion']); } catch (Exception $e) { $aprobDate = null; }
                   $isNuevo = $aprobDate ? ($aprobDate >= new DateTime('-3 days')) : false;
@@ -205,10 +211,9 @@ $solicitudes = array_merge($upcoming, $historical);
 
                     <div class="stepper" aria-hidden="true">
                         <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step <?= $hasCoord ? 'complete' : '' ?>"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <?php $decClass = 'step' . ($hasDecision ? ' complete step-decision' : ''); $decClass .= ($hasDecision && $isCancelado) ? ' cancel' : ''; ?>
-                        <div class="<?= $decClass ?>"><div class="dot"></div><div class="label">Decisión<?php if ($hasDecision && $aprobDate) echo ' - ' . instructor_h($aprobDate->format('Y-m-d')); ?></div></div>
-                        <div class="step <?= $hasDecision ? 'complete' : '' ?>"><div class="dot"></div><div class="label">Notificado</div></div>
+                        <div class="<?= $stepRevisionClass ?>"><div class="dot"></div><div class="label">En revisión</div></div>
+                        <div class="<?= $stepDecisionClass ?>"><div class="dot"></div><div class="label">Decisión<?php if ($hasDecision && $aprobDate) echo ' - ' . instructor_h($aprobDate->format('Y-m-d')); ?></div></div>
+                        <div class="<?= $stepNotificadoClass ?>"><div class="dot"></div><div class="label">Notificado</div></div>
                     </div>
                 </div>
                 <a class="status-pill <?= instructor_h(instructor_status_class((string)$evento['estado'])) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$evento['id_evento'])) ?>"><?= instructor_h($evento['estado']) ?></a>

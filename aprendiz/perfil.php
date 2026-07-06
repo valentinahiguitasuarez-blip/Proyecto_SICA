@@ -13,6 +13,16 @@ function e(string|int|null $value): string
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+function profile_normalize_spaces(string $value): string
+{
+    return preg_replace('/\s+/', ' ', trim($value)) ?? trim($value);
+}
+
+function profile_name_is_valid(string $value, int $max): bool
+{
+    return (bool)preg_match('/^[\p{L}\s\'-]{2,' . $max . '}$/u', $value);
+}
+
 $usuario = $_SESSION['usuario'] ?? [];
 $idDocumento = (int)($usuario['id_documento'] ?? 0);
 $profileMessage = $_SESSION['profile_message'] ?? '';
@@ -40,20 +50,33 @@ try {
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $csrf = (string)($_POST['csrf_perfil'] ?? '');
-    $nombrePost = trim((string)($_POST['nombre'] ?? ''));
-    $apellidoPost = trim((string)($_POST['apellido'] ?? ''));
-    $correoPost = trim((string)($_POST['correo'] ?? ''));
+    $nombrePost = profile_normalize_spaces((string)($_POST['nombre'] ?? ''));
+    $apellidoPost = profile_normalize_spaces((string)($_POST['apellido'] ?? ''));
+    $correoPost = strtolower(trim((string)($_POST['correo'] ?? '')));
     $telefonoPost = trim((string)($_POST['telefono'] ?? ''));
     $fichaPost = (int)($_POST['id_ficha'] ?? 0);
+    $documentoActual = (string)$idDocumento;
 
     if (!hash_equals((string)$_SESSION['csrf_perfil'], $csrf)) {
         $_SESSION['profile_message'] = 'La sesion expiro. Intenta de nuevo.';
         $_SESSION['profile_message_type'] = 'danger';
-    } elseif ($nombrePost === '' || $apellidoPost === '' || !filter_var($correoPost, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['profile_message'] = 'Revisa nombre, apellido y correo antes de guardar.';
+    } elseif (!preg_match('/^\d{1,10}$/', $documentoActual)) {
+        $_SESSION['profile_message'] = 'El documento debe tener solo numeros y maximo 10 digitos.';
         $_SESSION['profile_message_type'] = 'danger';
-    } elseif ($telefonoPost !== '' && !preg_match('/^[0-9+\s-]{7,15}$/', $telefonoPost)) {
-        $_SESSION['profile_message'] = 'El telefono solo debe contener numeros, espacios, + o guiones.';
+    } elseif (!profile_name_is_valid($nombrePost, 50)) {
+        $_SESSION['profile_message'] = 'El nombre debe tener entre 2 y 50 letras. No uses numeros ni simbolos.';
+        $_SESSION['profile_message_type'] = 'danger';
+    } elseif (!profile_name_is_valid($apellidoPost, 60)) {
+        $_SESSION['profile_message'] = 'El apellido debe tener entre 2 y 60 letras. No uses numeros ni simbolos.';
+        $_SESSION['profile_message_type'] = 'danger';
+    } elseif (strlen($correoPost) > 100 || !filter_var($correoPost, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['profile_message'] = 'Escribe un correo personal valido de maximo 100 caracteres.';
+        $_SESSION['profile_message_type'] = 'danger';
+    } elseif ($telefonoPost !== '' && !preg_match('/^\d{10}$/', $telefonoPost)) {
+        $_SESSION['profile_message'] = 'El telefono debe tener exactamente 10 numeros.';
+        $_SESSION['profile_message_type'] = 'danger';
+    } elseif ($fichaPost <= 0) {
+        $_SESSION['profile_message'] = 'Selecciona una ficha valida.';
         $_SESSION['profile_message_type'] = 'danger';
     } else {
         if (($profileMessage = $_SESSION['profile_message'] ?? '') === '') {
@@ -69,6 +92,21 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
                 if (!$fichaExiste) {
                     throw new RuntimeException('Ficha no valida.');
+                }
+
+                $correoStmt = $pdo->prepare(
+                    'SELECT id_documento
+                     FROM usuario
+                     WHERE correo = :correo AND id_documento <> :id_documento
+                     LIMIT 1'
+                );
+                $correoStmt->execute([
+                    ':correo' => $correoPost,
+                    ':id_documento' => $idDocumento,
+                ]);
+
+                if ($correoStmt->fetch()) {
+                    throw new RuntimeException('correo_duplicado');
                 }
 
                 if (!empty($_FILES['foto_perfil']['name'])) {
@@ -105,6 +143,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     }
 
                     $fotoPerfil = 'uploads/perfiles/' . $fileName;
+                }
+
+                $currentStmt = $pdo->prepare(
+                    'SELECT nombre, apellido, correo, telefono, id_ficha
+                     FROM usuario
+                     WHERE id_documento = :id_documento
+                     LIMIT 1'
+                );
+                $currentStmt->execute([':id_documento' => $idDocumento]);
+                $currentProfile = $currentStmt->fetch() ?: [];
+
+                $sinCambios = $fotoPerfil === null
+                    && $nombrePost === (string)($currentProfile['nombre'] ?? '')
+                    && $apellidoPost === (string)($currentProfile['apellido'] ?? '')
+                    && $correoPost === strtolower((string)($currentProfile['correo'] ?? ''))
+                    && $telefonoPost === (string)($currentProfile['telefono'] ?? '')
+                    && $fichaPost === (int)($currentProfile['id_ficha'] ?? 0);
+
+                if ($sinCambios) {
+                    $_SESSION['profile_message'] = 'No realizaste cambios en tu perfil.';
+                    $_SESSION['profile_message_type'] = 'info';
+                    header('Location: ' . app_url('aprendiz/perfil.php'));
+                    exit;
                 }
 
                 $fotoSql = $fotoPerfil !== null ? ', foto_perfil = :foto_perfil' : '';
@@ -149,7 +210,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $_SESSION['profile_message_type'] = 'danger';
                 error_log('SICA perfil: error actualizando usuario: ' . $exception->getMessage());
             } catch (Throwable $exception) {
-                $_SESSION['profile_message'] = 'No fue posible guardar el perfil.';
+                $_SESSION['profile_message'] = $exception->getMessage() === 'correo_duplicado'
+                    ? 'Ese correo ya esta registrado por otro usuario.'
+                    : 'No fue posible guardar el perfil.';
                 $_SESSION['profile_message_type'] = 'danger';
                 error_log('SICA perfil: ' . $exception->getMessage());
             }
@@ -309,7 +372,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                 </dl>
             </article>
 
-            <form class="profile-form" method="post" action="<?= e(app_url('aprendiz/perfil.php')) ?>" enctype="multipart/form-data">
+            <form class="profile-form" method="post" action="<?= e(app_url('aprendiz/perfil.php')) ?>" enctype="multipart/form-data" data-profile-form>
                 <input type="hidden" name="csrf_perfil" value="<?= e($_SESSION['csrf_perfil']) ?>">
 
                 <div class="profile-form-intro">
@@ -322,30 +385,37 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                     </div>
                     <label class="profile-photo-field">
                         <span>Foto de perfil</span>
-                        <input type="file" name="foto_perfil" accept="image/png,image/jpeg,image/webp">
+                        <input type="file" name="foto_perfil" accept="image/png,image/jpeg,image/webp" data-profile-photo>
                         <small>JPG, PNG o WebP. Maximo 2 MB.</small>
+                        <small class="profile-field-error" data-error-for="foto_perfil"></small>
                     </label>
                 </div>
 
                 <label>
                     <span>Nombre</span>
-                    <input type="text" name="nombre" value="<?= e($perfil['nombre']) ?>" required maxlength="50">
+                    <input type="text" name="nombre" value="<?= e($perfil['nombre']) ?>" required minlength="2" maxlength="50" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]{2,50}" autocomplete="given-name">
+                    <small class="profile-field-error" data-error-for="nombre"></small>
                 </label>
                 <label>
                     <span>Apellido</span>
-                    <input type="text" name="apellido" value="<?= e($perfil['apellido']) ?>" required maxlength="50">
+                    <input type="text" name="apellido" value="<?= e($perfil['apellido']) ?>" required minlength="2" maxlength="60" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]{2,60}" autocomplete="family-name">
+                    <small class="profile-field-error" data-error-for="apellido"></small>
                 </label>
                 <label>
                     <span>Correo personal</span>
-                    <input type="email" name="correo" value="<?= e($perfil['correo']) ?>" required maxlength="100">
+                    <input type="email" name="correo" value="<?= e($perfil['correo']) ?>" required maxlength="100" autocomplete="email">
+                    <small class="profile-field-error" data-error-for="correo"></small>
                 </label>
                 <label>
                     <span>Telefono</span>
-                    <input type="tel" name="telefono" value="<?= e($perfil['telefono'] ?? '') ?>" maxlength="15">
+                    <input type="tel" name="telefono" value="<?= e($perfil['telefono'] ?? '') ?>" maxlength="10" pattern="\d{10}" inputmode="numeric" autocomplete="tel">
+                    <small>Opcional. Si lo escribes, debe tener 10 numeros.</small>
+                    <small class="profile-field-error" data-error-for="telefono"></small>
                 </label>
                 <label>
                     <span>Documento</span>
-                    <input type="text" value="<?= e($perfil['id_documento']) ?>" readonly>
+                    <input type="text" value="<?= e($perfil['id_documento']) ?>" maxlength="10" pattern="\d{1,10}" inputmode="numeric" readonly>
+                    <small>Solo numeros. Maximo 10 digitos.</small>
                 </label>
                 <label class="profile-wide-field">
                     <span>Ficha, programa y jornada</span>
@@ -358,6 +428,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                         <?php endforeach; ?>
                     </select>
                     <small>Selecciona la ficha correspondiente con su programa y jornada.</small>
+                    <small class="profile-field-error" data-error-for="id_ficha"></small>
                 </label>
 
                 <div class="profile-readonly-line">
@@ -384,5 +455,121 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
         </section>
     </section>
 </main>
+
+<script>
+(() => {
+    const form = document.querySelector('[data-profile-form]');
+    if (!form) {
+        return;
+    }
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    const fields = {
+        nombre: form.elements.nombre,
+        apellido: form.elements.apellido,
+        correo: form.elements.correo,
+        telefono: form.elements.telefono,
+        id_ficha: form.elements.id_ficha,
+        foto_perfil: form.querySelector('[data-profile-photo]')
+    };
+
+    const messages = {
+        nombre: 'El nombre debe tener entre 2 y 50 letras.',
+        apellido: 'El apellido debe tener entre 2 y 60 letras.',
+        correo: 'Escribe un correo personal valido, maximo 100 caracteres.',
+        telefono: 'El telefono debe tener exactamente 10 numeros.',
+        id_ficha: 'Selecciona una ficha valida.',
+        foto_perfil: 'La foto debe ser JPG, PNG o WebP y pesar maximo 2 MB.'
+    };
+
+    const namePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/;
+    const setError = (name, message = '') => {
+        const target = form.querySelector(`[data-error-for="${name}"]`);
+        const field = fields[name];
+        if (target) {
+            target.textContent = message;
+        }
+        if (field) {
+            field.classList.toggle('is-invalid', message !== '');
+        }
+    };
+
+    const validate = () => {
+        let valid = true;
+        const nombre = fields.nombre.value.trim().replace(/\s+/g, ' ');
+        const apellido = fields.apellido.value.trim().replace(/\s+/g, ' ');
+        const correo = fields.correo.value.trim();
+        const telefono = fields.telefono.value.trim();
+        const ficha = fields.id_ficha.value;
+        const foto = fields.foto_perfil.files[0];
+
+        if (nombre.length < 2 || nombre.length > 50 || !namePattern.test(nombre)) {
+            setError('nombre', messages.nombre);
+            valid = false;
+        } else {
+            setError('nombre');
+        }
+
+        if (apellido.length < 2 || apellido.length > 60 || !namePattern.test(apellido)) {
+            setError('apellido', messages.apellido);
+            valid = false;
+        } else {
+            setError('apellido');
+        }
+
+        if (correo.length > 100 || !fields.correo.validity.valid) {
+            setError('correo', messages.correo);
+            valid = false;
+        } else {
+            setError('correo');
+        }
+
+        if (telefono !== '' && !/^\d{10}$/.test(telefono)) {
+            setError('telefono', messages.telefono);
+            valid = false;
+        } else {
+            setError('telefono');
+        }
+
+        if (ficha === '') {
+            setError('id_ficha', messages.id_ficha);
+            valid = false;
+        } else {
+            setError('id_ficha');
+        }
+
+        if (foto) {
+            const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!allowed.includes(foto.type) || foto.size > 2 * 1024 * 1024) {
+                setError('foto_perfil', messages.foto_perfil);
+                valid = false;
+            } else {
+                setError('foto_perfil');
+            }
+        } else {
+            setError('foto_perfil');
+        }
+
+        submitButton.disabled = !valid;
+        return valid;
+    };
+
+    ['input', 'change'].forEach((eventName) => {
+        form.addEventListener(eventName, (event) => {
+            if (event.target.matches('input, select')) {
+                validate();
+            }
+        });
+    });
+
+    form.addEventListener('submit', (event) => {
+        if (!validate()) {
+            event.preventDefault();
+        }
+    });
+
+    validate();
+})();
+</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

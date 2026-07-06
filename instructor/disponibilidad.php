@@ -162,7 +162,7 @@ foreach ($events as $event) {
                         <?php if (! $hasActive): ?>
                             <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
                         <?php else: ?>
-                            <span class="calendar-occupied" title="Este día tiene un evento aprobado.">Reservado</span>
+                            <span class="calendar-occupied" title="Este día tiene un evento aprobado.">No disp.</span>
                         <?php endif; ?>
                     </div>
                     <?php foreach ($events as $event): ?>

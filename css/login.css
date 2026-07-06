@@ -459,6 +459,47 @@ body[data-theme="dark"] .logout-cancel-btn {
     font-size: 12px;
 }
 
+.password-rules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: -2px 0 12px;
+}
+
+.password-rules span {
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 9px;
+    border: 1px solid rgba(100, 116, 139, 0.16);
+    border-radius: 8px;
+    color: #64748b;
+    background: #f8fafc;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.password-rules span::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #cbd5e1;
+}
+
+.password-rules span.is-complete {
+    color: #08734b;
+    border-color: rgba(25, 185, 120, 0.22);
+    background: rgba(25, 185, 120, 0.1);
+}
+
+.password-rules span.is-complete::before {
+    background: #19b978;
+}
+
 .login-options {
     display: flex;
     align-items: center;
@@ -685,6 +726,22 @@ body[data-theme="dark"] .password-eye:hover,
 body[data-theme="dark"] .password-eye:focus {
     color: #ffffff;
     background: rgba(122, 162, 255, 0.14);
+}
+
+body[data-theme="dark"] .password-rules span {
+    color: #aab6ca;
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(17, 26, 45, 0.92);
+}
+
+body[data-theme="dark"] .password-rules span::before {
+    background: #526174;
+}
+
+body[data-theme="dark"] .password-rules span.is-complete {
+    color: #7ee0ae;
+    border-color: rgba(52, 211, 153, 0.24);
+    background: rgba(52, 211, 153, 0.1);
 }
 
 body[data-theme="dark"] .theme-toggle {

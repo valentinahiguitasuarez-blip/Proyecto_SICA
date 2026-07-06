@@ -662,7 +662,7 @@ body {
     min-height: 130px;
     padding: 18px;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* allow rows to grow with content */
     background: #ffffff;
 }
 
@@ -1124,7 +1124,11 @@ body {
 }
 
 .calendar-cell {
-    min-height: 126px;
+    min-height: 0; /* allow expansion and contraction */
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .calendar-cell.available {
@@ -1178,24 +1182,18 @@ body {
     font-size: 12px;
     font-weight: 800;
     text-decoration: none;
-}
 
-/* Truncate long event titles so they don't overflow calendar cells */
-.calendar-event {
-    /* Allow event title to wrap up to 2 lines, then truncate with ellipsis */
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-word;
-    max-width: 100%;
+    /* Allow normal wrapping and prevent ellipsis/clamping */
     white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow: visible;
+    max-width: 100%;
 }
 
 @media (min-width: 900px) {
     .calendar-event {
-        -webkit-line-clamp: 3; /* allow more lines on desktop */
         font-size: 13px;
         padding: 8px;
     }

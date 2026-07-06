@@ -152,13 +152,14 @@ foreach ($events as $event) {
             <?php for ($i = 1; $i < $firstWeekday; $i++): ?><div class="calendar-cell muted"></div><?php endfor; ?>
             <?php for ($day = 1; $day <= $daysInMonth; $day++): ?>
                 <?php $date = $start->setDate((int)$start->format('Y'), (int)$start->format('m'), $day)->format('Y-m-d'); ?>
-                <div class="calendar-cell">
+                <?php $events = $eventsByDay[$date] ?? []; ?>
+                <div class="calendar-cell<?= empty($events) ? ' available' : '' ?>">
                     <div class="calendar-date">
                         <span><?= instructor_h($day) ?></span>
                         <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
                     </div>
-                    <?php foreach ($eventsByDay[$date] ?? [] as $event): ?>
-                        <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : ((string)$event['estado'] === 'Activo' ? '' : 'busy'); ?>
+                    <?php foreach ($events as $event): ?>
+                        <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : 'busy'; ?>
                         <a class="calendar-event <?= instructor_h($class) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$event['id_evento'])) ?>">
                             <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
                         </a>

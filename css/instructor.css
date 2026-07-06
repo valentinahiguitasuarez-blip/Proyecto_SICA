@@ -1127,6 +1127,14 @@ body {
     min-height: 126px;
 }
 
+.calendar-cell.available {
+    background: rgba(16, 185, 129, 0.10);
+}
+
+.calendar-cell.available .calendar-date {
+    color: #07523c;
+}
+
 .calendar-cell.muted {
     background: #f8fafc;
     color: #aab6c5;

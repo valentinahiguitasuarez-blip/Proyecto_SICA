@@ -115,8 +115,11 @@ $solicitudes = array_merge($upcoming, $historical);
     .mis-solicitudes h3 { color:#0e1a2f; margin:0; }
     .mis-solicitudes small { color: #65748b; display:block; margin-top:6px; }
 
-    /* Status pill overrides */
-    .mis-solicitudes .status-pill { background:#f4f3ff; color:#5b21b6; padding:8px 12px; border-radius:999px; font-weight:900; text-decoration:none; }
+    /* Status pill overrides - keep Pendientes amber, style Activos as purple */
+    .mis-solicitudes .status-pill { padding:8px 12px; border-radius:999px; font-weight:900; text-decoration:none; }
+    .mis-solicitudes .status-pill.pending { background: var(--ins-amber-soft); color: var(--ins-amber); }
+    .mis-solicitudes .status-pill.ok { background: #f4f3ff; color: #5b21b6; }
+    .mis-solicitudes .status-pill.danger { background: var(--ins-red-soft); color: var(--ins-red); }
 
     /* Metric tile override: keep Pendientes amber, set Activos (navy) to purple on this page */
     .mis-solicitudes .metric-tile.amber strong,

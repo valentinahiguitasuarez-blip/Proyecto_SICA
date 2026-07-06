@@ -225,3 +225,32 @@ $dateOccupied = ($prefillDate !== '' && isset($occupiedDates[$prefillDate]));
 
 <?php instructor_layout_end(); ?>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>
+<script>
+/* Igualar alturas de celdas del calendario para que todos los días tengan el mismo tamaño.
+   Recalcula en load y resize. */
+(function(){
+    function equalizeCalendarCells(){
+        var cells = document.querySelectorAll('.calendar-grid .calendar-cell');
+        if(!cells || cells.length === 0) return;
+        // Reset any inline minHeight to measure natural heights
+        cells.forEach(function(c){ c.style.minHeight = '0'; });
+        var max = 0;
+        cells.forEach(function(c){
+            var h = c.getBoundingClientRect().height;
+            if(h > max) max = h;
+        });
+        // Set all cells to the tallest measured height
+        cells.forEach(function(c){ c.style.minHeight = Math.ceil(max) + 'px'; });
+    }
+    window.addEventListener('load', equalizeCalendarCells);
+    var resizeTimer = null;
+    window.addEventListener('resize', function(){
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(equalizeCalendarCells, 120);
+    });
+    // Also run after DOM changes (e.g., when events are loaded dynamically)
+    var observer = new MutationObserver(function(){ equalizeCalendarCells(); });
+    var grid = document.querySelector('.calendar-grid');
+    if(grid) observer.observe(grid, { childList: true, subtree: true });
+})();
+</script>

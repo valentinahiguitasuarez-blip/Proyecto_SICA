@@ -216,7 +216,41 @@ $solicitudes = array_merge($upcoming, $historical);
     <!-- Historical (paginated) -->
     <div class="request-list" style="margin-top:18px;">
         <h3 style="margin:8px 0;">Historial</h3>
-        <?php if (!$historical): ?><div class="empty-state">No hay solicitudes en el historial para este filtro.</div><?php endif; ?>
+        <?php if (!$historical): ?>
+            <?php if ($estadoFiltro === 'Cancelado'): ?>
+                <article class="request-row">
+                    <div class="request-date"><strong>12</strong><span>Jul</span></div>
+                    <div style="flex:1;">
+                        <h3 style="margin:0">Evento ejemplo - Cancelado</h3>
+                        <small>Auditorio Demo / Taller - 09:00 a 11:00</small>
+                        <div class="stepper" aria-hidden="true" style="margin-top:8px;">
+                            <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
+                            <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
+                            <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Cancelado</div></div>
+                            <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                        </div>
+                    </div>
+                    <a class="status-pill <?= instructor_h(instructor_status_class('Cancelado')) ?>">Cancelado</a>
+                </article>
+            <?php elseif ($estadoFiltro === 'Finalizado'): ?>
+                <article class="request-row">
+                    <div class="request-date"><strong>20</strong><span>Jul</span></div>
+                    <div style="flex:1;">
+                        <h3 style="margin:0">Evento ejemplo - Finalizado</h3>
+                        <small>Auditorio Demo / Conferencia - 14:00 a 16:00</small>
+                        <div class="stepper" aria-hidden="true" style="margin-top:8px;">
+                            <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
+                            <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
+                            <div class="step complete step-decision"><div class="dot"></div><div class="label">Aprobado</div></div>
+                            <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                        </div>
+                    </div>
+                    <a class="status-pill <?= instructor_h(instructor_status_class('Finalizado')) ?>">Finalizado</a>
+                </article>
+            <?php else: ?>
+                <div class="empty-state">No hay solicitudes en el historial para este filtro.</div>
+            <?php endif; ?>
+        <?php endif; ?>
         <?php foreach ($historical as $evento): ?>
             <?php $fecha = new DateTime((string)$evento['fecha_evento']);
                   $estado = (string)($evento['estado'] ?? '');

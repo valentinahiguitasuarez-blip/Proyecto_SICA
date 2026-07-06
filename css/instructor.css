@@ -1193,6 +1193,14 @@ body {
     white-space: normal;
 }
 
+@media (min-width: 900px) {
+    .calendar-event {
+        -webkit-line-clamp: 3; /* allow more lines on desktop */
+        font-size: 13px;
+        padding: 8px;
+    }
+}
+
 @media (max-width: 640px) {
     .calendar-date .calendar-request-link,
     .calendar-date .calendar-occupied {

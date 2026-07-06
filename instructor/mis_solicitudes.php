@@ -118,6 +118,16 @@ $solicitudes = array_merge($upcoming, $historical);
     /* Status pill overrides */
     .mis-solicitudes .status-pill { background:#f4f3ff; color:#5b21b6; padding:8px 12px; border-radius:999px; font-weight:900; text-decoration:none; }
 
+    /* Metric tile override: keep Pendientes amber, set Activos (navy) to purple on this page */
+    .mis-solicitudes .metric-tile.amber strong,
+    .mis-solicitudes .metric-tile.amber em { color: var(--ins-amber); }
+
+    .mis-solicitudes .metric-tile.navy strong,
+    .mis-solicitudes .metric-tile.navy em { color: #6b46c1; }
+    .mis-solicitudes .metric-tile.navy::before { background: rgba(107,70,193,0.08); }
+    .mis-solicitudes .metric-tile.navy::after,
+    .mis-solicitudes .metric-tile.navy em { background: #efe8ff; }
+
     /* Keep default request-date for other pages */
     .request-date { width:72px; text-align:center; font-weight:700; color:#333; }
     </style>

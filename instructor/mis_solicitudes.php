@@ -52,6 +52,60 @@ $historical = instructor_rows($pdo, $historicalSql, $paramsPag);
 
 // combine for rendering when needed
 $solicitudes = array_merge($upcoming, $historical);
+
+function instructor_request_step_data(array $evento): array
+{
+    $estado = (string)($evento['estado'] ?? '');
+    $active = match ($estado) {
+        'Activo' => 'solicitado',
+        'Pendiente' => 'revision',
+        'Cancelado' => 'decision',
+        'Finalizado' => 'notificado',
+        default => '',
+    };
+
+    $decisionDate = '';
+    try {
+        if (!empty($evento['fecha_aprobacion'])) {
+            $decisionDate = (new DateTime((string)$evento['fecha_aprobacion']))->format('Y-m-d');
+        }
+    } catch (Exception $exception) {
+        $decisionDate = '';
+    }
+
+    return [
+        ['key' => 'solicitado', 'label' => 'Solicitado', 'extra' => ''],
+        ['key' => 'revision', 'label' => 'En revision', 'extra' => ''],
+        ['key' => 'decision', 'label' => 'Decision', 'extra' => $active === 'decision' && $decisionDate !== '' ? ' - ' . $decisionDate : ''],
+        ['key' => 'notificado', 'label' => 'Notificado', 'extra' => $active === 'notificado' && $decisionDate !== '' ? ' - ' . $decisionDate : ''],
+    ];
+}
+
+function instructor_step_class(array $step, string $estado): string
+{
+    $estado = (string)$estado;
+    $active = match ($estado) {
+        'Activo' => 'solicitado',
+        'Pendiente' => 'revision',
+        'Cancelado' => 'decision',
+        'Finalizado' => 'notificado',
+        default => '',
+    };
+
+    if ($active !== (string)$step['key']) {
+        return 'step';
+    }
+
+    $statusClass = match ($estado) {
+        'Activo' => 'state-active',
+        'Pendiente' => 'state-pending',
+        'Cancelado' => 'state-cancelled',
+        'Finalizado' => 'state-finished',
+        default => 'state-muted',
+    };
+
+    return 'step is-current ' . $statusClass;
+}
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 <?php instructor_layout_start('solicitudes'); ?>
@@ -101,9 +155,9 @@ $solicitudes = array_merge($upcoming, $historical);
                     <h3 style="margin:0">Seminario Taller - Cancelado</h3>
                     <small>Auditorio Demo / Taller - 09:00 a 11:00</small>
                     <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Decisión</div></div>
+                        <div class="step"><div class="dot"></div><div class="label">Solicitado</div></div>
+                        <div class="step"><div class="dot"></div><div class="label">En revision</div></div>
+                        <div class="step is-current state-cancelled"><div class="dot"></div><div class="label">Decision</div></div>
                         <div class="step"><div class="dot"></div><div class="label">Notificado</div></div>
                     </div>
                 </div>
@@ -116,10 +170,10 @@ $solicitudes = array_merge($upcoming, $historical);
                     <h3 style="margin:0">Feria de Proyectos SENA - Finalizado</h3>
                     <small>Auditorio Demo / Conferencia - 14:00 a 16:00</small>
                     <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="step complete step-decision"><div class="dot"></div><div class="label">Decisión</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                        <div class="step"><div class="dot"></div><div class="label">Solicitado</div></div>
+                        <div class="step"><div class="dot"></div><div class="label">En revision</div></div>
+                        <div class="step"><div class="dot"></div><div class="label">Decision</div></div>
+                        <div class="step is-current state-finished"><div class="dot"></div><div class="label">Notificado</div></div>
                     </div>
                 </div>
                 <a class="status-pill <?= instructor_h(instructor_status_class('Finalizado')) ?>">Finalizado</a>
@@ -137,11 +191,15 @@ $solicitudes = array_merge($upcoming, $historical);
     .stepper { display:flex; gap:12px; align-items:center; margin-top:8px; }
     .step { display:flex; align-items:center; gap:8px; font-size:13px; color:#666; }
     .step .dot { width:12px; height:12px; border-radius:50%; background:#ddd; box-shadow:0 0 0 4px transparent; }
-    /* Use purple for primary steps on this page */
-    .step.complete .dot { background:var(--ins-blue, #0ea5e9); box-shadow:0 0 0 4px rgba(14,165,233,0.12); }
-    .mis-solicitudes .step.complete .dot { background:#6b46c1; box-shadow:0 0 0 4px rgba(107,70,193,0.12); }
-    .step.complete.step-decision .dot { background:var(--ins-green, #10b981); box-shadow:0 0 0 4px rgba(16,185,129,0.12); }
-    .step.complete.step-decision.cancel .dot { background:var(--ins-red, #ef4444); box-shadow:0 0 0 4px rgba(239,68,68,0.12); }
+    .step.is-current { font-weight:900; }
+    .step.is-current.state-active { color:#6b46c1; }
+    .step.is-current.state-pending { color:var(--ins-amber); }
+    .step.is-current.state-cancelled { color:var(--ins-blue); }
+    .step.is-current.state-finished { color:var(--ins-green); }
+    .step.is-current.state-active .dot { background:#6b46c1; box-shadow:0 0 0 4px rgba(107,70,193,0.13); }
+    .step.is-current.state-pending .dot { background:var(--ins-amber); box-shadow:0 0 0 4px rgba(217,139,9,0.14); }
+    .step.is-current.state-cancelled .dot { background:var(--ins-blue); box-shadow:0 0 0 4px rgba(22,93,255,0.13); }
+    .step.is-current.state-finished .dot { background:var(--ins-green); box-shadow:0 0 0 4px rgba(18,166,120,0.13); }
     .step .label { white-space:nowrap; }
     .stepper::before { content:''; position:relative; left:0; }
 
@@ -180,21 +238,10 @@ $solicitudes = array_merge($upcoming, $historical);
         <?php foreach ($upcoming as $evento): ?>
             <?php $fecha = new DateTime((string)$evento['fecha_evento']);
                   $estado = (string)($evento['estado'] ?? '');
-                  $hasCoord = !empty($evento['id_coordinador']);
-                  $hasDecision = $hasCoord && !empty($evento['fecha_aprobacion']);
-                  $isPendiente = $estado === 'Pendiente';
-                  $isActivo = $estado === 'Activo';
+                  $steps = instructor_request_step_data($evento);
                   $isCancelado = $estado === 'Cancelado';
-                  $isFinalizado = $estado === 'Finalizado';
-                  if (in_array($estado, ['Activo','Cancelado','Finalizado'], true)) {
-                      $hasDecision = true;
-                  }
-                  // Toda solicitud existente ya alcanzó "En revisión" (Pendiente = en revisión;
-                  // los demás estados ya pasaron por ella). No existe CSS para "step active".
-                  $stepRevisionClass = 'step complete';
-                  $stepDecisionClass = 'step' . ($hasDecision ? ' complete step-decision' : '');
-                  $stepDecisionClass .= ($hasDecision && $isCancelado) ? ' cancel' : '';
-                  $stepNotificadoClass = 'step' . ($isFinalizado ? ' complete' : '');
+                  // Toda solicitud existente ya alcanzo "En revision" (Pendiente = en revision;
+                  // los demas estados ya pasaron por ella). No existe CSS para "step active".
                   $aprobDate = null;
                   try { if (!empty($evento['fecha_aprobacion'])) $aprobDate = new DateTime((string)$evento['fecha_aprobacion']); } catch (Exception $e) { $aprobDate = null; }
                   $isNuevo = $aprobDate ? ($aprobDate >= new DateTime('-3 days')) : false;
@@ -212,10 +259,9 @@ $solicitudes = array_merge($upcoming, $historical);
                     <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
 
                     <div class="stepper" aria-hidden="true">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="<?= $stepRevisionClass ?>"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="<?= $stepDecisionClass ?>"><div class="dot"></div><div class="label">Decisión<?php if ($hasDecision && $aprobDate) echo ' - ' . instructor_h($aprobDate->format('Y-m-d')); ?></div></div>
-                        <div class="<?= $stepNotificadoClass ?>"><div class="dot"></div><div class="label">Notificado</div></div>
+                        <?php foreach ($steps as $step): ?>
+                            <div class="<?= instructor_h(instructor_step_class($step, $estado)) ?>"><div class="dot"></div><div class="label"><?= instructor_h($step['label'] . $step['extra']) ?></div></div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 <a class="status-pill <?= instructor_h(instructor_status_class((string)$evento['estado'])) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$evento['id_evento'])) ?>"><?= instructor_h($evento['estado']) ?></a>
@@ -234,10 +280,10 @@ $solicitudes = array_merge($upcoming, $historical);
                         <h3 style="margin:0">Evento ejemplo - Cancelado</h3>
                         <small>Auditorio Demo / Taller - 09:00 a 11:00</small>
                         <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                            <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                            <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Decisión</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                            <div class="step"><div class="dot"></div><div class="label">Solicitado</div></div>
+                            <div class="step"><div class="dot"></div><div class="label">En revision</div></div>
+                            <div class="step is-current state-cancelled"><div class="dot"></div><div class="label">Decision</div></div>
+                            <div class="step"><div class="dot"></div><div class="label">Notificado</div></div>
                         </div>
                     </div>
                     <a class="status-pill <?= instructor_h(instructor_status_class('Cancelado')) ?>">Cancelado</a>
@@ -249,10 +295,10 @@ $solicitudes = array_merge($upcoming, $historical);
                         <h3 style="margin:0">Evento ejemplo - Finalizado</h3>
                         <small>Auditorio Demo / Conferencia - 14:00 a 16:00</small>
                         <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                            <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                            <div class="step complete step-decision"><div class="dot"></div><div class="label">Decisión</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
+                            <div class="step"><div class="dot"></div><div class="label">Solicitado</div></div>
+                            <div class="step"><div class="dot"></div><div class="label">En revision</div></div>
+                            <div class="step"><div class="dot"></div><div class="label">Decision</div></div>
+                            <div class="step is-current state-finished"><div class="dot"></div><div class="label">Notificado</div></div>
                         </div>
                     </div>
                     <a class="status-pill <?= instructor_h(instructor_status_class('Finalizado')) ?>">Finalizado</a>
@@ -264,14 +310,7 @@ $solicitudes = array_merge($upcoming, $historical);
         <?php foreach ($historical as $evento): ?>
             <?php $fecha = new DateTime((string)$evento['fecha_evento']);
                   $estado = (string)($evento['estado'] ?? '');
-                  $hasCoord = !empty($evento['id_coordinador']);
-                  $hasDecision = $hasCoord && !empty($evento['fecha_aprobacion']);
-                  if (in_array($estado, ['Activo','Finalizado','Cancelado'], true)) {
-                      $hasDecision = true;
-                  }
-                  // Todo evento en historial (Activo pasado, Cancelado o Finalizado) ya pasó por revisión.
-                  $revComplete = $hasCoord || in_array($estado, ['Activo','Finalizado','Cancelado'], true);
-                  $isActivo = $estado === 'Activo';
+                  $steps = instructor_request_step_data($evento);
                   $isCancelado = $estado === 'Cancelado';
                   $aprobDate = null;
                   try { if (!empty($evento['fecha_aprobacion'])) $aprobDate = new DateTime((string)$evento['fecha_aprobacion']); } catch (Exception $e) { $aprobDate = null; }
@@ -290,11 +329,9 @@ $solicitudes = array_merge($upcoming, $historical);
                     <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
 
                     <div class="stepper" aria-hidden="true">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step <?= $revComplete ? 'complete' : '' ?>"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <?php $decClass = 'step' . ($hasDecision ? ' complete step-decision' : ''); $decClass .= ($hasDecision && $isCancelado) ? ' cancel' : ''; ?>
-                        <div class="<?= $decClass ?>"><div class="dot"></div><div class="label">Decisión<?php if ($hasDecision && $aprobDate) echo ' - ' . instructor_h($aprobDate->format('Y-m-d')); ?></div></div>
-                        <div class="step <?= $hasDecision ? 'complete' : '' ?>"><div class="dot"></div><div class="label">Notificado</div></div>
+                        <?php foreach ($steps as $step): ?>
+                            <div class="<?= instructor_h(instructor_step_class($step, $estado)) ?>"><div class="dot"></div><div class="label"><?= instructor_h($step['label'] . $step['extra']) ?></div></div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 <a class="status-pill <?= instructor_h(instructor_status_class((string)$evento['estado'])) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$evento['id_evento'])) ?>"><?= instructor_h($evento['estado']) ?></a>

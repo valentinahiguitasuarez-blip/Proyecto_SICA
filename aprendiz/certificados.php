@@ -244,8 +244,12 @@ $ultimoCertificado = $listos[0] ?? null;
                         $estadoClase = $tieneCertificado ? 'ready' : ($asistencia === 'Asistio' ? 'issuing' : 'waiting');
                         $estadoTexto = $tieneCertificado ? 'Listo para descargar' : ($asistencia === 'Asistio' ? 'En emision' : 'Pendiente de asistencia');
                         $estadoDetalle = $asistencia === 'Asistio'
-                            ? 'Tu asistencia ya fue registrada. El certificado esta en preparacion.'
-                            : 'Confirma tu asistencia en el auditorio para habilitar el certificado.';
+                            ? 'Tu asistencia ya fue registrada. Estamos preparando tu certificado.'
+                            : 'Asiste al evento y confirma tu ingreso en el auditorio.';
+                        $accionTexto = $tieneCertificado ? 'Descargar certificado' : 'Ver pre-registro';
+                        $accionUrl = $tieneCertificado
+                            ? app_url('aprendiz/descargar_certificado.php?id=' . (int)$item['id_certificado'])
+                            : app_url('aprendiz/preregistro.php');
                         ?>
                         <article class="certificate-card <?= cert_e($estadoClase) ?>">
                             <div class="certificate-date">
@@ -255,9 +259,6 @@ $ultimoCertificado = $listos[0] ?? null;
                             <div>
                                 <div class="event-title-row">
                                     <span class="event-type"><?= cert_e($item['nombre_tipo']) ?></span>
-                                    <?php if ($tieneCertificado): ?>
-                                        <span class="certificate-status"><?= cert_e($estadoTexto) ?></span>
-                                    <?php endif; ?>
                                 </div>
                                 <h3><?= cert_e($item['nombre_evento']) ?></h3>
                                 <p><?= cert_e($item['descripcion'] ?? 'Evento registrado en SICA.') ?></p>
@@ -266,24 +267,13 @@ $ultimoCertificado = $listos[0] ?? null;
                                     <span><?= cert_e($item['nombre_auditorio'] . ' / Bloque ' . $item['bloque']) ?></span>
                                     <span>Asistencia: <?= cert_e($asistencia) ?></span>
                                 </div>
-                                <?php if (!$tieneCertificado): ?>
-                                    <div class="certificate-next-step <?= cert_e($estadoClase) ?>">
-                                        <span><?= cert_e($estadoTexto) ?></span>
-                                        <small><?= cert_e($estadoDetalle) ?></small>
-                                    </div>
-                                <?php endif; ?>
                             </div>
                             <div class="certificate-action">
-                                <?php if ($tieneCertificado): ?>
-                                    <span class="certificate-action-label">Certificado disponible</span>
-                                    <a href="<?= cert_e(app_url('aprendiz/descargar_certificado.php?id=' . (int)$item['id_certificado'])) ?>">Descargar certificado</a>
-                                <?php else: ?>
-                                    <div class="certificate-action-hint">
-                                        <strong>Siguiente paso</strong>
-                                        <span><?= $asistencia === 'Pendiente' ? 'Revisa tu registro y asiste al evento.' : 'Espera la emision del certificado.' ?></span>
-                                    </div>
-                                    <a class="secondary" href="<?= cert_e(app_url('aprendiz/preregistro.php')) ?>">Ver pre-registro</a>
-                                <?php endif; ?>
+                                <div class="certificate-action-state <?= cert_e($estadoClase) ?>">
+                                    <span><?= cert_e($estadoTexto) ?></span>
+                                    <small><?= cert_e($estadoDetalle) ?></small>
+                                </div>
+                                <a class="<?= cert_e($tieneCertificado ? 'primary' : 'secondary') ?>" href="<?= cert_e($accionUrl) ?>"><?= cert_e($accionTexto) ?></a>
                             </div>
                         </article>
                     <?php endforeach; ?>

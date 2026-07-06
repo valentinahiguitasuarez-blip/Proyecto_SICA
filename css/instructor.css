@@ -1148,6 +1148,26 @@ body {
     font-weight: 900;
 }
 
+/* Prevent overflow in calendar header and controls */
+.calendar-date span {
+    flex: 0 0 auto;
+    margin-right: 8px;
+}
+.calendar-date .calendar-request-link,
+.calendar-date .calendar-occupied {
+    flex: 0 0 auto;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 6.5rem;
+    text-align: right;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+}
+.calendar-date .calendar-occupied { background: rgba(14,21,40,0.04); color: var(--ins-muted); }
+
 .calendar-event {
     display: block;
     margin-top: 6px;
@@ -1158,6 +1178,14 @@ body {
     font-size: 12px;
     font-weight: 800;
     text-decoration: none;
+}
+
+/* Truncate long event titles so they don't overflow calendar cells */
+.calendar-event {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .calendar-event.pending {

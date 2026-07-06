@@ -175,9 +175,15 @@ $dateOccupied = ($prefillDate !== '' && isset($occupiedDates[$prefillDate]));
                     </div>
                     <?php foreach ($events as $event): ?>
                         <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : 'busy'; ?>
-                        <a class="calendar-event <?= instructor_h($class) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$event['id_evento'])) ?>">
-                            <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
-                        </a>
+                        <?php if (! $hasActive): ?>
+                            <a class="calendar-event <?= instructor_h($class) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$event['id_evento'])) ?>">
+                                <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
+                            </a>
+                        <?php else: ?>
+                            <span class="calendar-event <?= instructor_h($class) ?>" aria-hidden="true">
+                                <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
+                            </span>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </div>
             <?php endfor; ?>

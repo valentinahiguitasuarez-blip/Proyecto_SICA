@@ -425,11 +425,14 @@ if ($eventoSeleccionado > 0) {
                             </div>
                         </div>
                         <div class="preregister-status">
-                            <span><?= htmlspecialchars($asistencia, ENT_QUOTES, 'UTF-8') ?></span>
+                            <div class="preregister-status-card">
+                                <span><?= htmlspecialchars($asistencia, ENT_QUOTES, 'UTF-8') ?></span>
+                                <?php if (empty($item['id_certificado'])): ?>
+                                    <small><?= $asistencia === 'Pendiente' ? 'Esperando ingreso' : 'Certificado pendiente' ?></small>
+                                <?php endif; ?>
+                            </div>
                             <?php if (!empty($item['id_certificado'])): ?>
                                 <a href="<?= htmlspecialchars(app_url('aprendiz/descargar_certificado.php?id=' . (int)$item['id_certificado']), ENT_QUOTES, 'UTF-8') ?>">Certificado</a>
-                            <?php else: ?>
-                                <small><?= $asistencia === 'Pendiente' ? 'Esperando ingreso' : 'Certificado pendiente' ?></small>
                             <?php endif; ?>
                         </div>
                     </article>

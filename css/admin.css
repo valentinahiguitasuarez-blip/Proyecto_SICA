@@ -1054,10 +1054,9 @@ body {
     text-transform: uppercase;
 }
 
-.admin-reservation-actions textarea {
+.admin-reservation-actions textarea,
+.admin-reservation-actions select {
     width: 100%;
-    min-height: 86px;
-    resize: vertical;
     padding: 10px 12px;
     border: 1px solid var(--admin-line);
     border-radius: 8px;
@@ -1068,9 +1067,18 @@ body {
     font-weight: 700;
 }
 
+.admin-reservation-actions textarea {
+    min-height: 86px;
+    resize: vertical;
+}
+
+.admin-reservation-actions select {
+    min-height: 42px;
+}
+
 .admin-reservation-actions div {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 8px;
 }
 
@@ -1095,6 +1103,14 @@ body {
     font-weight: 800;
 }
 
+.admin-flow-note {
+    display: block;
+    padding: 10px 12px;
+    border-left: 4px solid var(--reservation-accent);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
 @media (max-width: 1180px) {
     .admin-metrics,
     .quick-actions div {
@@ -1113,10 +1129,6 @@ body {
 
     .admin-user-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
-    }
-
-    .admin-reservation-actions div {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 

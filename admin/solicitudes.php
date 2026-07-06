@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([1]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/smtp_mailer.php';
 
 $pageTitle = 'Solicitudes de Reserva - Administrador SICA';
 $pageStyles = ['css/admin.css'];
@@ -60,9 +61,18 @@ unset($_SESSION['admin_requests_message'], $_SESSION['admin_requests_message_typ
 
 $auditorios = [];
 $estados = [];
+$coordinadores = [];
 try {
     $auditorios = admin_s_rows($pdo, 'SELECT id_auditorio, nombre_auditorio, bloque FROM auditorio ORDER BY nombre_auditorio ASC');
     $estados = admin_s_rows($pdo, 'SELECT id_estado, nombre_estado FROM estado ORDER BY id_estado ASC');
+    $coordinadores = admin_s_rows(
+        $pdo,
+        "SELECT u.id_documento, u.nombre, u.apellido, u.correo
+         FROM usuario u
+         INNER JOIN rol r ON r.id_rol = u.id_rol
+         WHERE LOWER(r.nombre_rol) LIKE '%coordinador%'
+         ORDER BY u.nombre ASC, u.apellido ASC"
+    );
 } catch (Throwable $exception) {
     error_log('SICA admin solicitudes catalogos: ' . $exception->getMessage());
 }
@@ -79,11 +89,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $idEvento = (int)($_POST['id_evento'] ?? 0);
     $accion = (string)($_POST['accion'] ?? '');
     $observacion = trim((string)($_POST['observacion'] ?? ''));
+    $idCoordinador = (int)($_POST['id_coordinador'] ?? 0);
 
     if (!hash_equals((string)$_SESSION['csrf_admin_requests'], $csrf)) {
         $_SESSION['admin_requests_message'] = 'La sesion expiro. Intenta de nuevo.';
         $_SESSION['admin_requests_message_type'] = 'danger';
-    } elseif ($idEvento <= 0 || !in_array($accion, ['aprobar', 'rechazar', 'finalizar'], true)) {
+    } elseif ($idEvento <= 0 || !in_array($accion, ['enviar_coordinador', 'notificar_instructor'], true)) {
         $_SESSION['admin_requests_message'] = 'Selecciona una accion valida.';
         $_SESSION['admin_requests_message_type'] = 'danger';
     } elseif (strlen($observacion) > 180) {
@@ -93,9 +104,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         try {
             $eventoStmt = $pdo->prepare(
                 'SELECT e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin,
-                        e.id_auditorio, es.nombre_estado
+                        e.id_auditorio, e.descripcion, e.codigo_evento, e.id_coordinador,
+                        e.fecha_aprobacion, es.nombre_estado, a.nombre_auditorio, a.bloque,
+                        te.nombre_tipo, u.nombre, u.apellido, u.correo
                  FROM evento e
+                 INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
+                 INNER JOIN tipo_evento te ON te.id_tipo_evento = e.id_tipo_evento
                  INNER JOIN estado es ON es.id_estado = e.id_estado
+                 LEFT JOIN usuario u ON u.id_documento = e.id_solicitante
                  WHERE e.id_evento = :id_evento
                  LIMIT 1'
             );
@@ -106,55 +122,91 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 throw new RuntimeException('Solicitud no encontrada.');
             }
 
-            $nuevoEstado = match ($accion) {
-                'aprobar' => 'Activo',
-                'rechazar' => 'Cancelado',
-                'finalizar' => 'Finalizado',
-            };
-
-            if ($accion === 'aprobar') {
-                $overlap = admin_s_scalar(
-                    $pdo,
-                    "SELECT COUNT(*)
-                     FROM evento e
-                     INNER JOIN estado es ON es.id_estado = e.id_estado
-                     WHERE e.id_evento <> :id_evento
-                       AND e.id_auditorio = :auditorio
-                       AND e.fecha_evento = :fecha
-                       AND es.nombre_estado = 'Activo'
-                       AND NOT (e.hora_fin <= :inicio OR e.hora_inicio >= :fin)",
-                    [
-                        ':id_evento' => $idEvento,
-                        ':auditorio' => (int)$evento['id_auditorio'],
-                        ':fecha' => (string)$evento['fecha_evento'],
-                        ':inicio' => (string)$evento['hora_inicio'],
-                        ':fin' => (string)$evento['hora_fin'],
-                    ]
-                );
-
-                if ($overlap > 0) {
-                    throw new RuntimeException('Ese auditorio ya tiene una reserva aprobada en ese horario.');
+            if ($accion === 'enviar_coordinador') {
+                if ((string)$evento['nombre_estado'] !== 'Pendiente') {
+                    throw new RuntimeException('Solo puedes enviar a coordinacion solicitudes pendientes.');
                 }
+                if ($idCoordinador <= 0) {
+                    throw new RuntimeException('Selecciona el coordinador que revisara la solicitud.');
+                }
+
+                $coordStmt = $pdo->prepare(
+                    "SELECT u.id_documento, u.nombre, u.apellido, u.correo
+                     FROM usuario u
+                     INNER JOIN rol r ON r.id_rol = u.id_rol
+                     WHERE u.id_documento = :id
+                       AND LOWER(r.nombre_rol) LIKE '%coordinador%'
+                     LIMIT 1"
+                );
+                $coordStmt->execute([':id' => $idCoordinador]);
+                $coordinador = $coordStmt->fetch();
+                if (!$coordinador || !filter_var((string)$coordinador['correo'], FILTER_VALIDATE_EMAIL)) {
+                    throw new RuntimeException('El coordinador seleccionado no tiene un correo valido.');
+                }
+
+                $coordName = trim((string)$coordinador['nombre'] . ' ' . (string)$coordinador['apellido']);
+                $instructorName = trim((string)$evento['nombre'] . ' ' . (string)$evento['apellido']);
+                $body = "Hola {$coordName},\n\n"
+                    . "El administrador {$adminName} te envia una solicitud de reserva de auditorio para revision.\n\n"
+                    . "Evento: {$evento['nombre_evento']}\n"
+                    . "Tipo: {$evento['nombre_tipo']}\n"
+                    . "Instructor: {$instructorName}\n"
+                    . "Auditorio: {$evento['nombre_auditorio']} / Bloque {$evento['bloque']}\n"
+                    . "Fecha: {$evento['fecha_evento']}\n"
+                    . "Hora: " . substr((string)$evento['hora_inicio'], 0, 5) . " - " . substr((string)$evento['hora_fin'], 0, 5) . "\n"
+                    . "Codigo: {$evento['codigo_evento']}\n"
+                    . "Descripcion: {$evento['descripcion']}\n";
+                if ($observacion !== '') {
+                    $body .= "Nota del administrador: {$observacion}\n";
+                }
+                $body .= "\nIngresa a SICA como coordinador para aprobar o cancelar la solicitud.\n\nEquipo SICA";
+
+                if (!sica_send_mail((string)$coordinador['correo'], 'Solicitud de reserva de auditorio - SICA', $body)) {
+                    throw new RuntimeException('No se pudo enviar el correo al coordinador. Revisa la configuracion SMTP.');
+                }
+
+                $update = $pdo->prepare(
+                    'UPDATE evento
+                     SET id_coordinador = :coordinador,
+                         observacion = :observacion
+                     WHERE id_evento = :id_evento'
+                );
+                $update->execute([
+                    ':coordinador' => $idCoordinador,
+                    ':observacion' => $observacion !== '' ? $observacion : null,
+                    ':id_evento' => $idEvento,
+                ]);
+
+                $_SESSION['admin_requests_message'] = 'Solicitud enviada al coordinador correctamente.';
+            } else {
+                if (!in_array((string)$evento['nombre_estado'], ['Activo', 'Cancelado', 'Finalizado'], true)
+                    || empty($evento['fecha_aprobacion'])) {
+                    throw new RuntimeException('Aun no hay una decision de coordinacion para notificar.');
+                }
+                if (!filter_var((string)$evento['correo'], FILTER_VALIDATE_EMAIL)) {
+                    throw new RuntimeException('El instructor no tiene un correo valido registrado.');
+                }
+
+                $instructorName = trim((string)$evento['nombre'] . ' ' . (string)$evento['apellido']);
+                $estadoTexto = (string)$evento['nombre_estado'];
+                $body = "Hola {$instructorName},\n\n"
+                    . "Coordinacion ya reviso tu solicitud de reserva en SICA.\n\n"
+                    . "Evento: {$evento['nombre_evento']}\n"
+                    . "Estado actual: {$estadoTexto}\n"
+                    . "Auditorio: {$evento['nombre_auditorio']} / Bloque {$evento['bloque']}\n"
+                    . "Fecha: {$evento['fecha_evento']}\n"
+                    . "Hora: " . substr((string)$evento['hora_inicio'], 0, 5) . " - " . substr((string)$evento['hora_fin'], 0, 5) . "\n";
+                if (trim((string)$evento['observacion']) !== '') {
+                    $body .= "Observacion: {$evento['observacion']}\n";
+                }
+                $body .= "\nGracias por usar SICA.\n\nEquipo SICA";
+
+                if (!sica_send_mail((string)$evento['correo'], 'Respuesta a tu solicitud de auditorio - SICA', $body)) {
+                    throw new RuntimeException('No se pudo enviar el correo al instructor. Revisa la configuracion SMTP.');
+                }
+
+                $_SESSION['admin_requests_message'] = 'Respuesta enviada al instructor correctamente.';
             }
-
-            $update = $pdo->prepare(
-                'UPDATE evento
-                 SET id_estado = :estado,
-                     observacion = :observacion,
-                     fecha_aprobacion = CASE WHEN :accion_aprobar = 1 THEN NOW() ELSE fecha_aprobacion END,
-                     id_coordinador = CASE WHEN :accion_aprobar_2 = 1 THEN :admin ELSE id_coordinador END
-                 WHERE id_evento = :id_evento'
-            );
-            $update->execute([
-                ':estado' => $estadoIds[$nuevoEstado],
-                ':observacion' => $observacion !== '' ? $observacion : null,
-                ':accion_aprobar' => $accion === 'aprobar' ? 1 : 0,
-                ':accion_aprobar_2' => $accion === 'aprobar' ? 1 : 0,
-                ':admin' => $adminDocument > 0 ? $adminDocument : null,
-                ':id_evento' => $idEvento,
-            ]);
-
-            $_SESSION['admin_requests_message'] = 'Solicitud actualizada correctamente.';
             $_SESSION['admin_requests_message_type'] = 'success';
         } catch (Throwable $exception) {
             $_SESSION['admin_requests_message'] = $exception->getMessage() !== ''
@@ -210,12 +262,14 @@ try {
         'SELECT e.id_evento, e.nombre_evento, e.descripcion, e.fecha_evento, e.hora_inicio, e.hora_fin,
                 e.codigo_evento, e.observacion, e.fecha_aprobacion, es.nombre_estado AS estado,
                 a.nombre_auditorio, a.bloque, a.capacidad, te.nombre_tipo,
-                u.id_documento, u.nombre, u.apellido, u.correo
+                u.id_documento, u.nombre, u.apellido, u.correo,
+                c.id_documento AS coord_documento, c.nombre AS coord_nombre, c.apellido AS coord_apellido, c.correo AS coord_correo
          FROM evento e
          INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
          INNER JOIN estado es ON es.id_estado = e.id_estado
          INNER JOIN tipo_evento te ON te.id_tipo_evento = e.id_tipo_evento
-         LEFT JOIN usuario u ON u.id_documento = e.id_solicitante' .
+         LEFT JOIN usuario u ON u.id_documento = e.id_solicitante
+         LEFT JOIN usuario c ON c.id_documento = e.id_coordinador' .
             $whereSql .
         ' ORDER BY
             CASE es.nombre_estado
@@ -270,7 +324,7 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
             <div>
                 <p class="admin-eyebrow">Reservas de auditorio</p>
                 <h1>Solicitudes de reserva</h1>
-                <span>Revisa las solicitudes enviadas por instructores y coordina la disponibilidad del auditorio.</span>
+                <span>Recibe las solicitudes de los instructores, remitelas a coordinacion y comunica la respuesta final.</span>
             </div>
             <div class="admin-top-actions">
                 <a href="<?= admin_s_h(app_url('admin/index.php')) ?>">Panel <strong>IN</strong></a>
@@ -361,6 +415,10 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                     $statusClass = admin_s_status_class($estado);
                     $solicitante = trim((string)$solicitud['nombre'] . ' ' . (string)$solicitud['apellido']);
                     $solicitante = $solicitante !== '' ? $solicitante : 'Solicitante SICA';
+                    $coordinadorAsignado = trim((string)($solicitud['coord_nombre'] ?? '') . ' ' . (string)($solicitud['coord_apellido'] ?? ''));
+                    $coordinadorAsignado = $coordinadorAsignado !== '' ? $coordinadorAsignado : 'Sin coordinador asignado';
+                    $enviadoCoordinacion = !empty($solicitud['coord_documento']);
+                    $tieneDecision = $enviadoCoordinacion && !empty($solicitud['fecha_aprobacion']);
                     ?>
                     <article class="admin-reservation-card <?= admin_s_h($statusClass) ?>">
                         <time>
@@ -387,6 +445,13 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                 <strong><?= admin_s_h($solicitante) ?></strong>
                                 <small><?= admin_s_h($solicitud['correo'] ?? 'Correo no registrado') ?></small>
                             </div>
+                            <div class="admin-observation">
+                                <strong>Coordinacion:</strong>
+                                <?= admin_s_h($coordinadorAsignado) ?>
+                                <?php if (!empty($solicitud['coord_correo'])): ?>
+                                    <small><?= admin_s_h($solicitud['coord_correo']) ?></small>
+                                <?php endif; ?>
+                            </div>
                             <?php if (!empty($solicitud['observacion'])): ?>
                                 <div class="admin-observation">
                                     <?= admin_s_h($solicitud['observacion']) ?>
@@ -397,19 +462,38 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                         <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
                             <input type="hidden" name="csrf_admin_requests" value="<?= admin_s_h($_SESSION['csrf_admin_requests']) ?>">
                             <input type="hidden" name="id_evento" value="<?= admin_s_h($solicitud['id_evento']) ?>">
-                            <label>
-                                <span>Observacion</span>
-                                <textarea name="observacion" maxlength="180" placeholder="Mensaje para la solicitud"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
-                            </label>
+                            <?php if ($estado === 'Pendiente' && !$tieneDecision): ?>
+                                <label>
+                                    <span>Coordinador</span>
+                                    <select name="id_coordinador" <?= !$coordinadores ? 'disabled' : '' ?>>
+                                        <option value="0">Selecciona coordinador</option>
+                                        <?php foreach ($coordinadores as $coordinador): ?>
+                                            <option value="<?= admin_s_h($coordinador['id_documento']) ?>" <?= (int)$solicitud['coord_documento'] === (int)$coordinador['id_documento'] ? 'selected' : '' ?>>
+                                                <?= admin_s_h(trim((string)$coordinador['nombre'] . ' ' . (string)$coordinador['apellido'])) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Nota para coordinacion</span>
+                                    <textarea name="observacion" maxlength="180" placeholder="Contexto breve para revisar la solicitud"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
+                                </label>
+                            <?php else: ?>
+                                <input type="hidden" name="observacion" value="<?= admin_s_h($solicitud['observacion'] ?? '') ?>">
+                            <?php endif; ?>
                             <div>
                                 <?php if ($estado === 'Pendiente'): ?>
-                                    <button type="submit" name="accion" value="aprobar">Aprobar</button>
-                                    <button class="danger" type="submit" name="accion" value="rechazar">Rechazar</button>
-                                <?php elseif ($estado === 'Activo'): ?>
-                                    <button type="submit" name="accion" value="finalizar">Finalizar</button>
-                                    <button class="danger" type="submit" name="accion" value="rechazar">Cancelar</button>
+                                    <small class="admin-flow-note">
+                                        <?= $enviadoCoordinacion ? 'Enviado a coordinacion. Esperando respuesta.' : 'Pendiente por enviar a coordinacion.' ?>
+                                    </small>
+                                    <button type="submit" name="accion" value="enviar_coordinador">
+                                        <?= $enviadoCoordinacion ? 'Reenviar correo' : 'Enviar a coordinador' ?>
+                                    </button>
+                                <?php elseif ($tieneDecision): ?>
+                                    <small class="admin-flow-note">Coordinacion ya respondio. Informa al instructor.</small>
+                                    <button type="submit" name="accion" value="notificar_instructor">Notificar instructor</button>
                                 <?php else: ?>
-                                    <small>Solicitud cerrada</small>
+                                    <small class="admin-flow-note">Solicitud cerrada.</small>
                                 <?php endif; ?>
                             </div>
                         </form>

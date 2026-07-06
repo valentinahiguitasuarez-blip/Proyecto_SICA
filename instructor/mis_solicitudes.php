@@ -6,311 +6,209 @@ requireRole([3]);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../includes/instructor_panel.php';
 
-$pageTitle = 'Mis solicitudes - Instructor SICA';
+$pageTitle = 'Instructor - SICA';
 $pageStyles = ['css/instructor.css'];
-$idInstructor = (int)(instructor_user()['id_documento'] ?? 0);
-$estadoFiltro = trim((string)($_GET['estado'] ?? ''));
-$params = [':id' => $idInstructor];
-$where = ' WHERE e.id_solicitante = :id';
-if ($estadoFiltro !== '') {
-    $where .= ' AND es.nombre_estado = :estado';
-    $params[':estado'] = $estadoFiltro;
-}
+$user = instructor_user();
+$idInstructor = (int)($user['id_documento'] ?? 0);
+$nombre = trim((string)($user['nombre'] ?? 'Instructor'));
 
-// 1) counts by estado (aggregated query)
-$counts = ['Pendiente' => 0, 'Activo' => 0, 'Cancelado' => 0, 'Finalizado' => 0];
-$countStmt = $pdo->prepare('SELECT es.nombre_estado, COUNT(*) AS cnt FROM evento e INNER JOIN estado es ON es.id_estado = e.id_estado' . $where . ' GROUP BY es.nombre_estado');
-$countStmt->execute($params);
-foreach ($countStmt->fetchAll() as $row) {
-    $name = (string)($row['nombre_estado'] ?? '');
-    $cnt = (int)($row['cnt'] ?? 0);
-    if (array_key_exists($name, $counts)) {
-        $counts[$name] = $cnt;
-    } else {
-        $counts[$name] = $cnt;
-    }
-}
+$stats = [
+    'auditorios' => instructor_scalar($pdo, "SELECT COUNT(*) FROM auditorio a INNER JOIN estado e ON e.id_estado = a.id_estado WHERE e.nombre_estado = 'Activo'"),
+    'solicitudes' => instructor_scalar($pdo, 'SELECT COUNT(*) FROM evento WHERE id_solicitante = :id', [':id' => $idInstructor]),
+    'pendientes' => instructor_scalar($pdo, "SELECT COUNT(*) FROM evento ev INNER JOIN estado es ON es.id_estado = ev.id_estado WHERE ev.id_solicitante = :id AND es.nombre_estado = 'Pendiente'", [':id' => $idInstructor]),
+    'aprobadas' => instructor_scalar($pdo, "SELECT COUNT(*) FROM evento ev INNER JOIN estado es ON es.id_estado = ev.id_estado WHERE ev.id_solicitante = :id AND es.nombre_estado = 'Activo'", [':id' => $idInstructor]),
+    'preregistros' => instructor_scalar($pdo, 'SELECT COUNT(*) FROM preregistro pr INNER JOIN evento ev ON ev.id_evento = pr.id_evento WHERE ev.id_solicitante = :id', [':id' => $idInstructor]),
+    'asistencias' => instructor_scalar($pdo, "SELECT COUNT(*) FROM preregistro pr INNER JOIN evento ev ON ev.id_evento = pr.id_evento WHERE ev.id_solicitante = :id AND pr.asistencia <> 'Pendiente'", [':id' => $idInstructor]),
+];
 
-// 2) separate: "en proceso" (Pendiente OR Activo con fecha futura) and historical
-// Upcoming / in-process: Pendiente (any date) OR Activo with fecha_evento >= CURDATE()
-$perPage = 15;
-$pagina = max(1, (int)($_GET['pagina'] ?? 1));
+$proximas = instructor_rows(
+    $pdo,
+    instructor_event_query() . ' WHERE e.id_solicitante = :id ORDER BY e.fecha_evento DESC, e.hora_inicio DESC LIMIT 5',
+    [':id' => $idInstructor]
+);
 
-$upcomingSql = instructor_event_query() . $where . " AND (es.nombre_estado = 'Pendiente' OR (es.nombre_estado = 'Activo' AND DATE(e.fecha_evento) >= CURDATE())) ORDER BY e.fecha_evento ASC, e.hora_inicio ASC";
-$upcoming = instructor_rows($pdo, $upcomingSql, $params);
-
-// Historical: Cancelado, Finalizado, or Activo with fecha_evento < CURDATE()
-$countHistoricalSql = 'SELECT COUNT(*) FROM evento e INNER JOIN estado es ON es.id_estado = e.id_estado' . $where . " AND (es.nombre_estado IN ('Cancelado','Finalizado') OR (es.nombre_estado = 'Activo' AND DATE(e.fecha_evento) < CURDATE()))";
-$totalHistorical = (int)instructor_scalar($pdo, $countHistoricalSql, $params);
-$totalPages = (int)max(1, ceil($totalHistorical / $perPage));
-$offset = ($pagina - 1) * $perPage;
-$paramsPag = $params;
-$paramsPag[':limit'] = $perPage;
-$paramsPag[':offset'] = $offset;
-$historicalSql = instructor_event_query() . $where . " AND (es.nombre_estado IN ('Cancelado','Finalizado') OR (es.nombre_estado = 'Activo' AND DATE(e.fecha_evento) < CURDATE())) ORDER BY e.fecha_evento DESC, e.hora_inicio DESC LIMIT :limit OFFSET :offset";
-$historical = instructor_rows($pdo, $historicalSql, $paramsPag);
-
-// combine for rendering when needed
-$solicitudes = array_merge($upcoming, $historical);
+$agenda = instructor_rows(
+    $pdo,
+    instructor_event_query() . ' WHERE e.id_solicitante = :id ORDER BY CASE WHEN e.fecha_evento >= CURDATE() THEN 0 ELSE 1 END, e.fecha_evento ASC, e.hora_inicio ASC LIMIT 5',
+    [':id' => $idInstructor]
+);
+$eventoDestacado = $agenda[0] ?? null;
+$participantesDestacados = $eventoDestacado
+    ? instructor_scalar($pdo, 'SELECT COUNT(*) FROM preregistro WHERE id_evento = :id', [':id' => (int)$eventoDestacado['id_evento']])
+    : 0;
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
-<?php instructor_layout_start('solicitudes'); ?>
+<?php instructor_layout_start('dashboard'); ?>
 
 <header class="instructor-topbar">
     <div>
-        <p class="eyebrow">Mis solicitudes</p>
-        <h1>Historial de reservas</h1>
-        <span>Consulta estados, observaciones y detalles de tus solicitudes de auditorio.</span>
+        <p class="eyebrow">Dashboard instructor</p>
+        <h1>Bienvenido, <?= instructor_h($nombre) ?></h1>
+        <span>Consulta disponibilidad, solicita auditorios y administra la asistencia de tus eventos.</span>
     </div>
     <div class="topbar-actions">
         <a class="top-action" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
+        <a class="top-action logout-button" href="<?= instructor_h(app_url('login/logout.php')) ?>">
+            <span>SL</span>
+            Cerrar sesión
+        </a>
     </div>
 </header>
 
-<section class="panel mis-solicitudes">
+<section class="dashboard-hero">
+    <div class="dashboard-hero-copy">
+        <span class="live-pill">Panel activo</span>
+        <p class="eyebrow">Centro de control</p>
+        <h2>Gestiona auditorios, codigos y asistencia con una vista mas clara.</h2>
+        <p>SICA concentra tus solicitudes, el estado de aprobacion, los participantes y el codigo de ingreso para que cada evento avance sin perder trazabilidad.</p>
+        <div class="hero-actions">
+            <a class="primary-btn" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Crear solicitud</a>
+            <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/asistencia.php')) ?>">Abrir codigos</a>
+        </div>
+    </div>
+    <div class="dashboard-command" aria-label="Resumen operativo">
+        <div class="command-top">
+            <span>SICA</span>
+            <strong>Auditorios</strong>
+        </div>
+        <div class="command-map" aria-hidden="true">
+            <span class="map-node main-node">QR</span>
+            <span class="map-node node-a">DI</span>
+            <span class="map-node node-b">SO</span>
+            <span class="map-node node-c">AS</span>
+            <i></i>
+        </div>
+        <div class="command-stats">
+            <div><span>Solicitudes</span><strong><?= instructor_h($stats['solicitudes']) ?></strong></div>
+            <div><span>Pre-registros</span><strong><?= instructor_h($stats['preregistros']) ?></strong></div>
+        </div>
+    </div>
+</section>
+
+<section class="metric-grid" aria-label="Resumen del instructor">
+    <article class="metric-tile blue"><span>Auditorios activos</span><strong><?= instructor_h($stats['auditorios']) ?></strong><small>Disponibles para programar</small><em>Disponibilidad</em></article>
+    <article class="metric-tile green"><span>Pre-registros</span><strong><?= instructor_h($stats['preregistros']) ?></strong><small>Aprendices inscritos</small><em>Participantes</em></article>
+    <article class="metric-tile amber"><span>Pendientes</span><strong><?= instructor_h($stats['pendientes']) ?></strong><small>En revision administrativa</small><em>Seguimiento</em></article>
+    <article class="metric-tile navy"><span>Asistencias</span><strong><?= instructor_h($stats['asistencias']) ?></strong><small>Confirmadas en eventos</small><em>Control</em></article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="next-event-card">
+        <div class="panel-head">
+            <div>
+                <p class="eyebrow">Evento destacado</p>
+                <h2><?= $eventoDestacado ? instructor_h($eventoDestacado['nombre_evento']) : 'Tu proximo evento aparecera aqui' ?></h2>
+            </div>
+            <?php if ($eventoDestacado): ?>
+                <span class="status-pill <?= instructor_h(instructor_status_class((string)$eventoDestacado['estado'])) ?>"><?= instructor_h($eventoDestacado['estado']) ?></span>
+            <?php endif; ?>
+        </div>
+        <?php if ($eventoDestacado): ?>
+            <?php $fechaDestacada = new DateTime((string)$eventoDestacado['fecha_evento']); ?>
+            <div class="event-spotlight">
+                <div class="event-date-box">
+                    <strong><?= instructor_h($fechaDestacada->format('d')) ?></strong>
+                    <span><?= instructor_h($fechaDestacada->format('M')) ?></span>
+                </div>
+                <div class="event-detail-list">
+                    <div><span>Auditorio</span><strong><?= instructor_h($eventoDestacado['nombre_auditorio']) ?></strong></div>
+                    <div><span>Horario</span><strong><?= instructor_h(substr((string)$eventoDestacado['hora_inicio'], 0, 5)) ?> - <?= instructor_h(substr((string)$eventoDestacado['hora_fin'], 0, 5)) ?></strong></div>
+                    <div><span>Codigo</span><strong><?= instructor_h($eventoDestacado['codigo_evento']) ?></strong></div>
+                    <div><span>Pre-registrados</span><strong><?= instructor_h($participantesDestacados) ?></strong></div>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <a class="primary-btn" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$eventoDestacado['id_evento'])) ?>">Ver detalle</a>
+                <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/asistencia.php?evento=' . (int)$eventoDestacado['id_evento'])) ?>">Codigo QR</a>
+            </div>
+        <?php else: ?>
+            <div class="empty-state">Crea una solicitud desde disponibilidad para activar el seguimiento del evento, codigo y participantes.</div>
+            <a class="primary-btn" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
+        <?php endif; ?>
+    </article>
+
+    <aside class="quick-panel">
+        <div class="panel-head">
+            <div>
+                <p class="eyebrow">Accesos rapidos</p>
+                <h2>Operaciones</h2>
+            </div>
+        </div>
+        <div class="quick-actions">
+            <a href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>"><span>DI</span><strong>Disponibilidad</strong><small>Revisar auditorios</small></a>
+            <a href="<?= instructor_h(app_url('instructor/mis_solicitudes.php')) ?>"><span>SO</span><strong>Solicitudes</strong><small>Estados y observaciones</small></a>
+            <a href="<?= instructor_h(app_url('instructor/asistencia.php')) ?>"><span>QR</span><strong>Codigos</strong><small>Ingreso al evento</small></a>
+            <a href="<?= instructor_h(app_url('instructor/participantes.php')) ?>"><span>PA</span><strong>Participantes</strong><small>Pre-registros y asistencia</small></a>
+        </div>
+    </aside>
+</section>
+
+<section class="panel process-panel">
     <div class="panel-head">
         <div>
-            <p class="eyebrow">Solicitudes</p>
-            <h2>Eventos solicitados</h2>
-        </div>
-        <form class="calendar-toolbar" method="get">
-            <select name="estado" onchange="this.form.submit()">
-                <option value="">Todos los estados</option>
-                <?php foreach (['Pendiente','Activo','Cancelado','Finalizado'] as $estado): ?>
-                    <option value="<?= instructor_h($estado) ?>" <?= $estadoFiltro === $estado ? 'selected' : '' ?>><?= instructor_h($estado) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </form>
-    </div>
-    <!-- Metrics summary -->
-    <div class="metric-grid" style="margin:12px 0;">
-        <article class="metric-tile amber"><span>Pendientes</span><strong><?= instructor_h($counts['Pendiente'] ?? 0) ?></strong><small>En revision</small></article>
-        <article class="metric-tile navy"><span>Activos</span><strong><?= instructor_h($counts['Activo'] ?? 0) ?></strong><small>Aprobados</small></article>
-        <article class="metric-tile red"><span>Cancelados</span><strong><?= instructor_h($counts['Cancelado'] ?? 0) ?></strong><small>Cancelados</small></article>
-        <article class="metric-tile green"><span>Finalizados</span><strong><?= instructor_h($counts['Finalizado'] ?? 0) ?></strong><small>Completados</small></article>
-    </div>
-
-    <?php if (!empty($_GET['preview'])): ?>
-    <div class="panel" style="margin-bottom:12px;">
-        <div class="panel-head"><div><p class="eyebrow">Vista previa</p><h2>Ejemplos de estado</h2></div></div>
-        <div style="padding:12px;">
-            <p>Esta vista previa muestra una tarjeta <strong>Cancelado</strong> y otra <strong>Finalizado</strong> para ver el estilo.</p>
-            <article class="request-row" style="background:#fff;">
-                <div class="request-date"><strong>12</strong><span>Jul</span></div>
-                <div style="flex:1;">
-                    <h3 style="margin:0">Seminario Taller - Cancelado</h3>
-                    <small>Auditorio Demo / Taller - 09:00 a 11:00</small>
-                    <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Decisión</div></div>
-                        <div class="step"><div class="dot"></div><div class="label">Notificado</div></div>
-                    </div>
-                </div>
-                <a class="status-pill <?= instructor_h(instructor_status_class('Cancelado')) ?>">Cancelado</a>
-            </article>
-
-            <article class="request-row" style="background:#fff; margin-top:10px;">
-                <div class="request-date"><strong>20</strong><span>Jul</span></div>
-                <div style="flex:1;">
-                    <h3 style="margin:0">Feria de Proyectos SENA - Finalizado</h3>
-                    <small>Auditorio Demo / Conferencia - 14:00 a 16:00</small>
-                    <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="step complete step-decision"><div class="dot"></div><div class="label">Decisión</div></div>
-                        <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
-                    </div>
-                </div>
-                <a class="status-pill <?= instructor_h(instructor_status_class('Finalizado')) ?>">Finalizado</a>
-            </article>
+            <p class="eyebrow">Proceso</p>
+            <h2>Ruta operativa del evento</h2>
+            <span class="panel-subtitle">Un flujo corto para separar espacios sin perder trazabilidad.</span>
         </div>
     </div>
-    <?php endif; ?>
-
-    <style>
-    /* Alerts and small utilities */
-    .obs-banner { background: var(--ins-red-soft, #fdecea); color: var(--ins-red, #c0392b); padding:8px 12px; border-radius:6px; margin-bottom:8px; }
-    /* Scoped palette for Mis Solicitudes page */
-    .mis-solicitudes .badge-new { background:#6b46c1; color:#fff; padding:4px 10px; border-radius:12px; font-size:12px; margin-left:8px; font-weight:900; }
-
-    .stepper { display:flex; gap:12px; align-items:center; margin-top:8px; }
-    .step { display:flex; align-items:center; gap:8px; font-size:13px; color:#666; }
-    .step .dot { width:12px; height:12px; border-radius:50%; background:#ddd; box-shadow:0 0 0 4px transparent; }
-    /* Use purple for primary steps on this page */
-    .step.complete .dot { background:var(--ins-blue, #0ea5e9); box-shadow:0 0 0 4px rgba(14,165,233,0.12); }
-    .mis-solicitudes .step.complete .dot { background:#6b46c1; box-shadow:0 0 0 4px rgba(107,70,193,0.12); }
-    .step.complete.step-decision .dot { background:var(--ins-green, #10b981); box-shadow:0 0 0 4px rgba(16,185,129,0.12); }
-    .step.complete.step-decision.cancel .dot { background:var(--ins-red, #ef4444); box-shadow:0 0 0 4px rgba(239,68,68,0.12); }
-    .step .label { white-space:nowrap; }
-    .stepper::before { content:''; position:relative; left:0; }
-
-    /* Card layout tweaks */
-    .mis-solicitudes .request-row { padding:16px; border:1px solid rgba(14,21,40,0.04); border-radius:10px; margin-bottom:12px; display:flex; gap:16px; align-items:flex-start; background:#ffffff; box-shadow:0 6px 20px rgba(22,93,255,0.03); }
-    .mis-solicitudes .request-date { width:72px; text-align:center; font-weight:900; color:#3b0f6b; background: linear-gradient(180deg,#f3ecff,#efe8ff); border-radius:8px; padding:10px 6px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
-    .mis-solicitudes .request-date strong { font-size:20px; color:#3b0f6b; display:block; }
-    .mis-solicitudes .request-date span { font-size:11px; color:#6b46c1; text-transform:uppercase; }
-    .mis-solicitudes h3 { color:#0e1a2f; margin:0; }
-    .mis-solicitudes small { color: #65748b; display:block; margin-top:6px; }
-
-    /* Status pill overrides - keep Pendientes amber, style Activos as purple */
-    .mis-solicitudes .status-pill { padding:8px 12px; border-radius:999px; font-weight:900; text-decoration:none; }
-    .mis-solicitudes .status-pill.pending { background: var(--ins-amber-soft); color: var(--ins-amber); }
-    .mis-solicitudes .status-pill.ok { background: #f4f3ff; color: #5b21b6; }
-    .mis-solicitudes .status-pill.danger { background: var(--ins-red-soft); color: var(--ins-red); }
-
-    /* Metric tile override: keep Pendientes amber, set Activos (navy) to purple on this page */
-    .mis-solicitudes .metric-tile.amber strong,
-    .mis-solicitudes .metric-tile.amber em { color: var(--ins-amber); }
-
-    .mis-solicitudes .metric-tile.navy strong,
-    .mis-solicitudes .metric-tile.navy em { color: #6b46c1; }
-    .mis-solicitudes .metric-tile.navy::before { background: #6b46c1; }
-    .mis-solicitudes .metric-tile.navy::after,
-    .mis-solicitudes .metric-tile.navy em { background: #efe8ff; }
-
-    /* Keep default request-date for other pages */
-    .request-date { width:72px; text-align:center; font-weight:700; color:#333; }
-    </style>
-
-    <!-- Upcoming events -->
-    <div class="request-list">
-        <h3 style="margin:8px 0;">En proceso</h3>
-        <?php if (!$upcoming): ?><div class="empty-state">No hay solicitudes en proceso.</div><?php endif; ?>
-        <?php foreach ($upcoming as $evento): ?>
-            <?php $fecha = new DateTime((string)$evento['fecha_evento']);
-                  $estado = (string)($evento['estado'] ?? '');
-                  $hasCoord = !empty($evento['id_coordinador']);
-                  $hasDecision = $hasCoord && !empty($evento['fecha_aprobacion']);
-                  $isPendiente = $estado === 'Pendiente';
-                  $isActivo = $estado === 'Activo';
-                  $isCancelado = $estado === 'Cancelado';
-                  $isFinalizado = $estado === 'Finalizado';
-                  if (in_array($estado, ['Activo','Cancelado','Finalizado'], true)) {
-                      $hasDecision = true;
-                  }
-                  $stepRevisionClass = $isPendiente ? 'step active' : 'step complete';
-                  $stepDecisionClass = 'step' . ($hasDecision ? ' complete step-decision' : '');
-                  $stepDecisionClass .= ($hasDecision && $isCancelado) ? ' cancel' : '';
-                  $stepNotificadoClass = 'step' . ($isFinalizado ? ' complete' : '');
-                  $aprobDate = null;
-                  try { if (!empty($evento['fecha_aprobacion'])) $aprobDate = new DateTime((string)$evento['fecha_aprobacion']); } catch (Exception $e) { $aprobDate = null; }
-                  $isNuevo = $aprobDate ? ($aprobDate >= new DateTime('-3 days')) : false;
-            ?>
-            <?php if ($isCancelado && trim((string)($evento['observacion'] ?? '')) !== ''): ?>
-                <div class="obs-banner"><?= instructor_h($evento['observacion']) ?></div>
-            <?php endif; ?>
-            <article class="request-row">
-                <div class="request-date"><?= instructor_h($fecha->format('d M')) ?></div>
-                <div style="flex:1;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                      <h3 style="margin:0"><?= instructor_h($evento['nombre_evento']) ?></h3>
-                      <?php if ($isNuevo): ?><span class="badge-new">Nuevo</span><?php endif; ?>
-                    </div>
-                    <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
-
-                    <div class="stepper" aria-hidden="true">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="<?= $stepRevisionClass ?>"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="<?= $stepDecisionClass ?>"><div class="dot"></div><div class="label">Decisión<?php if ($hasDecision && $aprobDate) echo ' - ' . instructor_h($aprobDate->format('Y-m-d')); ?></div></div>
-                        <div class="<?= $stepNotificadoClass ?>"><div class="dot"></div><div class="label">Notificado</div></div>
-                    </div>
-                </div>
-                <a class="status-pill <?= instructor_h(instructor_status_class((string)$evento['estado'])) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$evento['id_evento'])) ?>"><?= instructor_h($evento['estado']) ?></a>
-            </article>
-        <?php endforeach; ?>
+    <div class="process-grid">
+        <article class="process-step"><b>1</b><strong>Consulta disponibilidad</strong><p>Elige auditorio, mes y revisa cruces.</p></article>
+        <article class="process-step"><b>2</b><strong>Envia solicitud</strong><p>Registra fecha, hora, tipo y descripcion.</p></article>
+        <article class="process-step"><b>3</b><strong>Revision</strong><p>Coordinacion aprueba o rechaza la solicitud.</p></article>
+        <article class="process-step"><b>4</b><strong>Asistencia</strong><p>Usa el codigo del evento y consulta participantes.</p></article>
     </div>
+</section>
 
-    <!-- Historical (paginated) -->
-    <div class="request-list" style="margin-top:18px;">
-        <h3 style="margin:8px 0;">Historial</h3>
-        <?php if (!$historical): ?>
-            <?php if ($estadoFiltro === 'Cancelado'): ?>
-                <article class="request-row">
-                    <div class="request-date"><strong>12</strong><span>Jul</span></div>
-                    <div style="flex:1;">
-                        <h3 style="margin:0">Evento ejemplo - Cancelado</h3>
-                        <small>Auditorio Demo / Taller - 09:00 a 11:00</small>
-                        <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                            <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                            <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Cancelado</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
-                        </div>
-                    </div>
-                    <a class="status-pill <?= instructor_h(instructor_status_class('Cancelado')) ?>">Cancelado</a>
-                </article>
-            <?php elseif ($estadoFiltro === 'Finalizado'): ?>
-                <article class="request-row">
-                    <div class="request-date"><strong>20</strong><span>Jul</span></div>
-                    <div style="flex:1;">
-                        <h3 style="margin:0">Evento ejemplo - Finalizado</h3>
-                        <small>Auditorio Demo / Conferencia - 14:00 a 16:00</small>
-                        <div class="stepper" aria-hidden="true" style="margin-top:8px;">
-                            <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                            <div class="step complete step-decision"><div class="dot"></div><div class="label">Aprobado</div></div>
-                            <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
-                        </div>
-                    </div>
-                    <a class="status-pill <?= instructor_h(instructor_status_class('Finalizado')) ?>">Finalizado</a>
-                </article>
-            <?php else: ?>
-                <div class="empty-state">No hay solicitudes en el historial para este filtro.</div>
-            <?php endif; ?>
+<section class="dashboard-grid lower-dashboard">
+<section class="panel activity-panel">
+    <div class="panel-head">
+        <div>
+            <p class="eyebrow">Actividad</p>
+            <h2>Movimiento reciente</h2>
+        </div>
+    </div>
+    <div class="activity-list">
+        <?php if (!$proximas): ?>
+            <div class="empty-state">Aun no hay actividad para mostrar.</div>
         <?php endif; ?>
-        <?php foreach ($historical as $evento): ?>
-            <?php $fecha = new DateTime((string)$evento['fecha_evento']);
-                  $estado = (string)($evento['estado'] ?? '');
-                  $hasCoord = !empty($evento['id_coordinador']);
-                  $hasDecision = $hasCoord && !empty($evento['fecha_aprobacion']);
-                  if (in_array($estado, ['Finalizado','Cancelado'], true)) {
-                      $hasDecision = true;
-                  }
-                  $isActivo = $estado === 'Activo';
-                  $isCancelado = $estado === 'Cancelado';
-                  $aprobDate = null;
-                  try { if (!empty($evento['fecha_aprobacion'])) $aprobDate = new DateTime((string)$evento['fecha_aprobacion']); } catch (Exception $e) { $aprobDate = null; }
-                  $isNuevo = $aprobDate ? ($aprobDate >= new DateTime('-3 days')) : false;
-            ?>
-            <?php if ($isCancelado && trim((string)($evento['observacion'] ?? '')) !== ''): ?>
-                <div class="obs-banner"><?= instructor_h($evento['observacion']) ?></div>
-            <?php endif; ?>
+        <?php foreach (array_slice($proximas, 0, 4) as $evento): ?>
+            <?php $fecha = new DateTime((string)$evento['fecha_evento']); ?>
+            <article class="activity-item">
+                <span class="activity-dot <?= instructor_h(instructor_status_class((string)$evento['estado'])) ?>"></span>
+                <div>
+                    <strong><?= instructor_h($evento['nombre_evento']) ?></strong>
+                    <small><?= instructor_h($evento['estado']) ?> - <?= instructor_h($fecha->format('d/m/Y')) ?> - <?= instructor_h($evento['nombre_auditorio']) ?></small>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+</section>
+
+<section class="panel request-panel">
+    <div class="panel-head">
+        <div>
+            <p class="eyebrow">Eventos solicitados</p>
+            <h2>Seguimiento de tus solicitudes</h2>
+        </div>
+        <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/mis_solicitudes.php')) ?>">Ver todas</a>
+    </div>
+    <div class="request-list">
+        <?php if (!$proximas): ?>
+            <div class="empty-state">Todavia no tienes solicitudes. Empieza revisando la disponibilidad de auditorios.</div>
+        <?php endif; ?>
+        <?php foreach ($proximas as $evento): ?>
+            <?php $fecha = new DateTime((string)$evento['fecha_evento']); ?>
             <article class="request-row">
                 <div class="request-date"><?= instructor_h($fecha->format('d M')) ?></div>
-                <div style="flex:1;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                      <h3 style="margin:0"><?= instructor_h($evento['nombre_evento']) ?></h3>
-                      <?php if ($isNuevo): ?><span class="badge-new">Nuevo</span><?php endif; ?>
-                    </div>
-                    <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
-
-                    <div class="stepper" aria-hidden="true">
-                        <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
-                        <div class="step <?= $hasCoord ? 'complete' : '' ?>"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <?php $decClass = 'step' . ($hasDecision ? ' complete step-decision' : ''); $decClass .= ($hasDecision && $isCancelado) ? ' cancel' : ''; ?>
-                        <div class="<?= $decClass ?>"><div class="dot"></div><div class="label">Decisión<?php if ($hasDecision && $aprobDate) echo ' - ' . instructor_h($aprobDate->format('Y-m-d')); ?></div></div>
-                        <div class="step <?= $hasDecision ? 'complete' : '' ?>"><div class="dot"></div><div class="label">Notificado</div></div>
-                    </div>
+                <div>
+                    <h3><?= instructor_h($evento['nombre_evento']) ?></h3>
+                    <small><?= instructor_h($evento['nombre_auditorio']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
                 </div>
                 <a class="status-pill <?= instructor_h(instructor_status_class((string)$evento['estado'])) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$evento['id_evento'])) ?>"><?= instructor_h($evento['estado']) ?></a>
             </article>
         <?php endforeach; ?>
-
-        <!-- Pagination controls -->
-        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-            <?php
-            $baseQuery = [];
-            if ($estadoFiltro !== '') $baseQuery['estado'] = $estadoFiltro;
-            for ($p = 1; $p <= $totalPages; $p++):
-                $q = $baseQuery;
-                $q['pagina'] = $p;
-                $href = app_url('instructor/mis_solicitudes.php') . '?' . http_build_query($q);
-            ?>
-                <a class="<?= $p === $pagina ? 'primary-btn' : 'top-action' ?>" href="<?= instructor_h($href) ?>"><?= instructor_h($p) ?></a>
-            <?php endfor; ?>
-        </div>
     </div>
+</section>
 </section>
 
 <?php instructor_layout_end(); ?>

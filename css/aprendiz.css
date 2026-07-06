@@ -1932,10 +1932,10 @@ body {
 
 .certificate-card {
     display: grid;
-    grid-template-columns: 72px minmax(0, 1fr) 210px;
-    gap: 16px;
-    align-items: start;
-    padding: 16px;
+    grid-template-columns: 76px minmax(0, 1fr) 230px;
+    gap: 18px;
+    align-items: center;
+    padding: 18px;
     border: 1px solid var(--ap-line);
     border-radius: 8px;
     background: #ffffff;
@@ -1988,6 +1988,29 @@ body {
     color: var(--ap-muted);
 }
 
+.certificate-meta {
+    gap: 14px;
+}
+
+.certificate-meta span {
+    position: relative;
+    padding: 0;
+    color: #53627a;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.certificate-meta span + span::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    display: inline-block;
+    margin: 0 10px 2px 0;
+    border-radius: 50%;
+    background: #cbd5e1;
+}
+
 .certificate-action {
     display: grid;
     align-content: center;
@@ -1995,14 +2018,13 @@ body {
 }
 
 .certificate-action-state {
-    min-height: 92px;
-    padding: 14px;
+    min-height: auto;
+    padding: 0 0 0 12px;
     display: grid;
     align-content: center;
     gap: 5px;
-    border: 1px solid var(--ap-line);
-    border-radius: 8px;
-    background: #f8fafc;
+    border-left: 4px solid var(--ap-line);
+    background: transparent;
 }
 
 .certificate-action-state span,
@@ -2025,18 +2047,18 @@ body {
 }
 
 .certificate-action-state.ready {
-    border-color: rgba(25, 185, 120, 0.24);
-    background: rgba(25, 185, 120, 0.08);
+    border-color: var(--ap-green);
+    background: transparent;
 }
 
 .certificate-action-state.issuing {
-    border-color: rgba(245, 158, 11, 0.22);
-    background: rgba(245, 158, 11, 0.08);
+    border-color: var(--ap-amber);
+    background: transparent;
 }
 
 .certificate-action-state.waiting {
-    border-color: rgba(3, 1, 210, 0.12);
-    background: rgba(3, 1, 210, 0.04);
+    border-color: #94a3b8;
+    background: transparent;
 }
 
 .certificate-action a {

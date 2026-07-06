@@ -262,7 +262,7 @@ $ultimoCertificado = $listos[0] ?? null;
                                 </div>
                                 <h3><?= cert_e($item['nombre_evento']) ?></h3>
                                 <p><?= cert_e($item['descripcion'] ?? 'Evento registrado en SICA.') ?></p>
-                                <div class="event-meta">
+                                <div class="event-meta certificate-meta">
                                     <span><?= cert_e(substr((string)$item['hora_inicio'], 0, 5) . ' - ' . substr((string)$item['hora_fin'], 0, 5)) ?></span>
                                     <span><?= cert_e($item['nombre_auditorio'] . ' / Bloque ' . $item['bloque']) ?></span>
                                     <span>Asistencia: <?= cert_e($asistencia) ?></span>

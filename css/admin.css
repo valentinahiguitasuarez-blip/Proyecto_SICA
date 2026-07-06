@@ -1111,6 +1111,134 @@ body {
     background: #ffffff;
 }
 
+.admin-mail-filters {
+    grid-template-columns: minmax(260px, 1fr) minmax(180px, 0.35fr) auto auto;
+}
+
+.admin-mail-board {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-mail-card {
+    --mail-accent: var(--admin-blue);
+    --mail-soft: rgba(22, 93, 255, 0.08);
+    display: grid;
+    grid-template-columns: minmax(190px, 0.6fr) minmax(190px, 0.6fr) minmax(0, 1.2fr) 220px;
+    gap: 12px;
+    align-items: stretch;
+    padding: 14px;
+    border: 1px solid color-mix(in srgb, var(--mail-accent), transparent 76%);
+    border-radius: 8px;
+    background:
+        linear-gradient(90deg, var(--mail-soft), #ffffff 42%),
+        #ffffff;
+}
+
+.admin-mail-card.ready {
+    --mail-accent: var(--admin-green);
+    --mail-soft: rgba(18, 166, 120, 0.10);
+}
+
+.admin-mail-card.waiting {
+    --mail-accent: var(--admin-amber);
+    --mail-soft: rgba(217, 139, 9, 0.12);
+}
+
+.admin-mail-flow {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid var(--admin-line);
+}
+
+.admin-mail-flow span {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--mail-accent);
+    background: var(--mail-soft);
+    font-weight: 900;
+}
+
+.admin-mail-flow.complete span {
+    color: #ffffff;
+    background: var(--admin-green);
+}
+
+.admin-mail-flow strong,
+.admin-mail-flow small {
+    display: block;
+}
+
+.admin-mail-flow strong {
+    color: var(--admin-ink);
+    font-size: 14px;
+}
+
+.admin-mail-flow small {
+    margin-top: 4px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.admin-mail-content {
+    min-width: 0;
+    padding: 12px;
+}
+
+.admin-mail-content h3 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.admin-mail-content p:not(.admin-eyebrow) {
+    margin: 8px 0 12px;
+    color: var(--admin-muted);
+}
+
+.admin-mail-actions {
+    display: grid;
+    gap: 8px;
+    align-content: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.admin-mail-actions button {
+    min-height: 42px;
+    border: 0;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-weight: 900;
+    box-shadow: 0 10px 20px rgba(22, 93, 255, 0.14);
+}
+
+.admin-mail-actions button:first-of-type {
+    color: var(--admin-blue);
+    background: #ffffff;
+    border: 1px solid rgba(22, 93, 255, 0.22);
+    box-shadow: none;
+}
+
+.admin-mail-actions button:disabled {
+    cursor: not-allowed;
+    color: var(--admin-muted);
+    background: #eef2f7;
+    border: 0;
+    box-shadow: none;
+}
+
 @media (max-width: 1180px) {
     .admin-metrics,
     .quick-actions div {
@@ -1123,7 +1251,9 @@ body {
 
     .admin-user-filters,
     .admin-user-card,
-    .admin-reservation-card {
+    .admin-reservation-card,
+    .admin-mail-filters,
+    .admin-mail-card {
         grid-template-columns: 1fr;
     }
 

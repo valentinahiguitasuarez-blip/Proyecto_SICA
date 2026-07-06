@@ -313,7 +313,7 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
             <a href="<?= admin_s_h(app_url('admin/index.php')) ?>"><span>PC</span>Panel de Control</a>
             <a href="<?= admin_s_h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
             <a class="active" href="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes de Reserva</a>
-            <a href="<?= admin_s_h(app_url('admin/index.php#correos')) ?>"><span>CN</span>Correos y Notificaciones</a>
+            <a href="<?= admin_s_h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos y Notificaciones</a>
             <a href="<?= admin_s_h(app_url('admin/index.php#auditorios')) ?>"><span>AU</span>Auditorios</a>
             <a href="<?= admin_s_h(app_url('admin/index.php#reportes')) ?>"><span>RP</span>Reportes</a>
         </nav>

@@ -155,7 +155,7 @@ $totalReservas = max(1, array_sum($reservas));
             <a class="active" href="<?= h(app_url('admin/index.php')) ?>"><span>PC</span>Panel de Control</a>
             <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
             <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes de Reserva</a>
-            <a href="#correos"><span>CN</span>Correos y Notificaciones</a>
+            <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos y Notificaciones</a>
             <a href="#auditorios"><span>AU</span>Auditorios</a>
             <a href="#reportes"><span>RP</span>Reportes</a>
         </nav>
@@ -170,7 +170,7 @@ $totalReservas = max(1, array_sum($reservas));
                 <span>Gestiona usuarios, reservas de auditorios y correos de confirmacion.</span>
             </div>
             <div class="admin-top-actions">
-                <a href="#correos" aria-label="Correos pendientes">Correo <strong><?= h($stats['correos']) ?></strong></a>
+                <a href="<?= h(app_url('admin/correos.php')) ?>" aria-label="Correos pendientes">Correo <strong><?= h($stats['correos']) ?></strong></a>
                 <a href="#reservas" aria-label="Solicitudes pendientes">Reservas <strong><?= h($reservas['Pendiente']) ?></strong></a>
                 <a class="admin-logout" href="<?= h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
             </div>

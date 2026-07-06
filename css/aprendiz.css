@@ -1967,6 +1967,8 @@ body {
 }
 
 .certificate-card {
+    --certificate-accent: var(--ap-blue);
+    --certificate-soft: rgba(3, 1, 210, 0.06);
     display: grid;
     grid-template-columns: 76px minmax(0, 1fr) 230px;
     gap: 18px;
@@ -1974,17 +1976,27 @@ body {
     padding: 18px;
     border: 1px solid var(--ap-line);
     border-radius: 8px;
-    background: #ffffff;
+    background:
+        linear-gradient(90deg, var(--certificate-soft), #ffffff 34%),
+        #ffffff;
 }
 
 .certificate-card.ready {
+    --certificate-accent: var(--ap-green);
+    --certificate-soft: rgba(25, 185, 120, 0.1);
     border-color: rgba(25, 185, 120, 0.3);
-    background: linear-gradient(135deg, rgba(25, 185, 120, 0.08), #ffffff 38%);
 }
 
 .certificate-card.issuing {
+    --certificate-accent: var(--ap-amber);
+    --certificate-soft: rgba(245, 158, 11, 0.1);
     border-color: rgba(245, 158, 11, 0.28);
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), #ffffff 38%);
+}
+
+.certificate-card.waiting {
+    --certificate-accent: #64748b;
+    --certificate-soft: rgba(3, 1, 210, 0.06);
+    border-color: rgba(3, 1, 210, 0.14);
 }
 
 .certificate-date {
@@ -1993,8 +2005,8 @@ body {
     place-items: center;
     align-content: center;
     border-radius: 8px;
-    color: var(--ap-blue);
-    background: rgba(3, 1, 210, 0.08);
+    color: var(--certificate-accent);
+    background: color-mix(in srgb, var(--certificate-accent), transparent 88%);
     font-weight: 900;
 }
 
@@ -2059,7 +2071,7 @@ body {
     display: grid;
     align-content: center;
     gap: 5px;
-    border-left: 4px solid var(--ap-line);
+    border-left: 4px solid var(--certificate-accent);
     background: transparent;
 }
 
@@ -2083,17 +2095,17 @@ body {
 }
 
 .certificate-action-state.ready {
-    border-color: var(--ap-green);
+    border-color: var(--certificate-accent);
     background: transparent;
 }
 
 .certificate-action-state.issuing {
-    border-color: var(--ap-amber);
+    border-color: var(--certificate-accent);
     background: transparent;
 }
 
 .certificate-action-state.waiting {
-    border-color: #94a3b8;
+    border-color: var(--certificate-accent);
     background: transparent;
 }
 
@@ -2113,8 +2125,8 @@ body {
 
 .certificate-action a.primary {
     color: #ffffff;
-    background: var(--ap-blue);
-    box-shadow: 0 12px 24px rgba(3, 1, 210, 0.16);
+    background: var(--certificate-accent);
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--certificate-accent), transparent 78%);
 }
 
 .certificate-action a.secondary {

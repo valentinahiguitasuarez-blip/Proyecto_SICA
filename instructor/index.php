@@ -48,7 +48,10 @@ $participantesDestacados = $eventoDestacado
     </div>
     <div class="topbar-actions">
         <a class="top-action" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Nueva solicitud</a>
-        <a class="danger-btn" href="<?= instructor_h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
+        <a class="top-action logout-button" href="<?= instructor_h(app_url('login/logout.php')) ?>">
+            <span>SL</span>
+            Cerrar sesión
+        </a>
     </div>
 </header>
 

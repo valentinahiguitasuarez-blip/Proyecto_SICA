@@ -33,7 +33,11 @@ $participantes = instructor_rows(
 
 function instructor_pdf_text(string $value): string
 {
-    $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
+    $mapa = [
+        'á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ñ'=>'n','ü'=>'u',
+        'Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ñ'=>'N','Ü'=>'U',
+    ];
+    $value = strtr($value, $mapa);
     $value = preg_replace('/[^\x20-\x7E]/', '', $value) ?? $value;
     return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $value);
 }
@@ -46,25 +50,35 @@ if ($tipo === 'pdf') {
     $contentStreams = [];
     foreach ($chunks as $pageIndex => $chunk) {
         $lines = '';
-        $y = 690;
+        $y = 670;
         $indexBase = $pageIndex * 24;
+
+        // Header row in fixed columns
+        $lines .= "BT /F1 10 Tf 52 700 Td (" . instructor_pdf_text('N°') . ") Tj ET\n";
+        $lines .= "BT /F1 10 Tf 110 700 Td (" . instructor_pdf_text('Documento') . ") Tj ET\n";
+        $lines .= "BT /F1 10 Tf 260 700 Td (" . instructor_pdf_text('Nombre completo') . ") Tj ET\n";
+        $lines .= "BT /F1 10 Tf 500 700 Td (" . instructor_pdf_text('Asistencia') . ") Tj ET\n";
+        $y -= 20;
+
         foreach ($chunk as $localIndex => $p) {
             $nombre = trim((string)$p['nombre'] . ' ' . (string)$p['apellido']);
             $num = $indexBase + $localIndex + 1;
-            $text = sprintf('%02d  %s  %s  %s', $num, $p['id_documento'], $nombre, $p['asistencia']);
-            $lines .= "BT /F1 9 Tf 52 {$y} Td (" . instructor_pdf_text($text) . ") Tj ET\n";
-            $y -= 22;
+            $lines .= "BT /F1 9 Tf 52 {$y} Td (" . instructor_pdf_text((string)$num) . ") Tj ET\n";
+            $lines .= "BT /F1 9 Tf 110 {$y} Td (" . instructor_pdf_text((string)$p['id_documento']) . ") Tj ET\n";
+            $lines .= "BT /F1 9 Tf 260 {$y} Td (" . instructor_pdf_text($nombre) . ") Tj ET\n";
+            $lines .= "BT /F1 9 Tf 500 {$y} Td (" . instructor_pdf_text((string)$p['asistencia']) . ") Tj ET\n";
+            $y -= 18;
         }
 
         $title = 'Participantes - ' . (string)$evento['nombre_evento'];
         $stream = "q 0.96 0.98 1 rg 0 0 595 842 re f Q\n";
         $stream .= "q 1 1 1 rg 36 36 523 770 re f Q\n";
         $stream .= "q 0.09 0.36 1 rg 36 782 523 24 re f Q\n";
-        $stream .= "BT /F2 20 Tf 52 742 Td (" . instructor_pdf_text('SICA - Participantes registrados') . ") Tj ET\n";
-        $stream .= "BT /F1 11 Tf 52 720 Td (" . instructor_pdf_text($title) . ") Tj ET\n";
-        // Page X of Y at top-right
-        $stream .= "BT /F1 10 Tf 440 742 Td (" . instructor_pdf_text('Página ' . ($pageIndex + 1) . ' de ' . $pageCount) . ") Tj ET\n";
-        $stream .= "BT /F1 10 Tf 52 704 Td (" . instructor_pdf_text('Total: ' . $total) . ") Tj ET\n";
+        $stream .= "1 1 1 rg BT /F2 20 Tf 52 742 Td (" . instructor_pdf_text('SICA - Participantes registrados') . ") Tj ET\n";
+        $stream .= "1 1 1 rg BT /F1 11 Tf 52 720 Td (" . instructor_pdf_text($title) . ") Tj ET\n";
+        $stream .= "1 1 1 rg BT /F1 10 Tf 440 742 Td (" . instructor_pdf_text('Pagina ' . ($pageIndex + 1) . ' de ' . $pageCount) . ") Tj ET\n";
+        $stream .= "1 1 1 rg BT /F1 10 Tf 52 704 Td (" . instructor_pdf_text('Total: ' . $total) . ") Tj ET\n";
+        $stream .= "0 0 0 rg\n";
         $stream .= $lines;
 
         $contentStreams[] = $stream;

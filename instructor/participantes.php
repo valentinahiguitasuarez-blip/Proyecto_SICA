@@ -161,6 +161,10 @@ $participantes = $evento ? instructor_rows(
 // search term for available learners
 $buscar = trim((string)($_GET['buscar'] ?? ''));
 $vista = (string)($_GET['vista'] ?? 'registrados');
+$baseParams = 'evento=' . (int)$selectedId;
+if ($buscar !== '') {
+    $baseParams .= '&buscar=' . rawurlencode($buscar);
+}
 
 $aprendicesDisponibles = [];
 if ($evento) {
@@ -224,12 +228,15 @@ if ($evento) {
             </select>
         </form>
         <!-- Tabs -->
-        <div class="panel-head" style="margin-top:12px;">
-            <nav class="instructor-tabs">
-                <?php $baseParams = 'evento=' . (int)($evento['id_evento'] ?? 0); ?>
-                <a class="<?= $vista === 'registrados' ? 'active' : '' ?>" href="<?= instructor_h(app_url('instructor/participantes.php?' . $baseParams . '&vista=registrados')) ?>">Ver registrados</a>
-                <a class="<?= $vista === 'agregar' ? 'active' : '' ?>" href="<?= instructor_h(app_url('instructor/participantes.php?' . $baseParams . '&vista=agregar' . ($buscar !== '' ? '&buscar=' . rawurlencode($buscar) : ''))) ?>">Agregar aprendices</a>
-            </nav>
+        <div class="panel-head">
+            <div>
+                <p class="eyebrow">Vista</p>
+                <h2>Opciones</h2>
+            </div>
+            <div class="topbar-actions">
+                <a class="<?= $vista === 'registrados' ? 'primary-btn' : 'secondary-btn' ?>" href="<?= instructor_h(app_url('instructor/participantes.php?' . $baseParams . '&vista=registrados')) ?>">Ver registrados</a>
+                <a class="<?= $vista === 'agregar' ? 'primary-btn' : 'secondary-btn' ?>" href="<?= instructor_h(app_url('instructor/participantes.php?' . $baseParams . '&vista=agregar' . ($buscar !== '' ? '&buscar=' . rawurlencode($buscar) : ''))) ?>">Agregar aprendices</a>
+            </div>
         </div>
 
         <?php if ($vista === 'registrados'): ?>
@@ -241,7 +248,7 @@ if ($evento) {
                 $pendientes = count(array_filter($participantes, function($p){ return (string)$p['asistencia'] === 'Pendiente'; }));
                 $confirmadas = $totalRegs - $pendientes;
 
-                // Partition by hora: arrived (hora not null) and not arrived (asistencia Pendiente and hora null)
+                // Partition by hora: arrived (hora not null) and not arrived (hora null or pendiente)
                 $arrived = array_filter($participantes, function($p){ return !empty($p['hora']); });
                 $notArrived = array_filter($participantes, function($p){ return empty($p['hora']) || (string)$p['asistencia'] === 'Pendiente'; });
 
@@ -254,11 +261,19 @@ if ($evento) {
             ?>
 
             <!-- Progress bar -->
-            <div style="margin-bottom:12px;">
+            <div class="panel">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Asistencia</p>
+                        <h2>Resumen de asistencia</h2>
+                    </div>
+                </div>
                 <?php $pct = $totalRegs > 0 ? (int)round(($confirmadas / $totalRegs) * 100) : 0; ?>
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                    <div><strong><?= instructor_h($confirmadas) ?></strong> de <?= instructor_h($totalRegs) ?> asistieron (<?= instructor_h($pct) ?>%)</div>
-                    <div style="flex:1; margin-left:16px; background:#eee; height:10px; border-radius:6px; overflow:hidden;"><div style="height:100%; width:<?= instructor_h((string)$pct) ?>%; background:var(--ins-green, #10b981);"></div></div>
+                <div>
+                    <strong><?= instructor_h($confirmadas) ?> de <?= instructor_h($totalRegs) ?> asistieron (<?= instructor_h($pct) ?>%)</strong>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: <?= instructor_h((string)$pct) ?>%;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -273,7 +288,7 @@ if ($evento) {
                         <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?> · Llegada <?= instructor_h(substr((string)$participante['hora'],0,5)) ?></small>
                     </div>
                     <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
-                    <form method="post" style="margin-left:12px;" onsubmit="return confirm('Eliminar participante?');">
+                    <form method="post" onsubmit="return confirm('Eliminar participante?');">
                         <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
                         <input type="hidden" name="action" value="remove_participant">
                         <input type="hidden" name="id_preregistro" value="<?= instructor_h($participante['id_preregistro']) ?>">
@@ -284,7 +299,12 @@ if ($evento) {
             <?php endforeach; ?>
 
             <?php if (!empty($notArrived)): ?>
-                <h3 style="margin-top:12px;">Aún no han llegado</h3>
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Aún no han llegado</p>
+                        <h2>Participantes pendientes</h2>
+                    </div>
+                </div>
                 <?php foreach ($notArrived as $participante): $counter++; $full = trim((string)$participante['nombre'] . ' ' . (string)$participante['apellido']); ?>
                     <article class="participant-row">
                         <b><?= instructor_h($counter) ?></b>
@@ -293,7 +313,7 @@ if ($evento) {
                             <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?></small>
                         </div>
                         <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
-                        <form method="post" style="margin-left:12px;" onsubmit="return confirm('Eliminar participante?');">
+                        <form method="post" onsubmit="return confirm('Eliminar participante?');">
                             <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
                             <input type="hidden" name="action" value="remove_participant">
                             <input type="hidden" name="id_preregistro" value="<?= instructor_h($participante['id_preregistro']) ?>">
@@ -326,12 +346,12 @@ if ($evento) {
             </div>
         </div>
         <?php if ($vista === 'agregar'): ?>
-            <div style="margin-bottom:12px;">
+            <div>
                 <form method="get" class="calendar-toolbar">
                     <input type="hidden" name="evento" value="<?= instructor_h($evento['id_evento']) ?>">
                     <input type="hidden" name="vista" value="agregar">
                     <input type="text" name="buscar" placeholder="Buscar por nombre, apellido, documento o ficha" value="<?= instructor_h($buscar) ?>">
-                    <button type="submit">Buscar</button>
+                    <button class="secondary-btn" type="submit">Buscar</button>
                 </form>
             </div>
             <div class="available-learners">
@@ -349,37 +369,44 @@ if ($evento) {
                     ?>
                     <?php foreach ($groups as $ficha => $members): ?>
                         <?php $first = $members[0]; $fichaLabel = $ficha === 'sin_ficha' ? 'Sin ficha' : $ficha; ?>
-                        <div style="border:1px solid #eee; padding:8px; margin-bottom:8px; border-radius:6px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <div><strong>Ficha <?= instructor_h($fichaLabel) ?></strong><div style="font-size:13px;color:#666;"><?= instructor_h($first['nombre_programa'] ?? 'Programa no asignado') ?></div></div>
-                                <form method="post" onsubmit="return confirm('Agregar toda la ficha al evento?');">
-                                    <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
-                                    <input type="hidden" name="action" value="add_ficha">
-                                    <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
-                                    <input type="hidden" name="id_ficha" value="<?= instructor_h($ficha) ?>">
-                                    <button class="secondary-btn" type="submit">Agregar toda la ficha</button>
-                                </form>
+                        <section class="panel">
+                            <div class="panel-head">
+                                <div>
+                                    <p class="eyebrow">Ficha</p>
+                                    <h2>Ficha <?= instructor_h($fichaLabel) ?></h2>
+                                    <span class="panel-subtitle"><?= instructor_h($first['nombre_programa'] ?? 'Programa no asignado') ?></span>
+                                </div>
+                                <div class="topbar-actions">
+                                    <form method="post" onsubmit="return confirm('Agregar toda la ficha al evento?');">
+                                        <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                                        <input type="hidden" name="action" value="add_ficha">
+                                        <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                                        <input type="hidden" name="id_ficha" value="<?= instructor_h($ficha) ?>">
+                                        <button class="secondary-btn" type="submit">Agregar toda la ficha</button>
+                                    </form>
+                                </div>
                             </div>
-
-                            <?php foreach ($members as $aprendiz): $full = trim((string)$aprendiz['nombre'] . ' ' . (string)$aprendiz['apellido']); ?>
-                                <form class="available-learner-row" method="post">
-                                    <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
-                                    <input type="hidden" name="action" value="add_participant">
-                                    <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
-                                    <input type="hidden" name="id_documento" value="<?= instructor_h($aprendiz['id_documento']) ?>">
-                                    <b><?= instructor_h(mb_strtoupper(mb_substr((string)$aprendiz['nombre'], 0, 1, 'UTF-8') . mb_substr((string)$aprendiz['apellido'], 0, 1, 'UTF-8'), 'UTF-8')) ?></b>
-                                    <div>
-                                        <strong><?= instructor_h($full !== '' ? $full : 'Aprendiz SICA') ?></strong>
-                                        <small>
-                                            Ficha <?= instructor_h($aprendiz['id_ficha'] ?? 'N/A') ?>
-                                            · <?= instructor_h($aprendiz['nombre_programa'] ?? 'Programa no asignado') ?>
-                                            · <?= instructor_h($aprendiz['correo']) ?>
-                                        </small>
-                                    </div>
-                                    <button class="secondary-btn" type="submit">Agregar</button>
-                                </form>
-                            <?php endforeach; ?>
-                        </div>
+                            <div class="available-learners">
+                                <?php foreach ($members as $aprendiz): $full = trim((string)$aprendiz['nombre'] . ' ' . (string)$aprendiz['apellido']); ?>
+                                    <form class="available-learner-row" method="post">
+                                        <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                                        <input type="hidden" name="action" value="add_participant">
+                                        <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                                        <input type="hidden" name="id_documento" value="<?= instructor_h($aprendiz['id_documento']) ?>">
+                                        <b><?= instructor_h(mb_strtoupper(mb_substr((string)$aprendiz['nombre'], 0, 1, 'UTF-8') . mb_substr((string)$aprendiz['apellido'], 0, 1, 'UTF-8'), 'UTF-8')) ?></b>
+                                        <div>
+                                            <strong><?= instructor_h($full !== '' ? $full : 'Aprendiz SICA') ?></strong>
+                                            <small>
+                                                Ficha <?= instructor_h($aprendiz['id_ficha'] ?? 'N/A') ?>
+                                                · <?= instructor_h($aprendiz['nombre_programa'] ?? 'Programa no asignado') ?>
+                                                · <?= instructor_h($aprendiz['correo']) ?>
+                                            </small>
+                                        </div>
+                                        <button class="secondary-btn" type="submit">Agregar</button>
+                                    </form>
+                                <?php endforeach; ?>
+                            </div>
+                        </section>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>

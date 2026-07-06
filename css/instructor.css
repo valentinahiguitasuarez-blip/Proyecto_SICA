@@ -370,6 +370,26 @@ body {
     box-shadow: var(--ins-shadow);
 }
 
+.top-action.logout-button {
+    padding: 0 18px;
+    min-height: 48px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #165dff, #0f47e2);
+}
+
+.top-action.logout-button span {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+
 .hero-card,
 .dashboard-hero,
 .next-event-card,
@@ -1285,6 +1305,22 @@ body {
 .status-pill.muted {
     color: var(--ins-muted);
     background: #eef3f8;
+}
+
+.progress-bar {
+    position: relative;
+    height: 14px;
+    border-radius: 8px;
+    background: #eef3f8;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--ins-blue);
+    border-radius: 8px 0 0 8px;
+    transition: width 0.3s ease;
 }
 
 .detail-grid {

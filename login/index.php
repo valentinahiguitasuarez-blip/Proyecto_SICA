@@ -121,7 +121,7 @@ if (empty($_SESSION['csrf_login'])) {
                         <svg viewBox="0 0 24 24" width="20" height="20">
                             <path d="M17 9V7A5 5 0 0 0 7 7v2H5.75A1.75 1.75 0 0 0 4 10.75v8.5C4 20.22 4.78 21 5.75 21h12.5c.97 0 1.75-.78 1.75-1.75v-8.5C20 9.78 19.22 9 18.25 9H17Zm-8.5 0V7a3.5 3.5 0 1 1 7 0v2h-7Z" fill="currentColor"/>
                         </svg>
-                    </span><input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contrase&ntilde;a" required minlength="8" maxlength="72" autocomplete="new-password" readonly data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"><button type="button" class="password-eye" aria-label="Mostrar contrase&ntilde;a">
+                    </span><input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contrase&ntilde;a" required maxlength="72" autocomplete="new-password" readonly data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"><button type="button" class="password-eye" aria-label="Mostrar contrase&ntilde;a">
                         <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
                             <path d="M12 5.5c5.2 0 8.48 4.4 9.55 6.1a.75.75 0 0 1 0 .8c-1.07 1.7-4.35 6.1-9.55 6.1s-8.48-4.4-9.55-6.1a.75.75 0 0 1 0-.8C3.52 9.9 6.8 5.5 12 5.5Zm0 2c-3.8 0-6.43 3-7.5 4.5 1.07 1.5 3.7 4.5 7.5 4.5s6.43-3 7.5-4.5C18.43 10.5 15.8 7.5 12 7.5Zm0 1.75a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5Z" fill="currentColor"/>
                         </svg>

@@ -47,8 +47,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
 
         $fotoPerfil = null;
-        if (!empty($_FILES['foto_perfil']['name'])) {
-            if (($_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        if (isset($_FILES['foto_perfil']['tmp_name']) && is_uploaded_file((string)$_FILES['foto_perfil']['tmp_name'])) {
+            $error = $_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE;
+            if ($error !== UPLOAD_ERR_OK) {
                 throw new RuntimeException('No fue posible cargar la foto.');
             }
             if ((int)($_FILES['foto_perfil']['size'] ?? 0) > 2 * 1024 * 1024) {

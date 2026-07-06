@@ -195,56 +195,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const feedback = passwordInput.parentElement.querySelector('.invalid-feedback');
         const value = passwordInput.value;
-        const rules = {
-            length: value.length >= 8 && value.length <= 72,
-            upper: /[A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00dc\u00d1]/.test(value),
-            lower: /[a-z\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1]/.test(value),
-            number: /\d/.test(value),
-            special: /[^A-Za-z0-9\u00c1\u00c9\u00cd\u00d3\u00da\u00dc\u00d1\u00e1\u00e9\u00ed\u00f3\u00fa\u00fc\u00f1\s]/.test(value)
-        };
-        const missing = [];
-        let message = 'La contrase\u00f1a es segura.';
+        let message = 'La contraseña es válida.';
 
         passwordInput.setCustomValidity('');
 
-        if (value.length > 72) {
-            message = 'La contrase\u00f1a no puede superar 72 caracteres.';
+        if (value.length === 0) {
+            message = 'La contraseña no puede estar vacía.';
             passwordInput.setCustomValidity(message);
-        } else if (value.length > 0) {
-            if (!rules.length) {
-                missing.push('minimo 8 caracteres');
-            }
-            if (!rules.upper) {
-                missing.push('una mayuscula');
-            }
-            if (!rules.lower) {
-                missing.push('una minuscula');
-            }
-            if (!rules.number) {
-                missing.push('un numero');
-            }
-            if (!rules.special) {
-                missing.push('un caracter especial');
-            }
-
-            if (missing.length > 0) {
-                message = 'Falta ' + missing.join(', ') + '.';
-                passwordInput.setCustomValidity(message);
-            }
-        } else {
-            message = 'La contrase\u00f1a debe tener minimo 8 caracteres, mayuscula, minuscula, numero y caracter especial.';
+        } else if (value.length > 72) {
+            message = 'La contraseña no puede superar 72 caracteres.';
             passwordInput.setCustomValidity(message);
         }
 
         if (passwordRules) {
-            const completed = Object.keys(rules).filter(function (ruleName) {
-                return rules[ruleName];
-            }).length;
             const strengthBar = passwordRules.querySelector('[data-strength-bar]');
             const strengthMessage = passwordRules.querySelector('[data-strength-message]');
-            const percent = value.length === 0 ? 0 : (completed / Object.keys(rules).length) * 100;
+            const percent = value.length === 0 ? 0 : Math.min(100, (value.length / 72) * 100);
 
-            passwordRules.dataset.strength = missing.length === 0 && value.length > 0 ? 'secure' : (completed >= 3 ? 'medium' : 'low');
+            passwordRules.dataset.strength = value.length === 0 ? 'low' : 'medium';
 
             if (strengthBar) {
                 strengthBar.style.width = percent + '%';
@@ -252,22 +220,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (strengthMessage) {
                 if (value.length === 0) {
-                    strengthMessage.textContent = 'Usa 8 caracteres con mayuscula, minuscula, numero y simbolo.';
-                } else if (missing.length === 0) {
-                    strengthMessage.textContent = 'Contrasena segura.';
+                    strengthMessage.textContent = 'Ingresa tu contraseña.';
                 } else {
-                    strengthMessage.textContent = 'Falta ' + missing.slice(0, 2).join(' y ') + (missing.length > 2 ? '...' : '.');
+                    strengthMessage.textContent = 'Contraseña lista para iniciar sesión.';
                 }
             }
-
-            Object.keys(rules).forEach(function (ruleName) {
-                const rule = passwordRules.querySelector('[data-rule="' + ruleName + '"]');
-                if (!rule) {
-                    return;
-                }
-
-                rule.classList.toggle('is-complete', rules[ruleName]);
-            });
         }
 
         if (feedback) {

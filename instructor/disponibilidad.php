@@ -29,23 +29,47 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $idAuditorio = (int)($_POST['id_auditorio'] ?? 0);
     $idTipo = (int)($_POST['id_tipo_evento'] ?? 0);
     $fecha = (string)($_POST['fecha_evento'] ?? '');
-    $inicio = (string)($_POST['hora_inicio'] ?? '');
-    $fin = (string)($_POST['hora_fin'] ?? '');
+    $inicioRaw = trim((string)($_POST['hora_inicio'] ?? ''));
+    $finRaw = trim((string)($_POST['hora_fin'] ?? ''));
+    $inicioPeriodo = strtoupper(trim((string)($_POST['inicio_periodo'] ?? 'AM')));
+    $finPeriodo = strtoupper(trim((string)($_POST['fin_periodo'] ?? 'AM')));
     $titulo = trim((string)($_POST['nombre_evento'] ?? ''));
     $descripcion = trim((string)($_POST['descripcion'] ?? ''));
     $today = date('Y-m-d');
-
     $error = '';
+
+    $convertTo24Hour = static function (string $time, string $period): ?string {
+            if (!preg_match('/^(0?[1-9]|1[0-2]):([0-5][0-9])$/', $time, $matches)) {
+                return null;
+            }
+            $hour = (int)$matches[1];
+            $minute = $matches[2];
+
+            if ($period === 'AM') {
+                $hour = $hour === 12 ? 0 : $hour;
+            } elseif ($period === 'PM') {
+                $hour = $hour === 12 ? 12 : $hour + 12;
+            } else {
+                return null;
+            }
+
+            return sprintf('%02d:%s', $hour, $minute);
+        };
     if (!hash_equals((string)$_SESSION['csrf_instructor_request'], $csrf)) {
         $error = 'La sesion expiro. Recarga la pagina e intenta de nuevo.';
     } elseif ($idAuditorio <= 0 || $idTipo <= 0 || $titulo === '' || strlen($titulo) > 100) {
         $error = 'Completa el auditorio, tipo de evento y titulo.';
     } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) || $fecha < $today) {
         $error = 'Selecciona una fecha valida desde hoy en adelante.';
-    } elseif (!preg_match('/^\d{2}:\d{2}$/', $inicio) || !preg_match('/^\d{2}:\d{2}$/', $fin) || $inicio >= $fin) {
-        $error = 'La hora final debe ser mayor que la hora inicial.';
-    } elseif (strlen($descripcion) > 150) {
-        $error = 'La descripcion no puede superar 150 caracteres.';
+    } else {
+        $inicio = $convertTo24Hour($inicioRaw, $inicioPeriodo);
+        $fin = $convertTo24Hour($finRaw, $finPeriodo);
+
+        if ($inicio === null || $fin === null) {
+            $error = 'El formato de hora no es valido. Usa HH:MM y selecciona AM o PM.';
+        } elseif ($inicio >= $fin) {
+            $error = 'La hora final debe ser mayor que la hora inicial.';
+        }
     }
 
     if ($error === '') {
@@ -61,7 +85,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             [':auditorio' => $idAuditorio, ':fecha' => $fecha, ':inicio' => $inicio . ':00', ':fin' => $fin . ':00']
         );
         if ($overlap > 0) {
-            $error = 'Ese horario ya está ocupado por un evento aprobado o una solicitud pendiente y no puede modificarse.';
+            $error = 'Horario no se encuentra disponible.';
         }
     }
 
@@ -110,14 +134,16 @@ $eventsByDay = [];
 foreach ($events as $event) {
     $eventsByDay[(string)$event['fecha_evento']][] = $event;
 }
-// Build a list of dates that have an approved (Activo) event
-$occupiedDates = [];
-foreach ($eventsByDay as $d => $evs) {
-    foreach ($evs as $e) {
-        if (trim((string)$e['estado']) === 'Activo') { $occupiedDates[$d] = true; break; }
+// Determine whether the selected date already has an approved (Activo) event.
+$dateHasActive = false;
+if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
+    foreach ($eventsByDay[$prefillDate] as $event) {
+        if (trim((string)$event['estado']) === 'Activo') {
+            $dateHasActive = true;
+            break;
+        }
     }
 }
-$dateOccupied = ($prefillDate !== '' && isset($occupiedDates[$prefillDate]));
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 <?php instructor_layout_start('disponibilidad'); ?>
@@ -167,23 +193,13 @@ $dateOccupied = ($prefillDate !== '' && isset($occupiedDates[$prefillDate]));
                 <div class="calendar-cell<?= empty($events) ? ' available' : '' ?>">
                     <div class="calendar-date">
                         <span><?= instructor_h($day) ?></span>
-                        <?php if (! $hasActive): ?>
-                            <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
-                        <?php else: ?>
-                            <span class="calendar-occupied" title="Este día tiene un evento aprobado.">No disp.</span>
-                        <?php endif; ?>
+                        <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
                     </div>
                     <?php foreach ($events as $event): ?>
                         <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : 'busy'; ?>
-                        <?php if (! $hasActive): ?>
-                            <a class="calendar-event <?= instructor_h($class) ?>" title="<?= instructor_h($event['nombre_evento']) ?>" href="<?= instructor_h(app_url('instructor/detalle_solicitud.php?id=' . (int)$event['id_evento'])) ?>">
-                                <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
-                            </a>
-                        <?php else: ?>
-                            <span class="calendar-event <?= instructor_h($class) ?>" title="<?= instructor_h($event['nombre_evento']) ?>" aria-hidden="true">
-                                <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
-                            </span>
-                        <?php endif; ?>
+                        <span class="calendar-event <?= instructor_h($class) ?>" title="<?= instructor_h($event['nombre_evento']) ?>" aria-hidden="true">
+                            <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
+                        </span>
                     <?php endforeach; ?>
                 </div>
             <?php endfor; ?>
@@ -197,28 +213,32 @@ $dateOccupied = ($prefillDate !== '' && isset($occupiedDates[$prefillDate]));
                 <h2>Separar auditorio</h2>
             </div>
         </div>
-        <form class="form-grid" method="post">
+        <form class="form-grid" method="post" novalidate>
             <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_instructor_request']) ?>">
-            <?php if ($dateOccupied): ?>
-                <div class="form-message danger">La fecha seleccionada (<?= instructor_h($prefillDate) ?>) ya tiene un evento aprobado. No es posible crear ni modificar solicitudes para ese día.</div>
-                <label class="wide"><span>Auditorio</span><select name="id_auditorio" disabled><?php foreach ($auditorios as $auditorio): ?><option value="<?= instructor_h($auditorio['id_auditorio']) ?>" <?= (int)$auditorio['id_auditorio'] === $selectedAuditorio ? 'selected' : '' ?>><?= instructor_h($auditorio['nombre_auditorio']) ?> - capacidad <?= instructor_h($auditorio['capacidad']) ?></option><?php endforeach; ?></select></label>
-                <label><span>Fecha</span><input type="date" name="fecha_evento" min="<?= instructor_h(date('Y-m-d')) ?>" value="<?= instructor_h($prefillDate) ?>" disabled></label>
-                <label><span>Tipo</span><select name="id_tipo_evento" disabled><?php foreach ($tipos as $tipo): ?><option value="<?= instructor_h($tipo['id_tipo_evento']) ?>"><?= instructor_h($tipo['nombre_tipo']) ?></option><?php endforeach; ?></select></label>
-                <label><span>Hora inicio</span><input type="time" name="hora_inicio" value="08:00" disabled></label>
-                <label><span>Hora fin</span><input type="time" name="hora_fin" value="10:00" disabled></label>
-                <label class="wide"><span>Titulo del evento</span><input type="text" name="nombre_evento" maxlength="100" placeholder="Ej: Taller de orientacion" disabled></label>
-                <label class="wide"><span>Descripcion</span><textarea name="descripcion" maxlength="150" placeholder="Cuéntanos el objetivo del evento" disabled></textarea></label>
-                <button class="primary-btn wide" type="button" disabled>No disponible</button>
-            <?php else: ?>
-                <label class="wide"><span>Auditorio</span><select name="id_auditorio" required><?php foreach ($auditorios as $auditorio): ?><option value="<?= instructor_h($auditorio['id_auditorio']) ?>" <?= (int)$auditorio['id_auditorio'] === $selectedAuditorio ? 'selected' : '' ?>><?= instructor_h($auditorio['nombre_auditorio']) ?> - capacidad <?= instructor_h($auditorio['capacidad']) ?></option><?php endforeach; ?></select></label>
-                <label><span>Fecha</span><input type="date" name="fecha_evento" min="<?= instructor_h(date('Y-m-d')) ?>" value="<?= instructor_h($prefillDate) ?>" required></label>
-                <label><span>Tipo</span><select name="id_tipo_evento" required><?php foreach ($tipos as $tipo): ?><option value="<?= instructor_h($tipo['id_tipo_evento']) ?>"><?= instructor_h($tipo['nombre_tipo']) ?></option><?php endforeach; ?></select></label>
-                <label><span>Hora inicio</span><input type="time" name="hora_inicio" value="08:00" required></label>
-                <label><span>Hora fin</span><input type="time" name="hora_fin" value="10:00" required></label>
-                <label class="wide"><span>Titulo del evento</span><input type="text" name="nombre_evento" maxlength="100" required placeholder="Ej: Taller de orientacion"></label>
-                <label class="wide"><span>Descripcion</span><textarea name="descripcion" maxlength="150" placeholder="Cuéntanos el objetivo del evento"></textarea></label>
-                <button class="primary-btn wide" type="submit">Enviar solicitud</button>
-            <?php endif; ?>
+            <label class="wide"><span>Auditorio</span><select name="id_auditorio" required><?php foreach ($auditorios as $auditorio): ?><option value="<?= instructor_h($auditorio['id_auditorio']) ?>" <?= (int)$auditorio['id_auditorio'] === $selectedAuditorio ? 'selected' : '' ?>><?= instructor_h($auditorio['nombre_auditorio']) ?> - capacidad <?= instructor_h($auditorio['capacidad']) ?></option><?php endforeach; ?></select></label>
+            <label><span>Fecha</span><input type="date" name="fecha_evento" min="<?= instructor_h(date('Y-m-d')) ?>" value="<?= instructor_h($prefillDate) ?>" required></label>
+            <label><span>Tipo</span><select name="id_tipo_evento" required><?php foreach ($tipos as $tipo): ?><option value="<?= instructor_h($tipo['id_tipo_evento']) ?>"><?= instructor_h($tipo['nombre_tipo']) ?></option><?php endforeach; ?></select></label>
+            <label><span>Hora inicio</span>
+                <div class="field-row">
+                    <input type="text" name="hora_inicio" placeholder="8:00" inputmode="numeric" title="Ingresa la hora en formato HH:MM, por ejemplo 8:00" required>
+                    <select name="inicio_periodo" required>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </label>
+            <label><span>Hora fin</span>
+                <div class="field-row">
+                    <input type="text" name="hora_fin" placeholder="10:00" inputmode="numeric" title="Ingresa la hora en formato HH:MM, por ejemplo 10:00" required>
+                    <select name="fin_periodo" required>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </label>
+            <label class="wide"><span>Titulo del evento</span><input type="text" name="nombre_evento" maxlength="100" required placeholder="Ej: Taller de orientacion"></label>
+            <label class="wide"><span>Descripcion</span><textarea name="descripcion" maxlength="150" placeholder="Cuéntanos el objetivo del evento"></textarea></label>
+            <button class="primary-btn wide" type="submit">Enviar solicitud</button>
         </form>
     </aside>
 </section>

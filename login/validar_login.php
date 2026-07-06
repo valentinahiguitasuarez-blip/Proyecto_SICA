@@ -48,15 +48,8 @@ if (strlen($correo) > 60 || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
     failLogin('Ingresa un correo valido.', $correo);
 }
 
-if (
-    strlen($contrasena) < 8
-    || strlen($contrasena) > 72
-    || !preg_match('/[A-ZÁÉÍÓÚÜÑ]/u', $contrasena)
-    || !preg_match('/[a-záéíóúüñ]/u', $contrasena)
-    || !preg_match('/\d/', $contrasena)
-    || !preg_match('/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]/u', $contrasena)
-) {
-    failLogin('La contrasena debe tener minimo 8 caracteres, una mayuscula, una minuscula, un numero y un caracter especial.', $correo);
+if (strlen($contrasena) > 72) {
+    failLogin('La contrasena no puede superar 72 caracteres.', $correo);
 }
 
 $sql = 'SELECT u.id_documento, u.nombre, u.apellido, u.correo, u.contrasena, u.id_rol, u.foto_perfil,

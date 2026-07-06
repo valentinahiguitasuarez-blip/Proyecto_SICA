@@ -214,7 +214,7 @@ function instructor_step_class(array $step, string $estado): string
     /* Status pill overrides - keep Pendientes amber, style Activos as purple */
     .mis-solicitudes .status-pill { padding:8px 12px; border-radius:999px; font-weight:900; text-decoration:none; }
     .mis-solicitudes .status-pill.pending { background: var(--ins-amber-soft); color: var(--ins-amber); }
-    .mis-solicitudes .status-pill.ok { background: #f4f3ff; color: #5b21b6; }
+    .mis-solicitudes .status-pill.ok { background: var(--ins-green-soft); color: var(--ins-green); }
     .mis-solicitudes .status-pill.danger { background: var(--ins-red-soft); color: var(--ins-red); }
 
     /* Metric tile override: keep Pendientes amber, set Activos (navy) to purple on this page */

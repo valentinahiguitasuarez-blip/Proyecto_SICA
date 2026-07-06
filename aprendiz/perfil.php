@@ -109,8 +109,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     throw new RuntimeException('correo_duplicado');
                 }
 
-                if (!empty($_FILES['foto_perfil']['name'])) {
-                    if (($_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                if (isset($_FILES['foto_perfil']) && ($_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                    $error = (int)($_FILES['foto_perfil']['error'] ?? UPLOAD_ERR_NO_FILE);
+                    if ($error !== UPLOAD_ERR_OK) {
+                        if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+                            throw new RuntimeException('La foto no puede superar 2 MB.');
+                        }
+
+                        throw new RuntimeException('No fue posible cargar la foto.');
+                    }
+
+                    $tmpName = (string)($_FILES['foto_perfil']['tmp_name'] ?? '');
+                    if ($tmpName === '' || !is_uploaded_file($tmpName)) {
                         throw new RuntimeException('No fue posible cargar la foto.');
                     }
 
@@ -118,7 +128,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                         throw new RuntimeException('La foto no puede superar 2 MB.');
                     }
 
-                    $tmpName = (string)($_FILES['foto_perfil']['tmp_name'] ?? '');
                     $finfo = new finfo(FILEINFO_MIME_TYPE);
                     $mime = (string)$finfo->file($tmpName);
                     $extensiones = [
@@ -486,12 +495,33 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
     const setError = (name, message = '') => {
         const target = form.querySelector(`[data-error-for="${name}"]`);
         const field = fields[name];
+
         if (target) {
             target.textContent = message;
         }
+
         if (field) {
             field.classList.toggle('is-invalid', message !== '');
         }
+    };
+
+    const validateFile = () => {
+        const input = fields.foto_perfil;
+        if (!input || !input.files || input.files.length === 0) {
+            setError('foto_perfil');
+            return true;
+        }
+
+        const file = input.files[0];
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (!allowedTypes.includes(file.type) || file.size > 2 * 1024 * 1024) {
+            setError('foto_perfil', messages.foto_perfil);
+            return false;
+        }
+
+        setError('foto_perfil');
+        return true;
     };
 
     const validate = () => {
@@ -501,7 +531,6 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
         const correo = fields.correo.value.trim();
         const telefono = fields.telefono.value.trim();
         const ficha = fields.id_ficha.value;
-        const foto = fields.foto_perfil.files[0];
 
         if (nombre.length < 2 || nombre.length > 50 || !namePattern.test(nombre)) {
             setError('nombre', messages.nombre);
@@ -538,28 +567,27 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
             setError('id_ficha');
         }
 
-        if (foto) {
-            const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-            if (!allowed.includes(foto.type) || foto.size > 2 * 1024 * 1024) {
-                setError('foto_perfil', messages.foto_perfil);
-                valid = false;
-            } else {
-                setError('foto_perfil');
-            }
-        } else {
-            setError('foto_perfil');
+        if (!validateFile()) {
+            valid = false;
         }
 
-        submitButton.disabled = !valid;
+        if (submitButton) {
+            submitButton.disabled = !valid;
+        }
+
         return valid;
     };
 
-    ['input', 'change'].forEach((eventName) => {
-        form.addEventListener(eventName, (event) => {
-            if (event.target.matches('input, select')) {
-                validate();
-            }
-        });
+    form.addEventListener('input', (event) => {
+        if (event.target.matches('input, select')) {
+            validate();
+        }
+    });
+
+    form.addEventListener('change', (event) => {
+        if (event.target.matches('input, select')) {
+            validate();
+        }
     });
 
     form.addEventListener('submit', (event) => {

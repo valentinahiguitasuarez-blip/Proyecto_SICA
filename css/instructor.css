@@ -1182,10 +1182,15 @@ body {
 
 /* Truncate long event titles so they don't overflow calendar cells */
 .calendar-event {
-    white-space: nowrap;
+    /* Allow event title to wrap up to 2 lines, then truncate with ellipsis */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
     text-overflow: ellipsis;
+    word-break: break-word;
     max-width: 100%;
+    white-space: normal;
 }
 
 @media (max-width: 640px) {

@@ -140,14 +140,20 @@ function instructor_layout_end(): void
 function instructor_status_class(string $estado): string
 {
     $estado = mb_strtolower($estado, 'UTF-8');
-    if (str_contains($estado, 'activo') || str_contains($estado, 'aprob')) {
+    if (str_contains($estado, 'final') || str_contains($estado, 'finalizado')) {
+        return 'ok';
+    }
+    if (str_contains($estado, 'activo')) {
+        return 'navy';
+    }
+    if (str_contains($estado, 'aprob')) {
         return 'ok';
     }
     if (str_contains($estado, 'pendiente')) {
         return 'pending';
     }
     if (str_contains($estado, 'cancel') || str_contains($estado, 'rechaz')) {
-        return 'danger';
+        return 'info';
     }
     return 'muted';
 }

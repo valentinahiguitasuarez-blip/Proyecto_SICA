@@ -1315,6 +1315,18 @@ body {
     background: #eef3f8;
 }
 
+/* Blue info for Cancelado on pages that use this class */
+.status-pill.info {
+    color: var(--ins-blue);
+    background: var(--ins-blue-soft);
+}
+
+/* Navy / purple variant used for Activo on instructor pages */
+.status-pill.navy {
+    color: #5b21b6;
+    background: #f4f3ff;
+}
+
 .progress-bar {
     position: relative;
     height: 14px;

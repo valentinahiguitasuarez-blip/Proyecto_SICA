@@ -1188,6 +1188,19 @@ body {
     max-width: 100%;
 }
 
+@media (max-width: 640px) {
+    .calendar-date .calendar-request-link,
+    .calendar-date .calendar-occupied {
+        max-width: 4.2rem;
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+    .calendar-event {
+        font-size: 11px;
+        padding: 6px;
+    }
+}
+
 .calendar-event.pending {
     color: #7a5000;
     background: var(--ins-amber-soft);

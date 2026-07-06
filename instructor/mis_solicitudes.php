@@ -67,7 +67,7 @@ $solicitudes = array_merge($upcoming, $historical);
     </div>
 </header>
 
-<section class="panel">
+<section class="panel mis-solicitudes">
     <div class="panel-head">
         <div>
             <p class="eyebrow">Solicitudes</p>
@@ -91,17 +91,34 @@ $solicitudes = array_merge($upcoming, $historical);
     </div>
 
     <style>
+    /* Alerts and small utilities */
     .obs-banner { background: var(--ins-red-soft, #fdecea); color: var(--ins-red, #c0392b); padding:8px 12px; border-radius:6px; margin-bottom:8px; }
-    .badge-new { background:var(--ins-amber, #f59e0b); color:#fff; padding:2px 8px; border-radius:12px; font-size:12px; margin-left:8px; }
+    /* Scoped palette for Mis Solicitudes page */
+    .mis-solicitudes .badge-new { background:#6b46c1; color:#fff; padding:4px 10px; border-radius:12px; font-size:12px; margin-left:8px; font-weight:900; }
+
     .stepper { display:flex; gap:12px; align-items:center; margin-top:8px; }
     .step { display:flex; align-items:center; gap:8px; font-size:13px; color:#666; }
     .step .dot { width:12px; height:12px; border-radius:50%; background:#ddd; box-shadow:0 0 0 4px transparent; }
+    /* Use purple for primary steps on this page */
     .step.complete .dot { background:var(--ins-blue, #0ea5e9); box-shadow:0 0 0 4px rgba(14,165,233,0.12); }
+    .mis-solicitudes .step.complete .dot { background:#6b46c1; box-shadow:0 0 0 4px rgba(107,70,193,0.12); }
     .step.complete.step-decision .dot { background:var(--ins-green, #10b981); box-shadow:0 0 0 4px rgba(16,185,129,0.12); }
     .step.complete.step-decision.cancel .dot { background:var(--ins-red, #ef4444); box-shadow:0 0 0 4px rgba(239,68,68,0.12); }
     .step .label { white-space:nowrap; }
     .stepper::before { content:''; position:relative; left:0; }
-    .request-row { padding:12px; border:1px solid #eee; border-radius:8px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
+
+    /* Card layout tweaks */
+    .mis-solicitudes .request-row { padding:16px; border:1px solid rgba(14,21,40,0.04); border-radius:10px; margin-bottom:12px; display:flex; gap:16px; align-items:flex-start; background:#ffffff; box-shadow:0 6px 20px rgba(22,93,255,0.03); }
+    .mis-solicitudes .request-date { width:72px; text-align:center; font-weight:900; color:#3b0f6b; background: linear-gradient(180deg,#f3ecff,#efe8ff); border-radius:8px; padding:10px 6px; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+    .mis-solicitudes .request-date strong { font-size:20px; color:#3b0f6b; display:block; }
+    .mis-solicitudes .request-date span { font-size:11px; color:#6b46c1; text-transform:uppercase; }
+    .mis-solicitudes h3 { color:#0e1a2f; margin:0; }
+    .mis-solicitudes small { color: #65748b; display:block; margin-top:6px; }
+
+    /* Status pill overrides */
+    .mis-solicitudes .status-pill { background:#f4f3ff; color:#5b21b6; padding:8px 12px; border-radius:999px; font-weight:900; text-decoration:none; }
+
+    /* Keep default request-date for other pages */
     .request-date { width:72px; text-align:center; font-weight:700; color:#333; }
     </style>
 

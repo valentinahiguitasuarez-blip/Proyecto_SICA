@@ -251,7 +251,6 @@ try {
                                     <span class="event-type"><?= htmlspecialchars((string)$evento['nombre_tipo'], ENT_QUOTES, 'UTF-8') ?></span>
                                     <h3><?= htmlspecialchars((string)$evento['nombre_evento'], ENT_QUOTES, 'UTF-8') ?></h3>
                                 </div>
-                                <span class="event-state"><?= htmlspecialchars((string)$evento['estado'], ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <p><?= htmlspecialchars((string)($evento['descripcion'] ?? 'Evento programado por SICA.'), ENT_QUOTES, 'UTF-8') ?></p>
                             <div class="event-meta">
@@ -261,6 +260,10 @@ try {
                             </div>
                         </div>
                         <div class="event-action">
+                            <div class="event-action-state <?= htmlspecialchars($estadoClase, ENT_QUOTES, 'UTF-8') ?>">
+                                <small>Estado</small>
+                                <strong><?= htmlspecialchars((string)$evento['estado'], ENT_QUOTES, 'UTF-8') ?></strong>
+                            </div>
                             <?php if ($estaRegistrado): ?>
                                 <span class="registered-pill">Pre-registrado</span>
                                 <?php if (!empty($evento['id_certificado'])): ?>

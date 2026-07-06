@@ -905,7 +905,6 @@ body {
 }
 
 .event-type,
-.event-state,
 .registered-pill {
     display: inline-flex;
     align-items: center;
@@ -921,7 +920,6 @@ body {
     background: rgba(3, 1, 210, 0.08);
 }
 
-.event-state,
 .registered-pill {
     color: #08734b;
     background: rgba(25, 185, 120, 0.12);
@@ -961,10 +959,45 @@ body {
 
 .event-action {
     display: grid;
-    align-content: start;
+    align-content: center;
     justify-items: stretch;
     gap: 10px;
     min-width: 0;
+}
+
+.event-action-state {
+    padding: 10px 12px;
+    display: grid;
+    gap: 2px;
+    border-left: 4px solid var(--ap-green);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.event-action-state small,
+.event-action-state strong {
+    display: block;
+}
+
+.event-action-state small {
+    color: var(--ap-muted);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.event-action-state strong {
+    color: #08734b;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.event-action-state.closed {
+    border-color: #94a3b8;
+}
+
+.event-action-state.closed strong {
+    color: #64748b;
 }
 
 .event-action button,
@@ -997,8 +1030,11 @@ body {
 
 .event-action .registered-pill {
     width: 100%;
-    min-height: 36px;
+    min-height: 34px;
     justify-content: center;
+    color: #08734b;
+    background: rgba(25, 185, 120, 0.1);
+    border: 1px solid rgba(25, 185, 120, 0.18);
 }
 
 .event-empty {

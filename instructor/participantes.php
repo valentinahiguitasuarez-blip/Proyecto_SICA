@@ -261,7 +261,7 @@ if ($evento) {
             ?>
 
             <!-- Progress bar -->
-            <div class="panel">
+            <div class="panel-sub">
                 <div class="panel-head">
                     <div>
                         <p class="eyebrow">Asistencia</p>
@@ -279,10 +279,21 @@ if ($evento) {
 
             <?php if (empty($arrived) && empty($notArrived)): ?><div class="empty-state">Todavia no hay aprendices pre-registrados para este evento.</div><?php endif; ?>
 
+            <?php if (!empty($arrived)): ?>
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">Ya llegaron</p>
+                        <h2>Participantes confirmados</h2>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <?php $counter = 0; ?>
             <?php foreach ($arrived as $participante): $counter++; $full = trim((string)$participante['nombre'] . ' ' . (string)$participante['apellido']); ?>
                 <article class="participant-row">
-                    <b><?= instructor_h($counter) ?></b>
+                    <?php $avatarLabel = trim((string)mb_substr((string)$participante['nombre'], 0, 1, 'UTF-8') . (string)mb_substr((string)$participante['apellido'], 0, 1, 'UTF-8')); ?>
+                    <?php $avatarText = $avatarLabel !== '' ? mb_strtoupper($avatarLabel, 'UTF-8') : '?'; ?>
+                    <b><?= instructor_h($avatarText) ?></b>
                     <div>
                         <strong><?= instructor_h($full) ?></strong>
                         <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?> · Llegada <?= instructor_h(substr((string)$participante['hora'],0,5)) ?></small>
@@ -307,7 +318,9 @@ if ($evento) {
                 </div>
                 <?php foreach ($notArrived as $participante): $counter++; $full = trim((string)$participante['nombre'] . ' ' . (string)$participante['apellido']); ?>
                     <article class="participant-row">
-                        <b><?= instructor_h($counter) ?></b>
+                        <?php $avatarLabel = trim((string)mb_substr((string)$participante['nombre'], 0, 1, 'UTF-8') . (string)mb_substr((string)$participante['apellido'], 0, 1, 'UTF-8')); ?>
+                        <?php $avatarText = $avatarLabel !== '' ? mb_strtoupper($avatarLabel, 'UTF-8') : '?'; ?>
+                        <b><?= instructor_h($avatarText) ?></b>
                         <div>
                             <strong><?= instructor_h($full) ?></strong>
                             <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?></small>

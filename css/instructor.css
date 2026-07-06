@@ -1027,6 +1027,12 @@ body {
     margin-bottom: 18px;
 }
 
+.panel-sub {
+    padding: 14px 0 0;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--ins-line);
+}
+
 .panel-head {
     display: flex;
     align-items: flex-start;
@@ -1443,10 +1449,15 @@ body {
 
 .participant-row {
     display: grid;
-    grid-template-columns: 54px minmax(0, 1fr) 120px;
+    grid-template-columns: 54px minmax(0, 1fr) 120px auto;
     gap: 12px;
     align-items: center;
     padding: 12px;
+}
+
+.participant-row form {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .participant-row b {

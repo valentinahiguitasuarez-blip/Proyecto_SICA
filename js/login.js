@@ -237,6 +237,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (passwordRules) {
+            const completed = Object.keys(rules).filter(function (ruleName) {
+                return rules[ruleName];
+            }).length;
+            const strengthBar = passwordRules.querySelector('[data-strength-bar]');
+            const strengthMessage = passwordRules.querySelector('[data-strength-message]');
+            const percent = value.length === 0 ? 0 : (completed / Object.keys(rules).length) * 100;
+
+            passwordRules.dataset.strength = missing.length === 0 && value.length > 0 ? 'secure' : (completed >= 3 ? 'medium' : 'low');
+
+            if (strengthBar) {
+                strengthBar.style.width = percent + '%';
+            }
+
+            if (strengthMessage) {
+                if (value.length === 0) {
+                    strengthMessage.textContent = 'Usa 8 caracteres con mayuscula, minuscula, numero y simbolo.';
+                } else if (missing.length === 0) {
+                    strengthMessage.textContent = 'Contrasena segura.';
+                } else {
+                    strengthMessage.textContent = 'Falta ' + missing.slice(0, 2).join(' y ') + (missing.length > 2 ? '...' : '.');
+                }
+            }
+
             Object.keys(rules).forEach(function (ruleName) {
                 const rule = passwordRules.querySelector('[data-rule="' + ruleName + '"]');
                 if (!rule) {

@@ -459,45 +459,52 @@ body[data-theme="dark"] .logout-cancel-btn {
     font-size: 12px;
 }
 
-.password-rules {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+.password-strength {
     margin: -2px 0 12px;
+    padding: 9px 10px;
+    border: 1px solid rgba(100, 116, 139, 0.14);
+    border-radius: 8px;
+    background: rgba(248, 250, 252, 0.82);
 }
 
-.password-rules span {
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 9px;
-    border: 1px solid rgba(100, 116, 139, 0.16);
-    border-radius: 8px;
+.strength-track {
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e6ebf3;
+}
+
+.strength-track span {
+    width: 0;
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: #f59e0b;
+    transition: width 0.18s ease, background 0.18s ease;
+}
+
+.password-strength[data-strength="medium"] .strength-track span {
+    background: #2563ff;
+}
+
+.password-strength[data-strength="secure"] .strength-track span {
+    background: #19b978;
+}
+
+.password-strength p {
+    margin: 7px 0 0;
     color: #64748b;
-    background: #f8fafc;
     font-size: 11px;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
-.password-rules span::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    flex: 0 0 auto;
-    border-radius: 50%;
-    background: #cbd5e1;
-}
-
-.password-rules span.is-complete {
+.password-strength[data-strength="secure"] p {
     color: #08734b;
-    border-color: rgba(25, 185, 120, 0.22);
-    background: rgba(25, 185, 120, 0.1);
 }
 
-.password-rules span.is-complete::before {
-    background: #19b978;
+.strength-hidden-rule {
+    display: none;
 }
 
 .login-options {
@@ -728,20 +735,21 @@ body[data-theme="dark"] .password-eye:focus {
     background: rgba(122, 162, 255, 0.14);
 }
 
-body[data-theme="dark"] .password-rules span {
-    color: #aab6ca;
+body[data-theme="dark"] .password-strength {
     border-color: rgba(148, 163, 184, 0.18);
-    background: rgba(17, 26, 45, 0.92);
+    background: rgba(17, 26, 45, 0.78);
 }
 
-body[data-theme="dark"] .password-rules span::before {
-    background: #526174;
+body[data-theme="dark"] .strength-track {
+    background: #26334d;
 }
 
-body[data-theme="dark"] .password-rules span.is-complete {
+body[data-theme="dark"] .password-strength p {
+    color: #aab6ca;
+}
+
+body[data-theme="dark"] .password-strength[data-strength="secure"] p {
     color: #7ee0ae;
-    border-color: rgba(52, 211, 153, 0.24);
-    background: rgba(52, 211, 153, 0.1);
 }
 
 body[data-theme="dark"] .theme-toggle {

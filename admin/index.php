@@ -154,7 +154,7 @@ $totalReservas = max(1, array_sum($reservas));
         <nav class="admin-nav">
             <a class="active" href="<?= h(app_url('admin/index.php')) ?>"><span>PC</span>Panel de Control</a>
             <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
-            <a href="#reservas"><span>SR</span>Solicitudes de Reserva</a>
+            <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes de Reserva</a>
             <a href="#correos"><span>CN</span>Correos y Notificaciones</a>
             <a href="#auditorios"><span>AU</span>Auditorios</a>
             <a href="#reportes"><span>RP</span>Reportes</a>
@@ -333,7 +333,7 @@ $totalReservas = max(1, array_sum($reservas));
             <h2>Acciones rapidas</h2>
             <div>
                 <a href="<?= h(app_url('admin/usuarios.php')) ?>">Gestionar usuarios</a>
-                <a href="#reservas">Revisar solicitudes</a>
+                <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Revisar solicitudes</a>
                 <a href="#correos">Enviar confirmacion</a>
                 <a href="#auditorios">Ver auditorios</a>
                 <a href="#reportes">Generar reporte</a>

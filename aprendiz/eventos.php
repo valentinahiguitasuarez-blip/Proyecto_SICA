@@ -157,6 +157,55 @@ try {
             </a>
         </header>
 
+        <section class="event-gallery" aria-label="Galeria de auditorios">
+            <div id="eventAuditoriumCarousel" class="carousel slide event-carousel" data-bs-ride="carousel" data-bs-interval="5200">
+                <div class="carousel-indicators">
+                    <button type="button" data-bs-target="#eventAuditoriumCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Sala de juntas"></button>
+                    <button type="button" data-bs-target="#eventAuditoriumCarousel" data-bs-slide-to="1" aria-label="Auditorio principal"></button>
+                    <button type="button" data-bs-target="#eventAuditoriumCarousel" data-bs-slide-to="2" aria-label="Auditorio en capacitacion"></button>
+                    <button type="button" data-bs-target="#eventAuditoriumCarousel" data-bs-slide-to="3" aria-label="Auditorio en evento"></button>
+                </div>
+
+                <div class="carousel-inner">
+                    <article class="carousel-item active">
+                        <img src="<?= htmlspecialchars(app_url('img/eventos/sala-juntas.jpeg'), ENT_QUOTES, 'UTF-8') ?>" alt="Sala de juntas SICA">
+                        <div class="event-carousel-caption">
+                            <span>Sala de juntas</span>
+                            <strong>Espacios para coordinacion y preparacion de eventos.</strong>
+                        </div>
+                    </article>
+                    <article class="carousel-item">
+                        <img src="<?= htmlspecialchars(app_url('img/eventos/auditorio-3.jpeg'), ENT_QUOTES, 'UTF-8') ?>" alt="Auditorio principal con aprendices">
+                        <div class="event-carousel-caption">
+                            <span>Auditorio principal</span>
+                            <strong>Eventos academicos con asistencia masiva.</strong>
+                        </div>
+                    </article>
+                    <article class="carousel-item">
+                        <img src="<?= htmlspecialchars(app_url('img/eventos/auditorio-2.jpeg'), ENT_QUOTES, 'UTF-8') ?>" alt="Auditorio durante una capacitacion">
+                        <div class="event-carousel-caption">
+                            <span>Capacitaciones</span>
+                            <strong>Encuentros formativos y charlas institucionales.</strong>
+                        </div>
+                    </article>
+                    <article class="carousel-item">
+                        <img src="<?= htmlspecialchars(app_url('img/eventos/auditorio-1.jpeg'), ENT_QUOTES, 'UTF-8') ?>" alt="Auditorio durante evento institucional">
+                        <div class="event-carousel-caption">
+                            <span>Eventos SICA</span>
+                            <strong>Pre-registro, asistencia y certificados en un solo flujo.</strong>
+                        </div>
+                    </article>
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#eventAuditoriumCarousel" data-bs-slide="prev" aria-label="Imagen anterior">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#eventAuditoriumCarousel" data-bs-slide="next" aria-label="Imagen siguiente">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+        </section>
+
         <section class="events-panel standalone-events" aria-label="Eventos disponibles">
             <div class="section-heading">
                 <div>

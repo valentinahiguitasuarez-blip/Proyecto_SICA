@@ -127,7 +127,7 @@ $solicitudes = array_merge($upcoming, $historical);
 
     .mis-solicitudes .metric-tile.navy strong,
     .mis-solicitudes .metric-tile.navy em { color: #6b46c1; }
-    .mis-solicitudes .metric-tile.navy::before { background: rgba(107,70,193,0.08); }
+    .mis-solicitudes .metric-tile.navy::before { background: #6b46c1; }
     .mis-solicitudes .metric-tile.navy::after,
     .mis-solicitudes .metric-tile.navy em { background: #efe8ff; }
 

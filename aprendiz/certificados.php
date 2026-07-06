@@ -267,9 +267,8 @@ $ultimoCertificado = $listos[0] ?? null;
                                     <span class="certificate-action-label">Certificado disponible</span>
                                     <a href="<?= cert_e(app_url('aprendiz/descargar_certificado.php?id=' . (int)$item['id_certificado'])) ?>">Descargar certificado</a>
                                 <?php else: ?>
-                                    <span class="certificate-action-label muted"><?= cert_e($estadoTexto) ?></span>
                                     <a class="secondary" href="<?= cert_e(app_url('aprendiz/preregistro.php')) ?>">Ver pre-registro</a>
-                                    <small><?= $asistencia === 'Pendiente' ? 'Confirma tu asistencia en el evento.' : 'El certificado aun no ha sido emitido.' ?></small>
+                                    <small><?= $asistencia === 'Pendiente' ? 'Asiste al evento para habilitar el certificado.' : 'El certificado aun no ha sido emitido.' ?></small>
                                 <?php endif; ?>
                             </div>
                         </article>

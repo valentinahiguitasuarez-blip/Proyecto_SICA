@@ -1983,8 +1983,8 @@ body {
 
 .certificate-action {
     display: grid;
-    align-content: start;
-    gap: 8px;
+    align-content: center;
+    gap: 7px;
 }
 
 .certificate-action-label {
@@ -2015,9 +2015,11 @@ body {
 }
 
 .certificate-action a.secondary {
-    min-height: 40px;
+    min-height: 38px;
+    padding: 0 14px;
     color: var(--ap-blue);
-    background: rgba(3, 1, 210, 0.06);
+    background: #ffffff;
+    box-shadow: none;
 }
 
 @media (max-width: 1050px) {

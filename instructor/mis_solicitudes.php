@@ -103,7 +103,7 @@ $solicitudes = array_merge($upcoming, $historical);
                     <div class="stepper" aria-hidden="true" style="margin-top:8px;">
                         <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
                         <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Cancelado</div></div>
+                        <div class="step complete step-decision cancel"><div class="dot"></div><div class="label">Decisión</div></div>
                         <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
                     </div>
                 </div>
@@ -118,7 +118,7 @@ $solicitudes = array_merge($upcoming, $historical);
                     <div class="stepper" aria-hidden="true" style="margin-top:8px;">
                         <div class="step complete"><div class="dot"></div><div class="label">Solicitado</div></div>
                         <div class="step complete"><div class="dot"></div><div class="label">En revisión</div></div>
-                        <div class="step complete step-decision"><div class="dot"></div><div class="label">Aprobado</div></div>
+                        <div class="step complete step-decision"><div class="dot"></div><div class="label">Decisión</div></div>
                         <div class="step complete"><div class="dot"></div><div class="label">Notificado</div></div>
                     </div>
                 </div>

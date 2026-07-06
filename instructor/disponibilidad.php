@@ -61,7 +61,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             [':auditorio' => $idAuditorio, ':fecha' => $fecha, ':inicio' => $inicio . ':00', ':fin' => $fin . ':00']
         );
         if ($overlap > 0) {
-            $error = 'Ese horario ya tiene un evento o una solicitud pendiente.';
+            $error = 'Ese horario ya está ocupado por un evento aprobado o una solicitud pendiente y no puede modificarse.';
         }
     }
 
@@ -152,11 +152,18 @@ foreach ($events as $event) {
             <?php for ($i = 1; $i < $firstWeekday; $i++): ?><div class="calendar-cell muted"></div><?php endfor; ?>
             <?php for ($day = 1; $day <= $daysInMonth; $day++): ?>
                 <?php $date = $start->setDate((int)$start->format('Y'), (int)$start->format('m'), $day)->format('Y-m-d'); ?>
-                <?php $events = $eventsByDay[$date] ?? []; ?>
+                <?php $events = $eventsByDay[$date] ?? []; 
+                      $hasActive = false;
+                      foreach ($events as $ev) { if (trim((string)$ev['estado']) === 'Activo') { $hasActive = true; break; } }
+                ?>
                 <div class="calendar-cell<?= empty($events) ? ' available' : '' ?>">
                     <div class="calendar-date">
                         <span><?= instructor_h($day) ?></span>
-                        <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
+                        <?php if (! $hasActive): ?>
+                            <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
+                        <?php else: ?>
+                            <span class="calendar-occupied" title="Este día tiene un evento aprobado.">Ocupado</span>
+                        <?php endif; ?>
                     </div>
                     <?php foreach ($events as $event): ?>
                         <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : 'busy'; ?>

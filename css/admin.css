@@ -123,27 +123,39 @@ body {
 }
 
 .admin-profile {
-    margin-top: 16px;
-    margin-bottom: 8px;
+    margin: 16px 0 8px;
     display: flex;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
-    padding: 16px 18px;
+    min-width: 0;
+    padding: 14px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f8fbff;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.12), rgba(57, 198, 165, 0.08)),
+        rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(145, 184, 255, 0.16);
     text-decoration: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .admin-avatar {
-    width: 58px;
-    height: 58px;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
+    border-radius: 14px;
     color: #ffffff;
     background: linear-gradient(135deg, #165dff, #39c6a5);
+    box-shadow: 0 12px 22px rgba(22, 93, 255, 0.22);
     font-weight: 900;
+}
+
+.admin-profile > div:not(.admin-avatar) {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
 }
 
 .admin-profile strong,
@@ -152,18 +164,40 @@ body {
     display: block;
 }
 
+.admin-profile strong {
+    color: #ffffff;
+    font-size: 17px;
+    line-height: 1.15;
+}
+
 .admin-profile small {
-    max-width: 170px;
-    color: #c7d4e7;
+    max-width: 185px;
+    color: #b8c7dd;
+    font-size: 13px;
+    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .admin-profile span {
-    color: #33d69f;
-    font-size: 12px;
-    font-weight: 800;
+    width: max-content;
+    margin-top: 3px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    color: #8af0c8;
+    background: rgba(18, 166, 120, 0.12);
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.admin-profile:hover,
+.admin-profile:focus {
+    color: #ffffff;
+    border-color: rgba(145, 184, 255, 0.26);
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.18), rgba(57, 198, 165, 0.12)),
+        rgba(255, 255, 255, 0.075);
 }
 
 .admin-main {

@@ -1516,6 +1516,84 @@ body {
         rgba(255, 255, 255, 0.055);
 }
 
+.coord-nav-group {
+    display: grid;
+    gap: 6px;
+}
+
+.coord-nav-group summary {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    border-radius: 8px;
+    color: #cbdaf0;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 800;
+}
+
+.coord-nav-group summary::-webkit-details-marker {
+    display: none;
+}
+
+.coord-nav-group summary::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-left: auto;
+    border-right: 2px solid #91b8ff;
+    border-bottom: 2px solid #91b8ff;
+    transform: rotate(45deg);
+    transition: transform 160ms ease;
+}
+
+.coord-nav-group[open] summary::after {
+    transform: rotate(225deg);
+}
+
+.coord-nav-group summary span {
+    width: 28px;
+    color: #91b8ff;
+    font-size: 13px;
+    text-align: center;
+}
+
+.coord-nav-group summary:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.coord-nav-group[open] summary {
+    color: #ffffff;
+}
+
+.coord-nav-group a {
+    min-height: 36px;
+    margin-left: 14px;
+    padding-left: 18px;
+    color: #cbdaf0;
+    font-size: 13px;
+    font-weight: 750;
+    background: transparent;
+    box-shadow: none;
+}
+
+.coord-nav-group a span {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #91b8ff;
+    opacity: 0.85;
+}
+
+.coord-nav-group a:hover {
+    color: #ffffff;
+    background: rgba(145, 184, 255, 0.10);
+}
+
 .coord-help-card strong,
 .coord-help-card small {
     display: block;
@@ -1841,6 +1919,94 @@ body {
     box-shadow: 0 12px 24px rgba(22, 93, 255, 0.10);
 }
 
+.coord-extra-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.coord-auditorium-list,
+.coord-role-list,
+.coord-report-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.coord-auditorium-list > div,
+.coord-role-list > div,
+.coord-report-grid > div,
+.coord-config-card {
+    padding: 14px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.coord-auditorium-list span,
+.coord-auditorium-list strong,
+.coord-auditorium-list small,
+.coord-report-grid span,
+.coord-report-grid strong,
+.coord-report-grid small,
+.coord-config-card span,
+.coord-config-card strong,
+.coord-config-card small {
+    display: block;
+}
+
+.coord-auditorium-list span,
+.coord-report-grid span,
+.coord-config-card span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-auditorium-list strong,
+.coord-report-grid strong,
+.coord-config-card strong {
+    margin-top: 4px;
+    color: var(--admin-ink);
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.coord-auditorium-list small,
+.coord-report-grid small,
+.coord-config-card small,
+.coord-config-card p {
+    color: var(--admin-muted);
+}
+
+.coord-role-list > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.coord-role-list span {
+    color: var(--admin-muted);
+    font-weight: 850;
+}
+
+.coord-role-list strong {
+    min-width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: var(--admin-blue-soft);
+}
+
+.coord-config-card p {
+    margin: 10px 0 0;
+    line-height: 1.45;
+}
+
 @media (max-width: 1180px) {
     .admin-metrics,
     .quick-actions nav {
@@ -1856,7 +2022,8 @@ body {
     }
 
     .coord-workspace,
-    .coord-bottom-grid {
+    .coord-bottom-grid,
+    .coord-extra-grid {
         grid-template-columns: 1fr;
     }
 

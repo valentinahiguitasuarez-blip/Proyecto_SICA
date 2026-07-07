@@ -155,6 +155,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 
 $solicitudes = [];
+$auditorios = [];
+$usuariosPorRol = [];
 $counts = ['Pendiente' => 0, 'Activo' => 0, 'Cancelado' => 0, 'Finalizado' => 0];
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
 $monthFullLabels = [1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'];
@@ -196,6 +198,26 @@ try {
          LIMIT 100',
         [':coordinador' => $coordinadorId]
     );
+
+    $auditorios = coord_rows(
+        $pdo,
+        'SELECT a.nombre_auditorio, a.bloque, a.capacidad, es.nombre_estado AS estado,
+                COUNT(e.id_evento) eventos_asignados
+         FROM auditorio a
+         INNER JOIN estado es ON es.id_estado = a.id_estado
+         LEFT JOIN evento e ON e.id_auditorio = a.id_auditorio
+         GROUP BY a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad, es.nombre_estado
+         ORDER BY a.nombre_auditorio ASC'
+    );
+
+    $usuariosPorRol = coord_rows(
+        $pdo,
+        'SELECT r.nombre_rol, COUNT(*) total
+         FROM usuario u
+         INNER JOIN rol r ON r.id_rol = u.id_rol
+         GROUP BY r.id_rol, r.nombre_rol
+         ORDER BY r.nombre_rol ASC'
+    );
 } catch (Throwable $exception) {
     error_log('SICA coordinador solicitudes: ' . $exception->getMessage());
 }
@@ -212,6 +234,7 @@ $eventosAprobados = array_values(array_filter(
     static fn(array $solicitud): bool => (string)$solicitud['estado'] === 'Activo'
 ));
 $eventosAprobados = array_slice($eventosAprobados, 0, 3);
+$capacidadTotal = array_sum(array_map(static fn(array $auditorio): int => (int)$auditorio['capacidad'], $auditorios));
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -235,10 +258,20 @@ $eventosAprobados = array_slice($eventosAprobados, 0, 3);
 
         <nav class="admin-nav">
             <a class="active" href="<?= coord_h(app_url('coordinador/index.php')) ?>"><span>PC</span>Panel Coordinador</a>
-            <a href="#solicitudes"><span>SA</span>Solicitudes de Auditorio</a>
-            <a href="#pendientes"><span>PE</span>Pendientes por aprobar</a>
+            <details class="coord-nav-group" open>
+                <summary><span>SA</span>Solicitudes de Auditorio</summary>
+                <a href="#solicitudes"><span></span>Todas las solicitudes</a>
+                <a href="#pendientes"><span></span>Pendientes por aprobar</a>
+                <a href="#aprobados"><span></span>Aprobadas</a>
+                <a href="#rechazadas"><span></span>Rechazadas</a>
+                <a href="#historial"><span></span>Historial</a>
+            </details>
             <a href="#calendario"><span>CA</span>Calendario institucional</a>
             <a href="#aprobados"><span>EA</span>Eventos aprobados</a>
+            <a href="#auditorios"><span>AU</span>Auditorios</a>
+            <a href="#reportes"><span>RP</span>Reportes e Indicadores</a>
+            <a href="#usuarios"><span>UR</span>Usuarios y Roles</a>
+            <a href="#configuracion"><span>CF</span>Configuracion</a>
             <a class="nav-logout-link" href="<?= coord_h(app_url('login/logout.php')) ?>"><span>SL</span>Cerrar sesion</a>
         </nav>
 
@@ -450,7 +483,7 @@ $eventosAprobados = array_slice($eventosAprobados, 0, 3);
                     </div>
                 </section>
 
-                <section class="admin-panel coord-status-panel">
+                <section class="admin-panel coord-status-panel" id="rechazadas">
                     <div class="admin-panel-head">
                         <div>
                             <p class="admin-eyebrow">Estado</p>
@@ -480,6 +513,72 @@ $eventosAprobados = array_slice($eventosAprobados, 0, 3);
                     </div>
                 </section>
             </aside>
+        </section>
+
+        <section class="coord-extra-grid" id="historial" aria-label="Paneles adicionales del coordinador">
+            <article class="admin-panel" id="auditorios">
+                <div class="admin-panel-head">
+                    <div>
+                        <p class="admin-eyebrow">Auditorios</p>
+                        <h2>Espacios disponibles para revision</h2>
+                    </div>
+                </div>
+                <div class="coord-auditorium-list">
+                    <?php foreach ($auditorios as $auditorio): ?>
+                        <div>
+                            <span><?= coord_h($auditorio['nombre_auditorio']) ?> / Bloque <?= coord_h($auditorio['bloque']) ?></span>
+                            <strong><?= coord_h($auditorio['capacidad']) ?> cupos</strong>
+                            <small><?= coord_h($auditorio['estado']) ?> - <?= coord_h($auditorio['eventos_asignados']) ?> eventos</small>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </article>
+
+            <article class="admin-panel" id="reportes">
+                <div class="admin-panel-head">
+                    <div>
+                        <p class="admin-eyebrow">Reportes</p>
+                        <h2>Indicadores para decision</h2>
+                    </div>
+                </div>
+                <div class="coord-report-grid">
+                    <div><span>Capacidad total</span><strong><?= coord_h($capacidadTotal) ?></strong><small>Cupos disponibles</small></div>
+                    <div><span>Solicitudes cerradas</span><strong><?= coord_h($aprobadas + $rechazadas + $finalizadas) ?></strong><small>Con decision registrada</small></div>
+                    <div><span>Pendientes</span><strong><?= coord_h($pendientes) ?></strong><small>Requieren revision</small></div>
+                </div>
+            </article>
+
+            <article class="admin-panel" id="usuarios">
+                <div class="admin-panel-head">
+                    <div>
+                        <p class="admin-eyebrow">Usuarios y roles</p>
+                        <h2>Resumen de actores SICA</h2>
+                    </div>
+                </div>
+                <div class="coord-role-list">
+                    <?php foreach ($usuariosPorRol as $rol): ?>
+                        <div>
+                            <span><?= coord_h($rol['nombre_rol']) ?></span>
+                            <strong><?= coord_h($rol['total']) ?></strong>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </article>
+
+            <article class="admin-panel" id="configuracion">
+                <div class="admin-panel-head">
+                    <div>
+                        <p class="admin-eyebrow">Configuracion</p>
+                        <h2>Preferencias del coordinador</h2>
+                    </div>
+                </div>
+                <div class="coord-config-card">
+                    <span>Sesion activa</span>
+                    <strong><?= coord_h($coordinadorName) ?></strong>
+                    <small><?= coord_h($coordinadorMail) ?></small>
+                    <p>Las decisiones aprobadas o canceladas quedan registradas para que administracion notifique al instructor.</p>
+                </div>
+            </article>
         </section>
     </section>
 </main>

@@ -123,6 +123,11 @@ function instructor_layout_start(string $active): void
                 </div>
                 <a class="instructor-profile-link" href="<?= instructor_h(app_url('instructor/perfil.php')) ?>">Ver perfil</a>
             </section>
+
+            <a class="instructor-logout" href="<?= instructor_h(app_url('login/logout.php')) ?>">
+                <span aria-hidden="true">SL</span>
+                Cerrar sesion
+            </a>
         </aside>
 
         <section class="instructor-main">

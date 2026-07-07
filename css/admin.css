@@ -104,6 +104,24 @@ body {
     box-shadow: 0 10px 24px rgba(22, 93, 255, 0.20);
 }
 
+.admin-nav a.nav-logout-link {
+    margin-top: 10px;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--admin-blue), #2563ff);
+    border: 1px solid rgba(145, 184, 255, 0.22);
+    box-shadow: 0 14px 28px rgba(22, 93, 255, 0.18);
+}
+
+.admin-nav a.nav-logout-link span {
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: rgba(255, 255, 255, 0.92);
+    font-weight: 900;
+}
+
 .admin-profile {
     margin-top: 16px;
     margin-bottom: 8px;
@@ -210,8 +228,30 @@ body {
 
 .admin-logout {
     color: #ffffff;
-    background: var(--admin-ink);
-    border-color: var(--admin-ink);
+    background: linear-gradient(135deg, var(--admin-blue), #2563ff);
+    border-color: rgba(22, 93, 255, 0.28);
+    box-shadow: 0 14px 28px rgba(22, 93, 255, 0.20);
+}
+
+.admin-logout::before {
+    content: "SL";
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.admin-logout:hover,
+.admin-logout:focus {
+    color: #ffffff;
+    transform: translateY(-1px);
+    border-color: rgba(22, 93, 255, 0.38);
+    box-shadow: 0 18px 32px rgba(22, 93, 255, 0.26);
 }
 
 .admin-top-actions strong {

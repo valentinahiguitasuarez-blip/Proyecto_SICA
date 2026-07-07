@@ -221,7 +221,7 @@ try {
 
         <nav class="admin-nav">
             <a class="active" href="<?= coord_h(app_url('coordinador/index.php')) ?>"><span>SR</span>Solicitudes</a>
-            <a href="<?= coord_h(app_url('login/logout.php')) ?>"><span>SL</span>Cerrar sesion</a>
+            <a class="nav-logout-link" href="<?= coord_h(app_url('login/logout.php')) ?>"><span>SL</span>Cerrar sesion</a>
         </nav>
     </aside>
 

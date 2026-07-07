@@ -299,7 +299,11 @@ if ($evento) {
                         <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?> · Llegada <?= instructor_h(substr((string)$participante['hora'],0,5)) ?></small>
                     </div>
                     <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
-                    <form method="post" onsubmit="return confirm('Eliminar participante?');">
+                    <form method="post"
+                          data-confirm-kicker="Participantes"
+                          data-confirm-title="Eliminar participante"
+                          data-confirm-message="Este aprendiz saldra del listado del evento. Puedes volver a registrarlo si es necesario."
+                          data-confirm-text="Si, eliminar">
                         <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
                         <input type="hidden" name="action" value="remove_participant">
                         <input type="hidden" name="id_preregistro" value="<?= instructor_h($participante['id_preregistro']) ?>">
@@ -326,7 +330,11 @@ if ($evento) {
                             <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?></small>
                         </div>
                         <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
-                        <form method="post" onsubmit="return confirm('Eliminar participante?');">
+                        <form method="post"
+                              data-confirm-kicker="Participantes"
+                              data-confirm-title="Eliminar participante"
+                              data-confirm-message="Este aprendiz saldra del listado del evento. Puedes volver a registrarlo si es necesario."
+                              data-confirm-text="Si, eliminar">
                             <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
                             <input type="hidden" name="action" value="remove_participant">
                             <input type="hidden" name="id_preregistro" value="<?= instructor_h($participante['id_preregistro']) ?>">

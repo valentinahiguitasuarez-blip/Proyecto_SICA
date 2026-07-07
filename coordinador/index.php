@@ -328,8 +328,16 @@ try {
                                     <textarea name="observacion" maxlength="180" placeholder="Motivo o recomendacion de coordinacion"></textarea>
                                 </label>
                                 <div>
-                                    <button type="submit" name="accion" value="aprobar">Aprobar reserva</button>
-                                    <button class="danger" type="submit" name="accion" value="cancelar">Cancelar reserva</button>
+                                    <button type="submit" name="accion" value="aprobar"
+                                            data-confirm-kicker="Revision academica"
+                                            data-confirm-title="Aprobar reserva"
+                                            data-confirm-message="La reserva quedara aprobada y el administrador podra notificar al instructor."
+                                            data-confirm-text="Si, aprobar">Aprobar reserva</button>
+                                    <button class="danger" type="submit" name="accion" value="cancelar"
+                                            data-confirm-kicker="Revision academica"
+                                            data-confirm-title="Cancelar reserva"
+                                            data-confirm-message="La solicitud quedara cancelada. Verifica que la observacion explique el motivo."
+                                            data-confirm-text="Si, cancelar">Cancelar reserva</button>
                                 </div>
                             <?php else: ?>
                                 <small class="admin-flow-note">Decision registrada. El administrador comunica la respuesta al instructor.</small>

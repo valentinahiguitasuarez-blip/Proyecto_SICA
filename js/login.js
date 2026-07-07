@@ -35,6 +35,30 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     let pendingLogoutUrl = '';
+    let pendingConfirmAction = null;
+
+    const setConfirmModalContent = function (kicker, title, message, confirmText) {
+        const modal = ensureLogoutModal();
+        const modalKicker = modal.querySelector('.logout-confirm-kicker');
+        const modalTitle = modal.querySelector('#logoutConfirmTitle');
+        const modalMessage = modal.querySelector('.logout-confirm-dialog > p:not(.logout-confirm-kicker)');
+        const modalConfirm = modal.querySelector('#logoutConfirmButton');
+
+        if (modalKicker) {
+            modalKicker.textContent = kicker || 'Confirmacion';
+        }
+        if (modalTitle) {
+            modalTitle.textContent = title || 'Confirmar accion';
+        }
+        if (modalMessage) {
+            modalMessage.textContent = message || 'Revisa la informacion antes de continuar.';
+        }
+        if (modalConfirm) {
+            modalConfirm.textContent = confirmText || 'Confirmar';
+        }
+
+        return modal;
+    };
 
     const closeLogoutModal = function () {
         const modal = document.getElementById('logoutConfirmModal');
@@ -43,11 +67,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         document.body.classList.remove('logout-modal-open');
         pendingLogoutUrl = '';
+        pendingConfirmAction = null;
     };
 
     const openLogoutModal = function (url) {
-        const modal = ensureLogoutModal();
+        const modal = setConfirmModalContent(
+            'Salida segura',
+            'Cerrar sesion',
+            'Tu sesion se cerrara en este dispositivo. Podras ingresar nuevamente con tu correo y contrasena.',
+            'Si, cerrar sesion'
+        );
         pendingLogoutUrl = url;
+        pendingConfirmAction = null;
+        modal.classList.add('is-open');
+        document.body.classList.add('logout-modal-open');
+    };
+
+    const openActionModal = function (options, onConfirm) {
+        const modal = setConfirmModalContent(
+            options.kicker,
+            options.title,
+            options.message,
+            options.confirmText
+        );
+        pendingLogoutUrl = '';
+        pendingConfirmAction = onConfirm;
         modal.classList.add('is-open');
         document.body.classList.add('logout-modal-open');
     };
@@ -62,6 +106,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (confirmButton) {
         confirmButton.addEventListener('click', function () {
+            if (typeof pendingConfirmAction === 'function') {
+                const action = pendingConfirmAction;
+                closeLogoutModal();
+                action();
+                return;
+            }
+
             if (pendingLogoutUrl) {
                 window.location.href = pendingLogoutUrl;
             }
@@ -87,6 +138,50 @@ document.addEventListener('DOMContentLoaded', function () {
         link.addEventListener('click', function (event) {
             event.preventDefault();
             openLogoutModal(link.getAttribute('href') || 'login/logout.php');
+        });
+    });
+
+    document.querySelectorAll('a[data-confirm-title], a[data-confirm-message]').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            openActionModal({
+                kicker: link.dataset.confirmKicker || 'Confirmacion',
+                title: link.dataset.confirmTitle || 'Confirmar accion',
+                message: link.dataset.confirmMessage || 'Revisa la informacion antes de continuar.',
+                confirmText: link.dataset.confirmText || 'Confirmar'
+            }, function () {
+                window.location.href = link.getAttribute('href') || '#';
+            });
+        });
+    });
+
+    document.querySelectorAll('form').forEach(function (formElement) {
+        formElement.addEventListener('submit', function (event) {
+            const submitter = event.submitter;
+            const source = submitter && (submitter.dataset.confirmTitle || submitter.dataset.confirmMessage)
+                ? submitter
+                : formElement;
+
+            if (!source.dataset.confirmTitle && !source.dataset.confirmMessage) {
+                return;
+            }
+
+            event.preventDefault();
+            openActionModal({
+                kicker: source.dataset.confirmKicker || 'Confirmacion',
+                title: source.dataset.confirmTitle || 'Confirmar accion',
+                message: source.dataset.confirmMessage || 'Revisa la informacion antes de continuar.',
+                confirmText: source.dataset.confirmText || 'Confirmar'
+            }, function () {
+                if (submitter && submitter.name) {
+                    const hiddenSubmitter = document.createElement('input');
+                    hiddenSubmitter.type = 'hidden';
+                    hiddenSubmitter.name = submitter.name;
+                    hiddenSubmitter.value = submitter.value;
+                    formElement.appendChild(hiddenSubmitter);
+                }
+                formElement.submit();
+            });
         });
     });
 

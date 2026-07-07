@@ -114,6 +114,7 @@ body {
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    text-decoration: none;
 }
 
 .admin-avatar {
@@ -1124,7 +1125,7 @@ body {
     --mail-accent: var(--admin-blue);
     --mail-soft: rgba(22, 93, 255, 0.08);
     display: grid;
-    grid-template-columns: minmax(190px, 0.6fr) minmax(190px, 0.6fr) minmax(0, 1.2fr) 220px;
+    grid-template-columns: minmax(170px, 0.55fr) minmax(170px, 0.55fr) minmax(170px, 0.55fr) minmax(0, 1.1fr) 220px;
     gap: 12px;
     align-items: stretch;
     padding: 14px;
@@ -1133,6 +1134,11 @@ body {
     background:
         linear-gradient(90deg, var(--mail-soft), #ffffff 42%),
         #ffffff;
+}
+
+.admin-mail-card.draft {
+    --mail-accent: var(--admin-blue);
+    --mail-soft: rgba(22, 93, 255, 0.08);
 }
 
 .admin-mail-card.ready {
@@ -1214,8 +1220,13 @@ body {
     background: #f8fbff;
 }
 
-.admin-mail-actions button {
+.admin-mail-actions button,
+.admin-mail-actions a {
     min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     border: 0;
     border-radius: 8px;
     color: #ffffff;
@@ -1229,6 +1240,170 @@ body {
     background: #ffffff;
     border: 1px solid rgba(22, 93, 255, 0.22);
     box-shadow: none;
+}
+
+.admin-mail-actions a {
+    background: var(--admin-blue);
+}
+
+.admin-mail-actions small {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-auditorium-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.admin-auditorium-card {
+    display: grid;
+    gap: 14px;
+    min-height: 150px;
+    padding: 18px;
+    border: 1px solid rgba(22, 93, 255, 0.16);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.08), rgba(18, 166, 120, 0.08)),
+        #ffffff;
+}
+
+.admin-auditorium-card h3 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.admin-auditorium-card > div > span {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    margin-top: 10px;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: var(--admin-green);
+    background: var(--admin-green-soft);
+    font-weight: 900;
+}
+
+.admin-report-table {
+    display: grid;
+    gap: 8px;
+}
+
+.admin-report-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.4fr) minmax(150px, 0.8fr) minmax(110px, 0.5fr) minmax(110px, 0.45fr) minmax(110px, 0.45fr);
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.admin-report-row.head {
+    color: var(--admin-muted);
+    background: #f5f8fc;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-report-row span {
+    min-width: 0;
+    color: var(--admin-ink);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.admin-report-row small {
+    display: block;
+    margin-top: 4px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-profile-page {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.45fr) minmax(0, 1fr);
+    gap: 20px;
+    padding: 22px;
+}
+
+.admin-profile-card {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    padding: 22px;
+    border: 1px solid rgba(22, 93, 255, 0.14);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.08), rgba(18, 166, 120, 0.08)),
+        #ffffff;
+}
+
+.admin-profile-card .admin-avatar {
+    width: 86px;
+    height: 86px;
+    font-size: 26px;
+}
+
+.admin-profile-card h2 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.admin-profile-card > span {
+    color: var(--admin-muted);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+.admin-profile-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-profile-form label {
+    display: grid;
+    gap: 7px;
+}
+
+.admin-profile-form label span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-profile-form input {
+    min-height: 54px;
+    padding: 0 14px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-ink);
+    background: #ffffff;
+    font: inherit;
+    font-weight: 800;
+}
+
+.admin-profile-form button {
+    grid-column: 1 / -1;
+    min-height: 48px;
+    border: 0;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-weight: 900;
+    box-shadow: 0 12px 24px rgba(22, 93, 255, 0.16);
 }
 
 .admin-mail-actions button:disabled {
@@ -1253,7 +1428,11 @@ body {
     .admin-user-card,
     .admin-reservation-card,
     .admin-mail-filters,
-    .admin-mail-card {
+    .admin-mail-card,
+    .admin-auditorium-grid,
+    .admin-report-row,
+    .admin-profile-page,
+    .admin-profile-form {
         grid-template-columns: 1fr;
     }
 

@@ -176,6 +176,20 @@ $totalReservas = max(1, array_sum($reservas));
             </div>
         </header>
 
+        <section class="quick-actions quick-actions-featured" id="reportes">
+            <div>
+                <span class="admin-eyebrow">Acciones rapidas</span>
+                <h2>Gestion directa del sistema</h2>
+            </div>
+            <nav aria-label="Acciones rapidas del administrador">
+                <a href="<?= h(app_url('admin/usuarios.php')) ?>">Gestionar usuarios</a>
+                <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Revisar solicitudes</a>
+                <a href="#correos">Enviar confirmacion</a>
+                <a href="<?= h(app_url('admin/auditorios.php')) ?>">Ver auditorios</a>
+                <a href="<?= h(app_url('admin/reportes.php')) ?>">Generar reporte</a>
+            </nav>
+        </section>
+
         <section class="admin-metrics" aria-label="Indicadores generales">
             <article class="admin-metric">
                 <span>Usuarios registrados</span>
@@ -329,16 +343,6 @@ $totalReservas = max(1, array_sum($reservas));
             </article>
         </section>
 
-        <section class="quick-actions" id="reportes">
-            <h2>Acciones rapidas</h2>
-            <div>
-                <a href="<?= h(app_url('admin/usuarios.php')) ?>">Gestionar usuarios</a>
-                <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Revisar solicitudes</a>
-                <a href="#correos">Enviar confirmacion</a>
-                <a href="<?= h(app_url('admin/auditorios.php')) ?>">Ver auditorios</a>
-                <a href="<?= h(app_url('admin/reportes.php')) ?>">Generar reporte</a>
-            </div>
-        </section>
     </section>
 </main>
 

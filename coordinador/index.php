@@ -157,6 +157,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 $solicitudes = [];
 $counts = ['Pendiente' => 0, 'Activo' => 0, 'Cancelado' => 0, 'Finalizado' => 0];
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
+$monthFullLabels = [1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'];
 
 try {
     foreach (coord_rows(
@@ -198,6 +199,19 @@ try {
 } catch (Throwable $exception) {
     error_log('SICA coordinador solicitudes: ' . $exception->getMessage());
 }
+
+$totalSolicitudes = array_sum($counts);
+$pendientes = (int)($counts['Pendiente'] ?? 0);
+$aprobadas = (int)($counts['Activo'] ?? 0);
+$rechazadas = (int)($counts['Cancelado'] ?? 0);
+$finalizadas = (int)($counts['Finalizado'] ?? 0);
+$hoy = new DateTimeImmutable('now');
+$eventosCalendario = array_slice($solicitudes, 0, 6);
+$eventosAprobados = array_values(array_filter(
+    $solicitudes,
+    static fn(array $solicitud): bool => (string)$solicitud['estado'] === 'Activo'
+));
+$eventosAprobados = array_slice($eventosAprobados, 0, 3);
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -220,17 +234,30 @@ try {
         </section>
 
         <nav class="admin-nav">
-            <a class="active" href="<?= coord_h(app_url('coordinador/index.php')) ?>"><span>SR</span>Solicitudes</a>
+            <a class="active" href="<?= coord_h(app_url('coordinador/index.php')) ?>"><span>PC</span>Panel Coordinador</a>
+            <a href="#solicitudes"><span>SA</span>Solicitudes de Auditorio</a>
+            <a href="#pendientes"><span>PE</span>Pendientes por aprobar</a>
+            <a href="#calendario"><span>CA</span>Calendario institucional</a>
+            <a href="#aprobados"><span>EA</span>Eventos aprobados</a>
             <a class="nav-logout-link" href="<?= coord_h(app_url('login/logout.php')) ?>"><span>SL</span>Cerrar sesion</a>
         </nav>
+
+        <section class="coord-help-card" aria-label="Ayuda del coordinador">
+            <strong>Ruta de revision</strong>
+            <small>Revisa disponibilidad, decide la solicitud y deja una observacion clara para el instructor.</small>
+        </section>
     </aside>
 
     <section class="admin-main">
         <header class="admin-topbar">
             <div>
                 <p class="admin-eyebrow">Coordinacion</p>
-                <h1>Solicitudes de auditorio</h1>
-                <span>Aprueba o cancela las reservas que el administrador te remitio para revision.</span>
+                <h1>Bienvenida, <?= coord_h($coordinadorName) ?></h1>
+                <span>Revisa, aprueba y gestiona las solicitudes de auditorio remitidas por administracion.</span>
+            </div>
+            <div class="coord-top-date">
+                <span><?= coord_h($hoy->format('d')) ?></span>
+                <strong><?= coord_h($monthFullLabels[(int)$hoy->format('n')]) ?> <?= coord_h($hoy->format('Y')) ?></strong>
             </div>
         </header>
 
@@ -240,38 +267,41 @@ try {
             </div>
         <?php endif; ?>
 
-        <section class="admin-metrics reservation-metrics" aria-label="Resumen de solicitudes">
+        <section class="admin-metrics coord-metrics" aria-label="Resumen de solicitudes">
             <article class="admin-metric">
-                <span>Pendientes</span>
-                <strong><?= coord_h($counts['Pendiente'] ?? 0) ?></strong>
-                <small>Por decidir</small>
+                <span>Total solicitudes</span>
+                <strong><?= coord_h($totalSolicitudes) ?></strong>
+                <small>Todas las solicitudes</small>
+            </article>
+            <article class="admin-metric">
+                <span>Pendientes por aprobar</span>
+                <strong><?= coord_h($pendientes) ?></strong>
+                <small>Esperan tu revision</small>
             </article>
             <article class="admin-metric">
                 <span>Aprobadas</span>
-                <strong><?= coord_h($counts['Activo'] ?? 0) ?></strong>
-                <small>Reservas activas</small>
+                <strong><?= coord_h($aprobadas) ?></strong>
+                <small>Solicitudes autorizadas</small>
             </article>
             <article class="admin-metric">
-                <span>Canceladas</span>
-                <strong><?= coord_h($counts['Cancelado'] ?? 0) ?></strong>
+                <span>Rechazadas</span>
+                <strong><?= coord_h($rechazadas) ?></strong>
                 <small>No autorizadas</small>
-            </article>
-            <article class="admin-metric">
-                <span>Finalizadas</span>
-                <strong><?= coord_h($counts['Finalizado'] ?? 0) ?></strong>
-                <small>Cerradas</small>
             </article>
         </section>
 
-        <section class="admin-panel reservations-panel">
-            <div class="admin-panel-head">
-                <div>
-                    <p class="admin-eyebrow">Revision academica</p>
-                    <h2>Solicitudes asignadas</h2>
-                </div>
-            </div>
+        <section class="coord-workspace">
+            <div class="coord-main-column">
+                <section class="admin-panel reservations-panel coord-requests-panel" id="solicitudes">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Solicitudes pendientes por aprobar</p>
+                            <h2>Revision academica de auditorios</h2>
+                        </div>
+                        <a href="#pendientes">Ver pendientes</a>
+                    </div>
 
-            <div class="admin-reservation-list">
+                    <div class="admin-reservation-list" id="pendientes">
                 <?php if (!$solicitudes): ?>
                     <article class="admin-empty-state">
                         <strong>No tienes solicitudes asignadas.</strong>
@@ -345,7 +375,111 @@ try {
                         </form>
                     </article>
                 <?php endforeach; ?>
+                    </div>
+                </section>
+
+                <section class="coord-bottom-grid">
+                    <article class="admin-panel" id="aprobados">
+                        <div class="admin-panel-head">
+                            <div>
+                                <p class="admin-eyebrow">Eventos aprobados</p>
+                                <h2>Proximos auditorios confirmados</h2>
+                            </div>
+                        </div>
+                        <div class="coord-approved-list">
+                            <?php if (!$eventosAprobados): ?>
+                                <article class="admin-empty-state">
+                                    <strong>No hay eventos aprobados.</strong>
+                                    <span>Cuando apruebes solicitudes apareceran en este resumen.</span>
+                                </article>
+                            <?php endif; ?>
+                            <?php foreach ($eventosAprobados as $evento): ?>
+                                <?php $fechaAprobada = new DateTime((string)$evento['fecha_evento']); ?>
+                                <div>
+                                    <time><strong><?= coord_h($fechaAprobada->format('d')) ?></strong><span><?= coord_h($monthLabels[(int)$fechaAprobada->format('n')]) ?></span></time>
+                                    <span>
+                                        <strong><?= coord_h($evento['nombre_evento']) ?></strong>
+                                        <small><?= coord_h($evento['nombre_auditorio']) ?> - <?= coord_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= coord_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
+                                    </span>
+                                    <em>Confirmado</em>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </article>
+
+                    <article class="admin-panel">
+                        <div class="admin-panel-head">
+                            <div>
+                                <p class="admin-eyebrow">Indicadores</p>
+                                <h2>Uso de auditorios</h2>
+                            </div>
+                        </div>
+                        <div class="coord-progress-list">
+                            <div><span>Aprobadas</span><strong><?= coord_h($aprobadas) ?></strong><i style="width: <?= coord_h($totalSolicitudes > 0 ? (int)round(($aprobadas / $totalSolicitudes) * 100) : 0) ?>%"></i></div>
+                            <div><span>Pendientes</span><strong><?= coord_h($pendientes) ?></strong><i style="width: <?= coord_h($totalSolicitudes > 0 ? (int)round(($pendientes / $totalSolicitudes) * 100) : 0) ?>%"></i></div>
+                            <div><span>Rechazadas</span><strong><?= coord_h($rechazadas) ?></strong><i style="width: <?= coord_h($totalSolicitudes > 0 ? (int)round(($rechazadas / $totalSolicitudes) * 100) : 0) ?>%"></i></div>
+                        </div>
+                    </article>
+                </section>
             </div>
+
+            <aside class="coord-side-column" aria-label="Panel de apoyo del coordinador">
+                <section class="admin-panel coord-calendar" id="calendario">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Calendario</p>
+                            <h2>Uso de auditorios</h2>
+                        </div>
+                    </div>
+                    <div class="coord-calendar-head">
+                        <strong><?= coord_h($monthFullLabels[(int)$hoy->format('n')]) ?> <?= coord_h($hoy->format('Y')) ?></strong>
+                        <span>Hoy <?= coord_h($hoy->format('d')) ?></span>
+                    </div>
+                    <div class="coord-calendar-list">
+                        <?php if (!$eventosCalendario): ?>
+                            <span>No hay eventos para mostrar.</span>
+                        <?php endif; ?>
+                        <?php foreach ($eventosCalendario as $evento): ?>
+                            <?php $fechaEvento = new DateTime((string)$evento['fecha_evento']); ?>
+                            <div class="<?= coord_h(coord_status_class((string)$evento['estado'])) ?>">
+                                <time><?= coord_h($fechaEvento->format('d')) ?> <?= coord_h($monthLabels[(int)$fechaEvento->format('n')]) ?></time>
+                                <strong><?= coord_h($evento['nombre_evento']) ?></strong>
+                                <small><?= coord_h($evento['estado']) ?> - <?= coord_h($evento['nombre_auditorio']) ?></small>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+
+                <section class="admin-panel coord-status-panel">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Estado</p>
+                            <h2>Solicitudes por estado</h2>
+                        </div>
+                    </div>
+                    <div class="coord-ring"><strong><?= coord_h($totalSolicitudes) ?></strong><span>Total</span></div>
+                    <div class="coord-status-list">
+                        <div><span class="pending"></span>Pendientes<strong><?= coord_h($pendientes) ?></strong></div>
+                        <div><span class="approved"></span>Aprobadas<strong><?= coord_h($aprobadas) ?></strong></div>
+                        <div><span class="rejected"></span>Rechazadas<strong><?= coord_h($rechazadas) ?></strong></div>
+                        <div><span class="finished"></span>Finalizadas<strong><?= coord_h($finalizadas) ?></strong></div>
+                    </div>
+                </section>
+
+                <section class="admin-panel coord-quick-panel">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Acciones</p>
+                            <h2>Acciones rapidas</h2>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="#solicitudes">Revisar solicitudes</a>
+                        <a href="#calendario">Ver calendario</a>
+                        <a href="#aprobados">Eventos aprobados</a>
+                    </div>
+                </section>
+            </aside>
         </section>
     </section>
 </main>

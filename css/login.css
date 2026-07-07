@@ -459,6 +459,15 @@ body[data-theme="dark"] .logout-cancel-btn {
     font-size: 12px;
 }
 
+.login-field .form-control.is-invalid ~ .invalid-feedback,
+.was-validated .login-field .form-control:invalid ~ .invalid-feedback {
+    display: block;
+    margin-top: 6px;
+    color: #ff3045;
+    font-size: 12px;
+    line-height: 1.25;
+}
+
 .password-strength {
     margin: -2px 0 12px;
     padding: 9px 10px;

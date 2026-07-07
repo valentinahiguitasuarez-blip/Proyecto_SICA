@@ -4,51 +4,15 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([2]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/coordinador_panel.php';
 
 $pageTitle = 'Coordinador Academico - SICA';
 $pageStyles = ['css/admin.css'];
 
-$usuario = $_SESSION['usuario'] ?? [];
+$usuario = coord_user();
 $coordinadorId = (int)($usuario['id_documento'] ?? 0);
-$coordinadorName = trim((string)($usuario['nombre'] ?? 'Coordinador'));
+$coordinadorName = coord_full_name($usuario);
 $coordinadorMail = (string)($usuario['correo'] ?? 'coordinador@sica.edu.co');
-
-function coord_h(string|int|null $value): string
-{
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
-
-function coord_rows(PDO $pdo, string $sql, array $params = []): array
-{
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    return $stmt->fetchAll();
-}
-
-function coord_scalar(PDO $pdo, string $sql, array $params = []): int
-{
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    return (int)$stmt->fetchColumn();
-}
-
-function coord_estado_id(PDO $pdo, string $estado): int
-{
-    $stmt = $pdo->prepare('SELECT id_estado FROM estado WHERE nombre_estado = :estado LIMIT 1');
-    $stmt->execute([':estado' => $estado]);
-    return (int)$stmt->fetchColumn();
-}
-
-function coord_status_class(string $estado): string
-{
-    return match ($estado) {
-        'Activo' => 'approved',
-        'Pendiente' => 'pending',
-        'Cancelado' => 'rejected',
-        'Finalizado' => 'finished',
-        default => 'neutral',
-    };
-}
 
 if (empty($_SESSION['csrf_coord_requests'])) {
     $_SESSION['csrf_coord_requests'] = bin2hex(random_bytes(32));
@@ -200,32 +164,8 @@ try {
 }
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
+<?php coord_layout_start('solicitudes'); ?>
 
-<main class="admin-dashboard">
-    <aside class="admin-sidebar" aria-label="Menu del coordinador">
-        <a class="admin-brand" href="<?= coord_h(app_url('coordinador/index.php')) ?>">
-            <span>
-                <strong>SICA</strong>
-                <small>Coordinacion de auditorios</small>
-            </span>
-        </a>
-
-        <section class="admin-profile" aria-label="Coordinador activo">
-            <div class="admin-avatar">CO</div>
-            <div>
-                <strong><?= coord_h($coordinadorName) ?></strong>
-                <small><?= coord_h($coordinadorMail) ?></small>
-                <span>En linea</span>
-            </div>
-        </section>
-
-        <nav class="admin-nav">
-            <a class="active" href="<?= coord_h(app_url('coordinador/index.php')) ?>"><span>SR</span>Solicitudes</a>
-            <a href="<?= coord_h(app_url('login/logout.php')) ?>"><span>SL</span>Cerrar sesion</a>
-        </nav>
-    </aside>
-
-    <section class="admin-main">
         <header class="admin-topbar">
             <div>
                 <p class="admin-eyebrow">Coordinacion</p>
@@ -303,7 +243,7 @@ try {
                             </div>
                             <p><?= coord_h($solicitud['descripcion'] ?? 'Solicitud de reserva de auditorio.') ?></p>
                             <div class="admin-reservation-meta">
-                                <span><?= coord_h(substr((string)$solicitud['hora_inicio'], 0, 5) . ' - ' . substr((string)$solicitud['hora_fin'], 0, 5)) ?></span>
+                                <span><?= coord_h(coord_hora12((string)$solicitud['hora_inicio']) . ' - ' . coord_hora12((string)$solicitud['hora_fin'])) ?></span>
                                 <span><?= coord_h($solicitud['nombre_auditorio'] . ' / Bloque ' . $solicitud['bloque']) ?></span>
                                 <span>Capacidad <?= coord_h($solicitud['capacidad']) ?></span>
                                 <span>Codigo <?= coord_h($solicitud['codigo_evento']) ?></span>
@@ -339,7 +279,5 @@ try {
                 <?php endforeach; ?>
             </div>
         </section>
-    </section>
-</main>
-
+<?php coord_layout_end(); ?>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

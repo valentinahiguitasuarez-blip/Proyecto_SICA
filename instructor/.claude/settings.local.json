@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"c:/Users/ROMOM/Downloads\" | head -30; ls \"c:/Users/ROMOM/Downloads/instructor/../includes\" 2>/dev/null || echo \"no includes dir at sibling level\")",
+      "Read(//c/Users/ROMOM/Downloads/**)",
+      "Bash(php -l \"c:/Users/ROMOM/Downloads/instructor/mis_solicitudes.php\")",
+      "Bash(where php *)"
+    ]
+  }
+}

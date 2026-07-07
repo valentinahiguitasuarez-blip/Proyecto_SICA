@@ -147,6 +147,25 @@ body {
     font-weight: 800;
 }
 
+.admin-profile-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: background 160ms ease;
+}
+
+.admin-profile-link:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
 .admin-main {
     padding: 28px clamp(22px, 3vw, 40px);
 }
@@ -1303,4 +1322,321 @@ body {
     .admin-user-tags {
         justify-content: flex-start;
     }
+}
+
+/* ===== Coordinador: perfil ===== */
+.admin-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.35fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.admin-profile-summary {
+    text-align: center;
+}
+
+.admin-profile-photo {
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 12px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    overflow: hidden;
+    color: var(--admin-blue);
+    background: var(--admin-blue-soft);
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.admin-profile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-profile-summary h2 {
+    margin: 4px 0 2px;
+}
+
+.admin-profile-summary > span {
+    color: var(--admin-muted);
+    font-weight: 700;
+}
+
+.admin-profile-facts {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+    text-align: left;
+}
+
+.admin-profile-facts div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.admin-profile-facts dt {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-profile-facts dd {
+    margin: 0;
+    font-weight: 800;
+}
+
+.admin-profile-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-profile-field {
+    display: grid;
+    gap: 6px;
+}
+
+.admin-profile-field.wide {
+    grid-column: 1 / -1;
+}
+
+.admin-profile-field span {
+    color: var(--admin-muted);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-profile-field input {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-ink);
+    background: #ffffff;
+    font: inherit;
+    font-weight: 700;
+}
+
+.admin-profile-field input[type="file"] {
+    padding: 8px 12px;
+}
+
+.admin-profile-submit {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 46px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-weight: 900;
+    cursor: pointer;
+}
+
+/* ===== Coordinador: auditorios (solo lectura) ===== */
+.admin-auditorios-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.admin-auditorio-card {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.admin-auditorio-card h3 {
+    margin: 0;
+}
+
+.admin-auditorio-card > div:first-child span {
+    color: var(--admin-muted);
+    font-weight: 700;
+}
+
+.admin-auditorio-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: var(--admin-muted);
+    font-size: 13px;
+}
+
+.admin-auditorio-meta strong {
+    color: var(--admin-ink);
+}
+
+.admin-auditorio-card em {
+    justify-self: start;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 900;
+    background: #eef3f8;
+    color: var(--admin-muted);
+}
+
+.admin-auditorio-card.ok em {
+    color: #07523c;
+    background: var(--admin-green-soft);
+}
+
+.admin-auditorio-card.off em {
+    color: #a41428;
+    background: #ffe8eb;
+}
+
+@media (max-width: 900px) {
+    .admin-profile-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-profile-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.admin-profile-summary--coordinator {
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), #f7fbff 65%);
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 24px 55px rgba(31, 64, 117, 0.16);
+}
+
+.admin-profile-summary--coordinator .admin-profile-photo {
+    width: 118px;
+    height: 118px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, rgba(22, 93, 255, 0.15), rgba(18, 166, 120, 0.16));
+}
+
+.admin-profile-summary--coordinator h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 28px;
+}
+
+.admin-profile-summary--coordinator span {
+    color: #475569;
+}
+
+.admin-profile-form--coordinator {
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.admin-profile-form--coordinator .admin-profile-field.wide {
+    grid-column: 1 / -1;
+}
+
+.admin-profile-form--coordinator .admin-profile-submit {
+    justify-self: stretch;
+}
+
+/* ===== Coordinador: calendario ampliado ===== */
+.coord-calendar-wide .calendar-grid {
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+}
+
+.coord-calendar-wide .calendar-cell,
+.coord-calendar-wide .calendar-day-name {
+    min-height: 92px;
+    padding: 14px;
+}
+
+.coord-calendar-wide .calendar-date {
+    font-size: 15px;
+}
+
+.coord-calendar-wide .calendar-event {
+    padding: 8px 9px;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.coord-calendar-wide .calendar-event strong {
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+@media (max-width: 900px) {
+    .coord-calendar-wide .calendar-grid {
+        grid-template-columns: repeat(7, minmax(90px, 1fr));
+        overflow-x: auto;
+    }
+}
+
+/* ===== Nota descriptiva dentro de un admin-panel ===== */
+.admin-panel-note {
+    margin: -6px 0 16px;
+    color: var(--admin-muted);
+    font-size: 13px;
+}
+
+/* ===== Coordinador: badge de pendientes en el menu ===== */
+.admin-nav a {
+    justify-content: space-between;
+}
+
+.admin-nav-badge {
+    flex: 0 0 auto;
+    min-width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border-radius: 999px;
+    color: #ffffff;
+    background: var(--admin-red, #dc3545);
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.admin-nav a.active .admin-nav-badge {
+    background: #ffffff;
+    color: var(--admin-blue);
+}
+
+/* ===== Coordinador: barra de exportar CSV ===== */
+.admin-export-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin: -6px 0 16px;
+}
+
+.admin-export-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: #ffffff;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.admin-export-link:hover {
+    background: var(--admin-blue-soft);
 }

@@ -296,7 +296,7 @@ if ($evento) {
                     <b><?= instructor_h($avatarText) ?></b>
                     <div>
                         <strong><?= instructor_h($full) ?></strong>
-                        <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?> · Llegada <?= instructor_h(substr((string)$participante['hora'],0,5)) ?></small>
+                        <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?> · Llegada <?= instructor_h(date('g:i A', strtotime((string)$participante['hora']))) ?></small>
                     </div>
                     <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
                     <form method="post" onsubmit="return confirm('Eliminar participante?');">

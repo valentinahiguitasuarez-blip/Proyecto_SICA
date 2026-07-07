@@ -126,18 +126,6 @@ if (empty($_SESSION['csrf_login'])) {
                             <path d="M12 5.5c5.2 0 8.48 4.4 9.55 6.1a.75.75 0 0 1 0 .8c-1.07 1.7-4.35 6.1-9.55 6.1s-8.48-4.4-9.55-6.1a.75.75 0 0 1 0-.8C3.52 9.9 6.8 5.5 12 5.5Zm0 2c-3.8 0-6.43 3-7.5 4.5 1.07 1.5 3.7 4.5 7.5 4.5s6.43-3 7.5-4.5C18.43 10.5 15.8 7.5 12 7.5Zm0 1.75a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5Z" fill="currentColor"/>
                         </svg>
                     </button><div class="invalid-feedback">La contrase&ntilde;a debe ser segura.</div></div>
-                <div class="password-strength" id="passwordRules" aria-live="polite">
-                    <div class="strength-track" aria-hidden="true">
-                        <span data-strength-bar></span>
-                    </div>
-                    <p data-strength-message>Usa 8 caracteres con may&uacute;scula, min&uacute;scula, n&uacute;mero y s&iacute;mbolo.</p>
-                    <span class="strength-hidden-rule" data-rule="length"></span>
-                    <span class="strength-hidden-rule" data-rule="upper"></span>
-                    <span class="strength-hidden-rule" data-rule="lower"></span>
-                    <span class="strength-hidden-rule" data-rule="number"></span>
-                    <span class="strength-hidden-rule" data-rule="special"></span>
-                </div>
-
                 <div class="login-options">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="" id="recordarme">

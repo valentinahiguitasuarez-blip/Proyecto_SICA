@@ -149,7 +149,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 $filtro = trim((string)($_GET['estado'] ?? ''));
 $busqueda = trim((string)($_GET['q'] ?? ''));
 $params = [];
-$where = ['e.id_coordinador IS NOT NULL'];
+$where = ['1 = 1'];
 
 if ($filtro !== '') {
     $where[] = 'es.nombre_estado = :estado';
@@ -163,6 +163,7 @@ if ($busqueda !== '') {
 
 $whereSql = ' WHERE ' . implode(' AND ', $where);
 $stats = [
+    'sin_enviar' => 0,
     'coordinacion' => 0,
     'decisiones' => 0,
     'pendientes' => 0,
@@ -171,6 +172,14 @@ $stats = [
 $notificaciones = [];
 
 try {
+    $stats['sin_enviar'] = admin_c_scalar(
+        $pdo,
+        "SELECT COUNT(*)
+         FROM evento e
+         INNER JOIN estado es ON es.id_estado = e.id_estado
+         WHERE e.id_coordinador IS NULL
+           AND es.nombre_estado = 'Pendiente'"
+    );
     $stats['coordinacion'] = admin_c_scalar($pdo, 'SELECT COUNT(*) FROM evento WHERE id_coordinador IS NOT NULL');
     $stats['decisiones'] = admin_c_scalar($pdo, 'SELECT COUNT(*) FROM evento WHERE id_coordinador IS NOT NULL AND fecha_aprobacion IS NOT NULL');
     $stats['pendientes'] = admin_c_scalar(
@@ -203,7 +212,15 @@ try {
          LEFT JOIN usuario ins ON ins.id_documento = e.id_solicitante
          LEFT JOIN usuario coord ON coord.id_documento = e.id_coordinador' .
             $whereSql .
-        ' ORDER BY COALESCE(e.fecha_aprobacion, e.fecha_evento) DESC, e.hora_inicio DESC
+        ' ORDER BY
+            CASE
+                WHEN e.id_coordinador IS NULL AND es.nombre_estado = \'Pendiente\' THEN 1
+                WHEN e.id_coordinador IS NOT NULL AND e.fecha_aprobacion IS NULL THEN 2
+                WHEN e.id_coordinador IS NOT NULL AND e.fecha_aprobacion IS NOT NULL THEN 3
+                ELSE 4
+            END,
+            COALESCE(e.fecha_aprobacion, e.fecha_evento) DESC,
+            e.hora_inicio DESC
           LIMIT 100',
         $params
     );
@@ -236,8 +253,8 @@ try {
             <a href="<?= admin_c_h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
             <a href="<?= admin_c_h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes de Reserva</a>
             <a class="active" href="<?= admin_c_h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos y Notificaciones</a>
-            <a href="<?= admin_c_h(app_url('admin/index.php#auditorios')) ?>"><span>AU</span>Auditorios</a>
-            <a href="<?= admin_c_h(app_url('admin/index.php#reportes')) ?>"><span>RP</span>Reportes</a>
+            <a href="<?= admin_c_h(app_url('admin/auditorios.php')) ?>"><span>AU</span>Auditorios</a>
+            <a href="<?= admin_c_h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reportes</a>
         </nav>
     </aside>
 
@@ -246,7 +263,7 @@ try {
             <div>
                 <p class="admin-eyebrow">Comunicaciones</p>
                 <h1>Correos y notificaciones</h1>
-                <span>Controla los mensajes que van a coordinacion y las respuestas que recibe cada instructor.</span>
+                <span>Gestiona la ruta completa: solicitud del instructor, envio a coordinacion y respuesta final.</span>
             </div>
             <div class="admin-top-actions">
                 <a href="<?= admin_c_h(app_url('admin/solicitudes.php')) ?>">Reservas <strong>SR</strong></a>
@@ -262,24 +279,24 @@ try {
 
         <section class="admin-metrics reservation-metrics" aria-label="Resumen de correos">
             <article class="admin-metric">
-                <span>Enviados a coordinacion</span>
-                <strong><?= admin_c_h($stats['coordinacion']) ?></strong>
-                <small>Solicitudes remitidas</small>
+                <span>Por enviar</span>
+                <strong><?= admin_c_h($stats['sin_enviar']) ?></strong>
+                <small>Pendientes de coordinador</small>
             </article>
             <article class="admin-metric">
-                <span>Con decision</span>
-                <strong><?= admin_c_h($stats['decisiones']) ?></strong>
-                <small>Listas para informar</small>
-            </article>
-            <article class="admin-metric">
-                <span>En revision</span>
+                <span>En coordinacion</span>
                 <strong><?= admin_c_h($stats['pendientes']) ?></strong>
-                <small>Esperando coordinador</small>
+                <small>Esperando decision</small>
+            </article>
+            <article class="admin-metric">
+                <span>Por notificar</span>
+                <strong><?= admin_c_h($stats['decisiones']) ?></strong>
+                <small>Con respuesta final</small>
             </article>
             <article class="admin-metric">
                 <span>Canceladas</span>
                 <strong><?= admin_c_h($stats['cancelados']) ?></strong>
-                <small>Respuesta negativa</small>
+                <small>Respuestas negativas</small>
             </article>
         </section>
 
@@ -287,7 +304,7 @@ try {
             <div class="admin-panel-head">
                 <div>
                     <p class="admin-eyebrow">Bandeja SICA</p>
-                    <h2>Seguimiento de comunicaciones</h2>
+                    <h2>Ruta de correos</h2>
                 </div>
             </div>
 
@@ -323,22 +340,32 @@ try {
                     <?php
                     $estado = (string)$notificacion['estado'];
                     $decidida = !empty($notificacion['fecha_aprobacion']);
+                    $tieneCoordinador = !empty($notificacion['coord_correo']);
+                    $sinEnviar = !$tieneCoordinador && $estado === 'Pendiente';
                     $instructor = trim((string)$notificacion['instructor_nombre'] . ' ' . (string)$notificacion['instructor_apellido']);
                     $coordinador = trim((string)$notificacion['coord_nombre'] . ' ' . (string)$notificacion['coord_apellido']);
                     $fecha = new DateTime((string)$notificacion['fecha_evento']);
+                    $cardClass = $sinEnviar ? 'draft' : ($decidida ? 'ready' : 'waiting');
                     ?>
-                    <article class="admin-mail-card <?= $decidida ? 'ready' : 'waiting' ?>">
-                        <div class="admin-mail-flow">
+                    <article class="admin-mail-card <?= admin_c_h($cardClass) ?>">
+                        <div class="admin-mail-flow complete">
                             <span>1</span>
                             <div>
-                                <strong>Solicitud enviada a coordinacion</strong>
-                                <small><?= admin_c_h($coordinador !== '' ? $coordinador : 'Coordinador') ?> - <?= admin_c_h($notificacion['coord_correo'] ?? 'Sin correo') ?></small>
+                                <strong>Solicitud recibida</strong>
+                                <small><?= admin_c_h($instructor !== '' ? $instructor : 'Instructor') ?> - <?= admin_c_h($notificacion['instructor_correo'] ?? 'Sin correo') ?></small>
+                            </div>
+                        </div>
+                        <div class="admin-mail-flow <?= $tieneCoordinador ? 'complete' : '' ?>">
+                            <span>2</span>
+                            <div>
+                                <strong><?= $tieneCoordinador ? 'Enviada a coordinacion' : 'Falta enviar a coordinacion' ?></strong>
+                                <small><?= $tieneCoordinador ? admin_c_h(($coordinador !== '' ? $coordinador : 'Coordinador') . ' - ' . (string)$notificacion['coord_correo']) : 'Asigna coordinador desde solicitudes' ?></small>
                             </div>
                         </div>
                         <div class="admin-mail-flow <?= $decidida ? 'complete' : '' ?>">
-                            <span>2</span>
+                            <span>3</span>
                             <div>
-                                <strong><?= $decidida ? 'Decision registrada' : 'Esperando decision' ?></strong>
+                                <strong><?= $decidida ? 'Decision lista' : 'Esperando decision' ?></strong>
                                 <small><?= admin_c_h($estado) ?><?= $decidida ? ' - ' . admin_c_h((string)$notificacion['fecha_aprobacion']) : '' ?></small>
                             </div>
                         </div>
@@ -352,14 +379,21 @@ try {
                                 <span><?= admin_c_h($notificacion['instructor_correo'] ?? 'Sin correo') ?></span>
                             </div>
                         </div>
-                        <form class="admin-mail-actions" method="post" action="<?= admin_c_h(app_url('admin/correos.php')) ?>">
-                            <input type="hidden" name="csrf_admin_mail" value="<?= admin_c_h($_SESSION['csrf_admin_mail']) ?>">
-                            <input type="hidden" name="id_evento" value="<?= admin_c_h($notificacion['id_evento']) ?>">
-                            <button type="submit" name="accion" value="reenviar_coordinador">Reenviar a coordinador</button>
-                            <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>>
-                                Notificar instructor
-                            </button>
-                        </form>
+                        <?php if ($sinEnviar): ?>
+                            <div class="admin-mail-actions">
+                                <a href="<?= admin_c_h(app_url('admin/solicitudes.php?q=' . urlencode((string)$notificacion['nombre_evento']))) ?>">Asignar coordinador</a>
+                                <small>Primero se envia a coordinacion.</small>
+                            </div>
+                        <?php else: ?>
+                            <form class="admin-mail-actions" method="post" action="<?= admin_c_h(app_url('admin/correos.php')) ?>">
+                                <input type="hidden" name="csrf_admin_mail" value="<?= admin_c_h($_SESSION['csrf_admin_mail']) ?>">
+                                <input type="hidden" name="id_evento" value="<?= admin_c_h($notificacion['id_evento']) ?>">
+                                <button type="submit" name="accion" value="reenviar_coordinador">Reenviar a coordinador</button>
+                                <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>>
+                                    Notificar instructor
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </article>
                 <?php endforeach; ?>
             </div>

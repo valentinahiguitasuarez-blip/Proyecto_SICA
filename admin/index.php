@@ -142,22 +142,22 @@ $totalReservas = max(1, array_sum($reservas));
             </span>
         </a>
 
-        <section class="admin-profile" aria-label="Administrador activo">
+        <a class="admin-profile" href="<?= h(app_url('admin/perfil.php')) ?>" aria-label="Ver perfil del administrador">
             <div class="admin-avatar">AD</div>
             <div>
                 <strong><?= h($adminName) ?></strong>
                 <small><?= h($adminMail) ?></small>
                 <span>En linea</span>
             </div>
-        </section>
+        </a>
 
         <nav class="admin-nav">
             <a class="active" href="<?= h(app_url('admin/index.php')) ?>"><span>PC</span>Panel de Control</a>
             <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
             <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes de Reserva</a>
             <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos y Notificaciones</a>
-            <a href="#auditorios"><span>AU</span>Auditorios</a>
-            <a href="#reportes"><span>RP</span>Reportes</a>
+            <a href="<?= h(app_url('admin/auditorios.php')) ?>"><span>AU</span>Auditorios</a>
+            <a href="<?= h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reportes</a>
         </nav>
 
     </aside>
@@ -171,7 +171,7 @@ $totalReservas = max(1, array_sum($reservas));
             </div>
             <div class="admin-top-actions">
                 <a href="<?= h(app_url('admin/correos.php')) ?>" aria-label="Correos pendientes">Correo <strong><?= h($stats['correos']) ?></strong></a>
-                <a href="#reservas" aria-label="Solicitudes pendientes">Reservas <strong><?= h($reservas['Pendiente']) ?></strong></a>
+                <a href="<?= h(app_url('admin/solicitudes.php')) ?>" aria-label="Solicitudes pendientes">Reservas <strong><?= h($reservas['Pendiente']) ?></strong></a>
                 <a class="admin-logout" href="<?= h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
             </div>
         </header>
@@ -335,8 +335,8 @@ $totalReservas = max(1, array_sum($reservas));
                 <a href="<?= h(app_url('admin/usuarios.php')) ?>">Gestionar usuarios</a>
                 <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Revisar solicitudes</a>
                 <a href="#correos">Enviar confirmacion</a>
-                <a href="#auditorios">Ver auditorios</a>
-                <a href="#reportes">Generar reporte</a>
+                <a href="<?= h(app_url('admin/auditorios.php')) ?>">Ver auditorios</a>
+                <a href="<?= h(app_url('admin/reportes.php')) ?>">Generar reporte</a>
             </div>
         </section>
     </section>

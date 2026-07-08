@@ -294,6 +294,37 @@ try {
 }
 
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
+$solicitudesPorEstado = [
+    'Pendiente' => [],
+    'Activo' => [],
+    'Cancelado' => [],
+    'Finalizado' => [],
+];
+foreach ($solicitudes as $solicitud) {
+    $estadoSolicitud = (string)$solicitud['estado'];
+    if (!isset($solicitudesPorEstado[$estadoSolicitud])) {
+        $solicitudesPorEstado[$estadoSolicitud] = [];
+    }
+    $solicitudesPorEstado[$estadoSolicitud][] = $solicitud;
+}
+$seccionesSolicitud = [
+    'Pendiente' => [
+        'titulo' => 'Pendientes',
+        'descripcion' => 'Solicitudes por asignar o en espera de respuesta de coordinación.',
+    ],
+    'Activo' => [
+        'titulo' => 'Aprobadas',
+        'descripcion' => 'Reservas autorizadas que ya pueden comunicarse al instructor.',
+    ],
+    'Cancelado' => [
+        'titulo' => 'Canceladas',
+        'descripcion' => 'Solicitudes rechazadas o no autorizadas.',
+    ],
+    'Finalizado' => [
+        'titulo' => 'Finalizadas',
+        'descripcion' => 'Eventos cerrados en el sistema.',
+    ],
+];
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -360,6 +391,11 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                 <strong><?= admin_s_h($counts['Finalizado'] ?? 0) ?></strong>
                 <small>Eventos cerrados</small>
             </article>
+            <article class="admin-metric">
+                <span>Canceladas</span>
+                <strong><?= admin_s_h($counts['Cancelado'] ?? 0) ?></strong>
+                <small>No autorizadas</small>
+            </article>
         </section>
 
         <section class="admin-panel reservations-panel">
@@ -401,27 +437,43 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                 <a href="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">Limpiar</a>
             </form>
 
-            <div class="admin-reservation-list">
-                <?php if (!$solicitudes): ?>
-                    <article class="admin-empty-state">
-                        <strong>No hay solicitudes para mostrar.</strong>
-                        <span>Cuando los instructores separen auditorios, apareceran aqui.</span>
-                    </article>
-                <?php endif; ?>
-
-                <?php foreach ($solicitudes as $solicitud): ?>
+            <div class="admin-request-sections">
+                <?php foreach ($seccionesSolicitud as $estadoSeccion => $seccion): ?>
                     <?php
-                    $fecha = new DateTime((string)$solicitud['fecha_evento']);
-                    $estado = (string)$solicitud['estado'];
-                    $statusClass = admin_s_status_class($estado);
-                    $solicitante = trim((string)$solicitud['nombre'] . ' ' . (string)$solicitud['apellido']);
-                    $solicitante = $solicitante !== '' ? $solicitante : 'Solicitante SICA';
-                    $coordinadorAsignado = trim((string)($solicitud['coord_nombre'] ?? '') . ' ' . (string)($solicitud['coord_apellido'] ?? ''));
-                    $coordinadorAsignado = $coordinadorAsignado !== '' ? $coordinadorAsignado : 'Sin coordinador asignado';
-                    $enviadoCoordinacion = !empty($solicitud['coord_documento']);
-                    $tieneDecision = $enviadoCoordinacion && !empty($solicitud['fecha_aprobacion']);
+                    $itemsSeccion = $solicitudesPorEstado[$estadoSeccion] ?? [];
+                    $sectionClass = admin_s_status_class($estadoSeccion);
                     ?>
-                    <article class="admin-reservation-card <?= admin_s_h($statusClass) ?>">
+                    <section class="admin-request-section <?= admin_s_h($sectionClass) ?>" aria-label="<?= admin_s_h($seccion['titulo']) ?>">
+                        <header class="admin-request-section-head">
+                            <div>
+                                <p class="admin-eyebrow"><?= admin_s_h($estadoSeccion) ?></p>
+                                <h3><?= admin_s_h($seccion['titulo']) ?></h3>
+                                <span><?= admin_s_h($seccion['descripcion']) ?></span>
+                            </div>
+                            <strong><?= admin_s_h((string)count($itemsSeccion)) ?></strong>
+                        </header>
+
+                        <div class="admin-reservation-list">
+                            <?php if (!$itemsSeccion): ?>
+                                <article class="admin-empty-state compact">
+                                    <strong>No hay solicitudes en esta sección.</strong>
+                                    <span>Cuando exista una solicitud <?= admin_s_h(mb_strtolower($seccion['titulo'], 'UTF-8')) ?>, aparecerá aquí.</span>
+                                </article>
+                            <?php endif; ?>
+
+                            <?php foreach ($itemsSeccion as $solicitud): ?>
+                                <?php
+                                $fecha = new DateTime((string)$solicitud['fecha_evento']);
+                                $estado = (string)$solicitud['estado'];
+                                $statusClass = admin_s_status_class($estado);
+                                $solicitante = trim((string)$solicitud['nombre'] . ' ' . (string)$solicitud['apellido']);
+                                $solicitante = $solicitante !== '' ? $solicitante : 'Solicitante SICA';
+                                $coordinadorAsignado = trim((string)($solicitud['coord_nombre'] ?? '') . ' ' . (string)($solicitud['coord_apellido'] ?? ''));
+                                $coordinadorAsignado = $coordinadorAsignado !== '' ? $coordinadorAsignado : 'Sin coordinador asignado';
+                                $enviadoCoordinacion = !empty($solicitud['coord_documento']);
+                                $tieneDecision = $enviadoCoordinacion && !empty($solicitud['fecha_aprobacion']);
+                                ?>
+                                <article class="admin-reservation-card <?= admin_s_h($statusClass) ?>">
                         <time>
                             <strong><?= admin_s_h($fecha->format('d')) ?></strong>
                             <span><?= admin_s_h($monthLabels[(int)$fecha->format('n')]) ?></span>
@@ -539,7 +591,10 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                 </div>
                             </div>
                         </details>
-                    </article>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </section>
                 <?php endforeach; ?>
             </div>
         </section>

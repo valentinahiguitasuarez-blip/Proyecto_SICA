@@ -1558,7 +1558,7 @@ body {
 }
 
 .reservation-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 16px;
 }
@@ -1575,6 +1575,88 @@ body {
 .admin-reservation-list {
     display: grid;
     gap: 10px;
+}
+
+.admin-request-sections {
+    display: grid;
+    gap: 18px;
+}
+
+.admin-request-section {
+    --request-section-accent: var(--admin-blue);
+    --request-section-soft: rgba(22, 93, 255, 0.08);
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid color-mix(in srgb, var(--request-section-accent), transparent 76%);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, var(--request-section-soft), rgba(255, 255, 255, 0.94) 38%),
+        #ffffff;
+}
+
+.admin-request-section.pending {
+    --request-section-accent: var(--admin-amber);
+    --request-section-soft: rgba(217, 139, 9, 0.12);
+}
+
+.admin-request-section.approved {
+    --request-section-accent: var(--admin-green);
+    --request-section-soft: rgba(18, 166, 120, 0.10);
+}
+
+.admin-request-section.rejected {
+    --request-section-accent: var(--admin-red);
+    --request-section-soft: rgba(220, 53, 69, 0.09);
+}
+
+.admin-request-section.finished {
+    --request-section-accent: #64748b;
+    --request-section-soft: rgba(100, 116, 139, 0.08);
+}
+
+.admin-request-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 4px 2px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--request-section-accent), transparent 84%);
+}
+
+.admin-request-section-head h3 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 24px;
+    line-height: 1.1;
+    font-weight: 900;
+}
+
+.admin-request-section-head span {
+    display: block;
+    margin-top: 5px;
+    color: var(--admin-muted);
+    font-weight: 750;
+}
+
+.admin-request-section-head > strong {
+    min-width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--request-section-accent);
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--request-section-accent), transparent 74%);
+    font-size: 28px;
+    line-height: 1;
+}
+
+.admin-request-section .admin-empty-state.compact {
+    padding: 16px;
+    border-style: dashed;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: none;
 }
 
 .admin-reservation-card {
@@ -3593,6 +3675,11 @@ body {
 
     .admin-topbar span {
         color: var(--admin-muted);
+    }
+
+    .admin-request-section-head {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .admin-mail-guide ol {

@@ -250,10 +250,8 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                 <div class="admin-notification-center" aria-label="Centro de notificaciones">
                     <strong><?= h($notificationTotal) ?></strong>
                     <span>Alertas</span>
-                    <small><?= h($reservas['Pendiente']) ?> solicitudes · <?= h($stats['correos_pendientes'] ?? 0) ?> correos</small>
+                    <small><?= h($reservas['Pendiente']) ?> solicitudes - <?= h($stats['correos_pendientes'] ?? 0) ?> correos</small>
                 </div>
-                <a href="<?= h(app_url('admin/correos.php')) ?>" aria-label="Correos pendientes">Correo <strong><?= h($stats['correos_pendientes']) ?></strong></a>
-                <a href="<?= h(app_url('admin/solicitudes.php')) ?>" aria-label="Solicitudes pendientes">Reservas <strong><?= h($reservas['Pendiente']) ?></strong></a>
                 <a class="admin-logout" href="<?= h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
             </div>
         </header>
@@ -264,59 +262,7 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
             <button type="submit">Buscar</button>
         </form>
 
-        <section class="quick-actions quick-actions-featured" id="reportes">
-            <div>
-                <span class="admin-eyebrow">Acciones rapidas</span>
-                <h2>Gestion directa del sistema</h2>
-            </div>
-            <nav aria-label="Acciones rapidas del administrador">
-                <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>+</span>Nueva reserva</a>
-                <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Crear usuario</a>
-                <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CO</span>Enviar correo</a>
-                <a href="<?= h(app_url('admin/reportes.php')) ?>"><span>RP</span>Generar reporte</a>
-                <a href="<?= h(app_url('admin/auditorios.php')) ?>"><span>AU</span>Auditorios</a>
-                <a href="#eventos-hoy"><span>CA</span>Calendario</a>
-            </nav>
-        </section>
-
-        <section class="admin-metrics" aria-label="Indicadores generales">
-            <article class="admin-metric">
-                <span>Usuarios registrados</span>
-                <strong><?= h($stats['usuarios']) ?></strong>
-                <small>Gestion de cuentas y roles</small>
-            </article>
-            <article class="admin-metric">
-                <span>Eventos programados</span>
-                <strong><?= h($stats['eventos']) ?></strong>
-                <small>Reservas aprobadas o activas</small>
-            </article>
-            <article class="admin-metric">
-                <span>Correos pendientes</span>
-                <strong><?= h($stats['correos_pendientes'] ?? 0) ?></strong>
-                <small>Confirmaciones, cancelaciones o recordatorios</small>
-            </article>
-            <article class="admin-metric">
-                <span>Correos enviados</span>
-                <strong><?= h($stats['correos']) ?></strong>
-                <small>Confirmaciones y novedades</small>
-            </article>
-            <article class="admin-metric">
-                <span>Auditorios activos</span>
-                <strong><?= h($stats['auditorios']) ?></strong>
-                <small>Espacios disponibles</small>
-            </article>
-        </section>
-
-        <section class="admin-today-strip" aria-label="Indicadores de hoy">
-            <span>Hoy</span>
-            <div><strong><?= h($todayStats['solicitudes']) ?></strong><small>Solicitudes recibidas</small></div>
-            <div><strong><?= h($todayStats['aprobadas']) ?></strong><small>Solicitudes aprobadas</small></div>
-            <div><strong><?= h($todayStats['correos']) ?></strong><small>Correos enviados</small></div>
-            <div><strong><?= h($todayStats['eventos_activos']) ?></strong><small>Eventos activos</small></div>
-            <div><strong><?= h($todayStats['auditorios_ocupados']) ?> de <?= h(max(1, count($auditorios))) ?></strong><small>Auditorios ocupados</small></div>
-        </section>
-
-        <section class="admin-workflow-grid">
+        <section class="admin-focus-layout">
             <article class="admin-panel admin-work-queue">
                 <div class="admin-panel-head">
                     <div>
@@ -355,27 +301,101 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                 </div>
             </article>
 
-            <article class="admin-panel admin-flow-panel">
-                <div class="admin-panel-head">
+            <aside class="admin-focus-side" aria-label="Resumen operativo">
+                <article class="admin-panel admin-today-card">
                     <div>
-                        <p class="admin-eyebrow">Flujo SICA</p>
-                        <h2>Flujo de solicitudes</h2>
+                        <p class="admin-eyebrow">Hoy</p>
+                        <h2>Operacion del dia</h2>
                     </div>
-                </div>
-                <ol class="admin-flow-list">
-                    <li>Solicitud creada</li>
-                    <li>Revision administrador</li>
-                    <li>Enviada a coordinacion</li>
-                    <li>Aprobada / Rechazada</li>
-                    <li>Correo automatico</li>
-                    <li>Reserva confirmada</li>
-                    <li>Registro de asistencia</li>
-                    <li>Certificado generado</li>
-                </ol>
+                    <div class="admin-today-mini">
+                        <div><strong><?= h($todayStats['solicitudes']) ?></strong><small>Solicitudes</small></div>
+                        <div><strong><?= h($todayStats['correos']) ?></strong><small>Correos</small></div>
+                        <div><strong><?= h($todayStats['eventos_activos']) ?></strong><small>Eventos</small></div>
+                        <div><strong><?= h($todayStats['auditorios_ocupados']) ?> / <?= h(max(1, count($auditorios))) ?></strong><small>Auditorios</small></div>
+                    </div>
+                </article>
+
+                <section class="quick-actions quick-actions-compact" id="reportes">
+                    <div>
+                        <span class="admin-eyebrow">Accesos</span>
+                        <h2>Acciones rapidas</h2>
+                    </div>
+                    <nav aria-label="Acciones rapidas del administrador">
+                        <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>+</span>Nueva reserva</a>
+                        <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Crear usuario</a>
+                        <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CO</span>Enviar correo</a>
+                        <a href="<?= h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reporte</a>
+                    </nav>
+                </section>
+            </aside>
+        </section>
+
+        <section class="admin-metrics admin-metrics-compact" aria-label="Indicadores generales">
+            <article class="admin-metric">
+                <span>Usuarios</span>
+                <strong><?= h($stats['usuarios']) ?></strong>
+                <small>Cuentas activas y roles</small>
+            </article>
+            <article class="admin-metric">
+                <span>Eventos</span>
+                <strong><?= h($stats['eventos']) ?></strong>
+                <small>Reservas aprobadas</small>
+            </article>
+            <article class="admin-metric">
+                <span>Correos pendientes</span>
+                <strong><?= h($stats['correos_pendientes'] ?? 0) ?></strong>
+                <small>Por confirmar o avisar</small>
+            </article>
+            <article class="admin-metric">
+                <span>Auditorios</span>
+                <strong><?= h($stats['auditorios']) ?></strong>
+                <small>Espacios activos</small>
             </article>
         </section>
 
-        <section class="admin-grid">
+        <details class="admin-insights">
+            <summary>
+                <span>Analitica y trazabilidad</span>
+                <strong>Ver detalles del sistema</strong>
+            </summary>
+
+            <section class="admin-insights-grid">
+                <article class="admin-panel admin-flow-panel">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Flujo SICA</p>
+                            <h2>Flujo de solicitudes</h2>
+                        </div>
+                    </div>
+                    <ol class="admin-flow-list">
+                        <li>Solicitud creada</li>
+                        <li>Revision administrador</li>
+                        <li>Enviada a coordinacion</li>
+                        <li>Aprobada / Rechazada</li>
+                        <li>Correo automatico</li>
+                        <li>Reserva confirmada</li>
+                        <li>Registro de asistencia</li>
+                        <li>Certificado generado</li>
+                    </ol>
+                </article>
+
+                <article class="admin-panel admin-timeline-panel">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Trazabilidad</p>
+                            <h2>Linea de tiempo</h2>
+                        </div>
+                    </div>
+                    <div class="admin-timeline">
+                        <div><time>09:10</time><span>Solicitud recibida<?= $timelineBase ? ': ' . h($timelineBase['nombre_evento']) : '' ?></span></div>
+                        <div><time>09:25</time><span>Coordinacion revisa disponibilidad</span></div>
+                        <div><time>09:30</time><span>Correo enviado al responsable</span></div>
+                        <div><time>09:45</time><span>Auditorio reservado y flujo activo</span></div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="admin-grid">
             <article class="admin-panel upcoming-panel">
                 <div class="admin-panel-head">
                     <div>
@@ -439,21 +459,6 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                             <i><b style="width: <?= h($ocupacion) ?>%"></b></i>
                         </div>
                     <?php endforeach; ?>
-                </div>
-            </article>
-
-            <article class="admin-panel admin-timeline-panel">
-                <div class="admin-panel-head">
-                    <div>
-                        <p class="admin-eyebrow">Trazabilidad</p>
-                        <h2>Linea de tiempo</h2>
-                    </div>
-                </div>
-                <div class="admin-timeline">
-                    <div><time>09:10</time><span>Solicitud recibida<?= $timelineBase ? ': ' . h($timelineBase['nombre_evento']) : '' ?></span></div>
-                    <div><time>09:25</time><span>Coordinacion revisa disponibilidad</span></div>
-                    <div><time>09:30</time><span>Correo enviado al responsable</span></div>
-                    <div><time>09:45</time><span>Auditorio reservado y flujo activo</span></div>
                 </div>
             </article>
 
@@ -536,7 +541,8 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                     <?php endforeach; ?>
                 </div>
             </article>
-        </section>
+            </section>
+        </details>
 
     </section>
 </main>

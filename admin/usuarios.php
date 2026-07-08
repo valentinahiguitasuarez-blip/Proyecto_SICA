@@ -437,7 +437,7 @@ try {
                     <h2>Usuarios registrados</h2>
                 </div>
                 <div class="admin-panel-actions">
-                    <a class="admin-create-user-open" href="<?= admin_h(app_url('admin/solicitudes_usuarios.php')) ?>">Solicitudes de acceso</a>
+                    <a class="admin-create-user-open admin-create-user-secondary" href="<?= admin_h(app_url('admin/solicitudes_usuarios.php')) ?>">Solicitudes</a>
                     <button type="button" class="admin-create-user-open" data-open-create-user>Crear usuario</button>
                 </div>
             </div>

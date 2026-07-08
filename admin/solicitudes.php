@@ -88,7 +88,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $csrf = (string)($_POST['csrf_admin_requests'] ?? '');
     $idEvento = (int)($_POST['id_evento'] ?? 0);
     $accion = (string)($_POST['accion'] ?? '');
-    $observacion = trim((string)($_POST['observacion'] ?? ''));
+    $observacion = '';
     $idCoordinador = (int)($_POST['id_coordinador'] ?? 0);
 
     if (!hash_equals((string)$_SESSION['csrf_admin_requests'], $csrf)) {
@@ -96,9 +96,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $_SESSION['admin_requests_message_type'] = 'danger';
     } elseif ($idEvento <= 0 || !in_array($accion, ['enviar_coordinador', 'notificar_instructor'], true)) {
         $_SESSION['admin_requests_message'] = 'Selecciona una accion valida.';
-        $_SESSION['admin_requests_message_type'] = 'danger';
-    } elseif (strlen($observacion) > 180) {
-        $_SESSION['admin_requests_message'] = 'La observacion no puede superar 180 caracteres.';
         $_SESSION['admin_requests_message_type'] = 'danger';
     } else {
         try {
@@ -156,9 +153,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     . "Hora: " . substr((string)$evento['hora_inicio'], 0, 5) . " - " . substr((string)$evento['hora_fin'], 0, 5) . "\n"
                     . "Codigo: {$evento['codigo_evento']}\n"
                     . "Descripcion: {$evento['descripcion']}\n";
-                if ($observacion !== '') {
-                    $body .= "Nota del administrador: {$observacion}\n";
-                }
                 $body .= "\nIngresa a SICA como coordinador para aprobar o cancelar la solicitud.\n\nEquipo SICA";
 
                 if (!sica_send_mail((string)$coordinador['correo'], 'Solicitud de reserva de auditorio - SICA', $body)) {
@@ -168,12 +162,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $update = $pdo->prepare(
                     'UPDATE evento
                      SET id_coordinador = :coordinador,
-                         observacion = :observacion
                      WHERE id_evento = :id_evento'
                 );
                 $update->execute([
                     ':coordinador' => $idCoordinador,
-                    ':observacion' => $observacion !== '' ? $observacion : null,
                     ':id_evento' => $idEvento,
                 ]);
 
@@ -501,7 +493,7 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                 <div class="admin-review-action">
                                     <div class="admin-review-action-head">
                                         <strong>Accion</strong>
-                                        <span><?= $estado === 'Pendiente' ? 'Asignar coordinador' : 'Notificar respuesta' ?></span>
+                                        <span><?= $estado === 'Pendiente' ? 'Selecciona quien revisa' : 'Notificar respuesta' ?></span>
                                     </div>
 
                                     <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
@@ -518,10 +510,6 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
-                                            </label>
-                                            <label>
-                                                <span>Indicaciones</span>
-                                                <textarea name="observacion" maxlength="180"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
                                             </label>
                                         <?php else: ?>
                                             <input type="hidden" name="observacion" value="<?= admin_s_h($solicitud['observacion'] ?? '') ?>">

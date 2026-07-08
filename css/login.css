@@ -600,7 +600,8 @@ body[data-theme="dark"] .logout-cancel-btn {
 }
 
 .access-request-card {
-    width: min(760px, calc(100vw - 28px));
+    width: min(820px, calc(100vw - 28px));
+    padding: 28px;
 }
 
 .access-request-form {
@@ -608,10 +609,36 @@ body[data-theme="dark"] .logout-cancel-btn {
     gap: 16px;
 }
 
+.access-request-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 18px;
+}
+
+.access-request-steps span {
+    min-height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 0 10px;
+    border-radius: 8px;
+    color: #1f5fff;
+    background: #eef4ff;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
+
 .access-request-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+    padding: 14px;
+    border: 1px solid #e0e9f5;
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(37, 99, 255, 0.05), rgba(20, 184, 166, 0.04)),
+        #f8fbff;
 }
 
 .access-request-grid label {
@@ -637,6 +664,18 @@ body[data-theme="dark"] .logout-cancel-btn {
     background: #ffffff;
     font: inherit;
     font-weight: 650;
+}
+
+.access-request-grid input:focus,
+.access-request-grid select:focus {
+    outline: 0;
+    border-color: #2f6bff;
+    box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.14);
+}
+
+.access-request-submit {
+    min-height: 54px;
+    font-size: 15px;
 }
 
 @media (max-width: 640px) {
@@ -671,6 +710,10 @@ body[data-theme="dark"] .logout-cancel-btn {
     }
 
     .access-request-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .access-request-steps {
         grid-template-columns: 1fr;
     }
 

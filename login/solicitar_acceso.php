@@ -134,11 +134,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     }
 
     if ($messageType === 'danger') {
-        $_SESSION['access_request_old'] = $old;
         $_SESSION['access_request_message'] = $message;
         $_SESSION['access_request_type'] = $messageType;
-        header('Location: ' . app_url('login/solicitar_acceso.php'));
-        exit;
     }
 }
 ?>
@@ -150,12 +147,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             <div class="login-logo" aria-label="SICA"><span>SICA</span></div>
             <header class="login-header">
                 <h1>Solicitar acceso</h1>
-                <p>Envianos tus datos para que el administrador cree tu cuenta.</p>
+                <p>Completa tus datos y el administrador revisara tu solicitud.</p>
             </header>
 
             <?php if ($message !== ''): ?>
                 <div class="alert alert-<?= access_h($messageType) ?> shadow-sm" role="alert"><?= access_h($message) ?></div>
             <?php endif; ?>
+
+            <div class="access-request-steps" aria-label="Proceso de acceso">
+                <span>1. Envias tus datos</span>
+                <span>2. El admin aprueba</span>
+                <span>3. Recibes tu acceso</span>
+            </div>
 
             <form class="access-request-form" method="post" action="<?= access_h(app_url('login/solicitar_acceso.php')) ?>">
                 <input type="hidden" name="csrf_access_request" value="<?= access_h($_SESSION['csrf_access_request']) ?>">
@@ -165,11 +168,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             <option value="<?= access_h($key) ?>" <?= ($old['tipo_documento'] ?? 'CC') === $key ? 'selected' : '' ?>><?= access_h($label) ?></option>
                         <?php endforeach; ?>
                     </select></label>
-                    <label><span>Documento</span><input type="text" name="id_documento" inputmode="numeric" maxlength="20" required value="<?= access_h($old['id_documento'] ?? '') ?>"></label>
-                    <label><span>Nombre</span><input type="text" name="nombre" maxlength="50" required value="<?= access_h($old['nombre'] ?? '') ?>"></label>
-                    <label><span>Apellido</span><input type="text" name="apellido" maxlength="50" required value="<?= access_h($old['apellido'] ?? '') ?>"></label>
-                    <label><span>Correo personal</span><input type="email" name="correo" maxlength="100" required value="<?= access_h($old['correo'] ?? '') ?>"></label>
-                    <label><span>Telefono</span><input type="text" name="telefono" maxlength="15" value="<?= access_h($old['telefono'] ?? '') ?>"></label>
+                    <label><span>Documento</span><input type="text" name="id_documento" inputmode="numeric" maxlength="20" required placeholder="Numero de documento" value="<?= access_h($old['id_documento'] ?? '') ?>"></label>
+                    <label><span>Nombre</span><input type="text" name="nombre" maxlength="50" required placeholder="Tu nombre" value="<?= access_h($old['nombre'] ?? '') ?>"></label>
+                    <label><span>Apellido</span><input type="text" name="apellido" maxlength="50" required placeholder="Tu apellido" value="<?= access_h($old['apellido'] ?? '') ?>"></label>
+                    <label><span>Correo personal</span><input type="email" name="correo" maxlength="100" required placeholder="correo al que tienes acceso" value="<?= access_h($old['correo'] ?? '') ?>"></label>
+                    <label><span>Telefono</span><input type="text" name="telefono" maxlength="15" placeholder="Opcional" value="<?= access_h($old['telefono'] ?? '') ?>"></label>
                     <label><span>Rol solicitado</span><select name="id_rol" required data-role-select>
                         <?php foreach ($roles as $role): ?>
                             <option value="<?= access_h($role['id_rol']) ?>" <?= (int)($old['id_rol'] ?? 4) === (int)$role['id_rol'] ? 'selected' : '' ?>><?= access_h($role['nombre_rol']) ?></option>
@@ -177,7 +180,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     </select></label>
                     <label data-ficha-field><span>Ficha</span><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" placeholder="Buscar por ficha o programa" value="<?= access_h($old['id_ficha'] ?? '') ?>"></label>
                 </div>
-                <button type="submit" class="login-submit">Enviar solicitud</button>
+                <button type="submit" class="login-submit access-request-submit">Enviar solicitud</button>
             </form>
 
             <p class="login-register"><a href="<?= access_h(app_url('login/index.php')) ?>">Volver al inicio de sesion</a></p>

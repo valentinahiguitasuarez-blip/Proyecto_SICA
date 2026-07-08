@@ -399,16 +399,26 @@ body[data-theme="dark"] .logout-cancel-btn {
 
 .login-field .form-control.is-valid,
 .was-validated .login-field .form-control:valid {
-    border-color: #18a86b;
+    border-color: #dce3ee;
     background-image: none !important;
-    background-color: #fbfffd;
+    background-color: #ffffff !important;
     padding-right: 44px;
-    box-shadow: 0 0 0 4px rgba(24, 168, 107, 0.08);
+    box-shadow: 0 2px 9px rgba(46, 73, 116, 0.04);
 }
 
 .password-field .form-control.is-valid,
 .was-validated .password-field .form-control:valid {
     padding-right: 54px;
+}
+
+.login-field .form-control:-webkit-autofill,
+.login-field .form-control:-webkit-autofill:hover,
+.login-field .form-control:-webkit-autofill:focus {
+    -webkit-text-fill-color: #273449;
+    caret-color: #273449;
+    border-color: #dce3ee;
+    box-shadow: 0 0 0 1000px #ffffff inset, 0 2px 9px rgba(46, 73, 116, 0.04);
+    transition: background-color 9999s ease-out;
 }
 
 .field-icon {
@@ -600,8 +610,8 @@ body[data-theme="dark"] .logout-cancel-btn {
 }
 
 .access-request-card {
-    width: min(980px, calc(100vw - 32px));
-    padding: clamp(24px, 3vw, 34px);
+    width: min(860px, calc(100vw - 32px));
+    padding: clamp(26px, 3.4vw, 38px);
     border: 1px solid rgba(215, 226, 239, 0.82);
 }
 
@@ -645,9 +655,9 @@ body[data-theme="dark"] .logout-cancel-btn {
 
 .access-request-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    padding: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+    padding: 22px;
     border: 1px solid #e0e9f5;
     border-radius: 8px;
     background:
@@ -671,18 +681,18 @@ body[data-theme="dark"] .logout-cancel-btn {
 .access-request-grid input,
 .access-request-grid select {
     width: 100%;
-    min-height: 50px;
-    padding: 0 14px;
+    min-height: 54px;
+    padding: 0 16px;
     border: 1px solid #d7e2ef;
     border-radius: 8px;
     color: #101b33;
     background: #ffffff;
     font: inherit;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .access-request-grid input::placeholder {
-    color: #8793a6;
+    color: transparent;
     opacity: 1;
 }
 
@@ -869,10 +879,19 @@ body[data-theme="dark"] .login-field .form-control {
 
 body[data-theme="dark"] .login-field .form-control.is-valid,
 body[data-theme="dark"] .was-validated .login-field .form-control:valid {
-    border-color: #34d399;
+    border-color: #2a3853;
     background-image: none !important;
-    background-color: #10231f;
-    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.11);
+    background-color: #111a2d !important;
+    box-shadow: 0 2px 9px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="dark"] .login-field .form-control:-webkit-autofill,
+body[data-theme="dark"] .login-field .form-control:-webkit-autofill:hover,
+body[data-theme="dark"] .login-field .form-control:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--login-text);
+    caret-color: var(--login-text);
+    border-color: #2a3853;
+    box-shadow: 0 0 0 1000px #111a2d inset, 0 2px 9px rgba(0, 0, 0, 0.18);
 }
 
 body[data-theme="dark"] .login-field .form-control::placeholder {

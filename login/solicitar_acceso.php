@@ -168,17 +168,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             <option value="<?= access_h($key) ?>" <?= ($old['tipo_documento'] ?? 'CC') === $key ? 'selected' : '' ?>><?= access_h($label) ?></option>
                         <?php endforeach; ?>
                     </select></label>
-                    <label><span>Documento</span><input type="text" name="id_documento" inputmode="numeric" maxlength="20" required placeholder="Numero de documento" value="<?= access_h($old['id_documento'] ?? '') ?>"></label>
-                    <label><span>Nombre</span><input type="text" name="nombre" maxlength="50" required placeholder="Tu nombre" value="<?= access_h($old['nombre'] ?? '') ?>"></label>
-                    <label><span>Apellido</span><input type="text" name="apellido" maxlength="50" required placeholder="Tu apellido" value="<?= access_h($old['apellido'] ?? '') ?>"></label>
-                    <label><span>Correo personal</span><input type="email" name="correo" maxlength="100" required placeholder="correo al que tienes acceso" value="<?= access_h($old['correo'] ?? '') ?>"></label>
-                    <label><span>Telefono</span><input type="text" name="telefono" maxlength="15" placeholder="Opcional" value="<?= access_h($old['telefono'] ?? '') ?>"></label>
+                    <label><span>Documento</span><input type="text" name="id_documento" inputmode="numeric" maxlength="20" required value="<?= access_h($old['id_documento'] ?? '') ?>"></label>
+                    <label><span>Nombre</span><input type="text" name="nombre" maxlength="50" required value="<?= access_h($old['nombre'] ?? '') ?>"></label>
+                    <label><span>Apellido</span><input type="text" name="apellido" maxlength="50" required value="<?= access_h($old['apellido'] ?? '') ?>"></label>
+                    <label><span>Correo personal</span><input type="email" name="correo" maxlength="100" required value="<?= access_h($old['correo'] ?? '') ?>"></label>
+                    <label><span>Telefono</span><input type="text" name="telefono" maxlength="15" value="<?= access_h($old['telefono'] ?? '') ?>"></label>
                     <label><span>Rol solicitado</span><select name="id_rol" required data-role-select>
                         <?php foreach ($roles as $role): ?>
                             <option value="<?= access_h($role['id_rol']) ?>" <?= (int)($old['id_rol'] ?? 4) === (int)$role['id_rol'] ? 'selected' : '' ?>><?= access_h($role['nombre_rol']) ?></option>
                         <?php endforeach; ?>
                     </select></label>
-                    <label class="access-request-wide" data-ficha-field><span>Ficha</span><div class="access-ficha-field"><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" placeholder="Buscar por numero de ficha o programa" value="<?= access_h($old['id_ficha'] ?? '') ?>"></div></label>
+                    <label class="access-request-wide" data-ficha-field><span>Ficha</span><div class="access-ficha-field"><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" value="<?= access_h($old['id_ficha'] ?? '') ?>"></div></label>
                 </div>
                 <button type="submit" class="login-submit access-request-submit">Enviar solicitud</button>
             </form>

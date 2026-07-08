@@ -283,7 +283,14 @@ $params = [];
 $where = [];
 
 if ($search !== '') {
-    $where[] = '(CAST(u.id_documento AS CHAR) LIKE :search OR u.nombre LIKE :search OR u.apellido LIKE :search OR u.correo LIKE :search OR CAST(f.id_ficha AS CHAR) LIKE :search OR p.nombre_programa LIKE :search)';
+    $where[] = '(CAST(u.id_documento AS CHAR) LIKE :search
+        OR u.nombre LIKE :search
+        OR u.apellido LIKE :search
+        OR CONCAT(u.nombre, " ", u.apellido) LIKE :search
+        OR CONCAT(u.apellido, " ", u.nombre) LIKE :search
+        OR u.correo LIKE :search
+        OR CAST(f.id_ficha AS CHAR) LIKE :search
+        OR p.nombre_programa LIKE :search)';
     $params[':search'] = '%' . $search . '%';
 }
 
@@ -350,8 +357,7 @@ try {
         ' GROUP BY u.id_documento, ' . ($hasDocumentTypeColumn ? 'u.tipo_documento, ' : '') . 'u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
                  u.id_rol, u.id_estado, u.id_ficha, r.nombre_rol, es.nombre_estado,
                  p.nombre_programa, j.nombre_jornada
-          ORDER BY u.fecha_registro DESC, u.nombre ASC
-          LIMIT 80',
+          ORDER BY u.fecha_registro DESC, u.nombre ASC',
         $params
     );
 } catch (Throwable $exception) {
@@ -445,7 +451,7 @@ try {
             <form class="admin-user-filters" method="get" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
                 <label>
                     <span>Busqueda rapida</span>
-                    <input type="search" name="q" value="<?= admin_h($search) ?>" placeholder="Nombre, correo, documento o ficha">
+                    <input type="search" name="q" value="<?= admin_h($search) ?>">
                 </label>
                 <label>
                     <span>Rol</span>
@@ -627,27 +633,27 @@ try {
             </label>
             <label>
                 <span>Documento</span>
-                <input type="text" name="nuevo_documento" inputmode="numeric" pattern="\d{1,20}" maxlength="20" required placeholder="Ej. 1234567890">
+                <input type="text" name="nuevo_documento" inputmode="numeric" pattern="\d{1,20}" maxlength="20" required>
             </label>
             <label>
                 <span>Nombre</span>
-                <input type="text" name="nuevo_nombre" maxlength="50" required placeholder="Nombre">
+                <input type="text" name="nuevo_nombre" maxlength="50" required>
             </label>
             <label>
                 <span>Apellido</span>
-                <input type="text" name="nuevo_apellido" maxlength="50" required placeholder="Apellido">
+                <input type="text" name="nuevo_apellido" maxlength="50" required>
             </label>
             <label>
                 <span>Correo</span>
-                <input type="email" name="nuevo_correo" maxlength="60" required placeholder="correo personal">
+                <input type="email" name="nuevo_correo" maxlength="60" required>
             </label>
             <label>
                 <span>Telefono</span>
-                <input type="text" name="nuevo_telefono" maxlength="15" placeholder="Opcional">
+                <input type="text" name="nuevo_telefono" maxlength="15">
             </label>
             <label>
                 <span>Contrasena temporal</span>
-                <input type="text" name="nuevo_contrasena" minlength="6" maxlength="72" required placeholder="Ej. Aprendiz123#">
+                <input type="text" name="nuevo_contrasena" minlength="6" maxlength="72" required>
             </label>
             <label>
                 <span>Rol</span>

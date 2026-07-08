@@ -1091,6 +1091,40 @@ body {
     font-weight: 600;
 }
 
+.admin-ficha-field {
+    position: relative;
+}
+
+.admin-ficha-field::before {
+    content: "";
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #6b7a90;
+    border-radius: 50%;
+    transform: translateY(-58%);
+    pointer-events: none;
+}
+
+.admin-ficha-field::after {
+    content: "";
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    width: 8px;
+    height: 2px;
+    border-radius: 999px;
+    background: #6b7a90;
+    transform: rotate(45deg) translateY(4px);
+    pointer-events: none;
+}
+
+.admin-ficha-field input {
+    padding-left: 42px;
+}
+
 .admin-create-user-form option {
     font-weight: 500;
 }
@@ -1140,6 +1174,7 @@ body {
 
 .admin-user-filters input,
 .admin-user-filters select,
+.admin-user-actions input,
 .admin-user-actions select {
     width: 100%;
     min-height: 42px;
@@ -1150,6 +1185,13 @@ body {
     background: #ffffff;
     font: inherit;
     font-weight: 600;
+}
+
+.admin-user-actions input:disabled,
+.admin-user-actions select:disabled {
+    color: #64748b;
+    cursor: not-allowed;
+    background: #edf2f7;
 }
 
 .admin-user-filters option,
@@ -1340,7 +1382,7 @@ body {
 
 .admin-user-actions {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+    grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
     align-items: end;
     gap: 9px;
     padding: 12px;
@@ -1349,16 +1391,14 @@ body {
     background: #f8fbff;
 }
 
+.admin-user-actions-wide {
+    grid-column: span 2;
+}
+
 .admin-user-actions small {
     color: var(--admin-muted);
     font-size: 12px;
     font-weight: 800;
-}
-
-.admin-user-actions select:disabled {
-    color: #64748b;
-    cursor: not-allowed;
-    background: #edf2f7;
 }
 
 .admin-empty-state {

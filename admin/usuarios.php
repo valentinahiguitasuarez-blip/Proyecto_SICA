@@ -178,33 +178,82 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
     } else {
         $targetDocument = (int)($_POST['id_documento'] ?? 0);
+        $editDocumentType = (string)($_POST['tipo_documento'] ?? 'CC');
+        $editName = trim((string)($_POST['nombre'] ?? ''));
+        $editLastName = trim((string)($_POST['apellido'] ?? ''));
+        $editMail = mb_strtolower(trim((string)($_POST['correo'] ?? '')), 'UTF-8');
+        $editPhone = trim((string)($_POST['telefono'] ?? ''));
+        $editFichaRaw = trim((string)($_POST['id_ficha'] ?? ''));
+        $editFicha = $editFichaRaw === '' ? null : (int)$editFichaRaw;
         $newRole = (int)($_POST['id_rol'] ?? 0);
         $newState = (int)($_POST['id_estado'] ?? 0);
 
         if ($targetDocument <= 0 || !in_array($newRole, $roleIds, true) || !in_array($newState, $accountStateIds, true)) {
             $_SESSION['admin_users_message'] = 'Selecciona un usuario, rol y estado validos.';
             $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif (!in_array($editDocumentType, ['CC', 'TI', 'CE', 'PEP'], true)) {
+            $_SESSION['admin_users_message'] = 'Selecciona un tipo de documento valido.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($editName === '' || $editLastName === '' || strlen($editName) > 50 || strlen($editLastName) > 50) {
+            $_SESSION['admin_users_message'] = 'Escribe nombre y apellido de maximo 50 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($editMail === '' || strlen($editMail) > 60 || !filter_var($editMail, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['admin_users_message'] = 'Escribe un correo valido de maximo 60 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($editPhone !== '' && strlen($editPhone) > 15) {
+            $_SESSION['admin_users_message'] = 'El telefono no puede superar 15 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($editFicha !== null && !in_array($editFicha, $fichaIds, true)) {
+            $_SESSION['admin_users_message'] = 'Selecciona una ficha valida o deja el campo sin ficha.';
+            $_SESSION['admin_users_message_type'] = 'danger';
         } elseif ($targetDocument === $adminDocument && ($newRole !== 1 || ($activeStateId !== null && $newState !== $activeStateId))) {
             $_SESSION['admin_users_message'] = 'No puedes quitarte el acceso administrativo desde tu propia cuenta.';
             $_SESSION['admin_users_message_type'] = 'danger';
         } else {
             try {
+                $duplicate = $pdo->prepare('SELECT id_documento FROM usuario WHERE correo = :correo AND id_documento <> :id_documento LIMIT 1');
+                $duplicate->execute([
+                    ':correo' => $editMail,
+                    ':id_documento' => $targetDocument,
+                ]);
+                if ($duplicate->fetch()) {
+                    throw new RuntimeException('correo_duplicado');
+                }
+
+                $typeSql = $hasDocumentTypeColumn ? ', tipo_documento = :tipo_documento' : '';
                 $update = $pdo->prepare(
                     'UPDATE usuario
-                     SET id_rol = :id_rol,
+                     SET nombre = :nombre,
+                         apellido = :apellido,
+                         correo = :correo,
+                         telefono = :telefono,
+                         id_ficha = :id_ficha,
+                         id_rol = :id_rol,
                          id_estado = :id_estado
+                         ' . $typeSql . '
                      WHERE id_documento = :id_documento'
                 );
-                $update->execute([
+                $updateParams = [
+                    ':nombre' => $editName,
+                    ':apellido' => $editLastName,
+                    ':correo' => $editMail,
+                    ':telefono' => $editPhone !== '' ? $editPhone : null,
+                    ':id_ficha' => $editFicha,
                     ':id_rol' => $newRole,
                     ':id_estado' => $newState,
                     ':id_documento' => $targetDocument,
-                ]);
+                ];
+                if ($hasDocumentTypeColumn) {
+                    $updateParams[':tipo_documento'] = $editDocumentType;
+                }
+                $update->execute($updateParams);
 
                 $_SESSION['admin_users_message'] = 'Usuario actualizado correctamente.';
                 $_SESSION['admin_users_message_type'] = 'success';
             } catch (Throwable $exception) {
-                $_SESSION['admin_users_message'] = 'No fue posible actualizar el usuario.';
+                $_SESSION['admin_users_message'] = $exception->getMessage() === 'correo_duplicado'
+                    ? 'Ese correo ya esta registrado por otro usuario.'
+                    : 'No fue posible actualizar el usuario.';
                 $_SESSION['admin_users_message_type'] = 'danger';
                 error_log('SICA admin usuarios actualizar: ' . $exception->getMessage());
             }
@@ -460,6 +509,38 @@ try {
                                 <input type="hidden" name="accion" value="actualizar">
                                 <input type="hidden" name="id_documento" value="<?= admin_h($item['id_documento']) ?>">
                                 <label>
+                                    <span>Nombre</span>
+                                    <input type="text" name="nombre" value="<?= admin_h($item['nombre']) ?>" maxlength="50" required <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                </label>
+                                <label>
+                                    <span>Apellido</span>
+                                    <input type="text" name="apellido" value="<?= admin_h($item['apellido']) ?>" maxlength="50" required <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                </label>
+                                <label>
+                                    <span>Correo</span>
+                                    <input type="email" name="correo" value="<?= admin_h($item['correo']) ?>" maxlength="60" required <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                </label>
+                                <label>
+                                    <span>Telefono</span>
+                                    <input type="text" name="telefono" value="<?= admin_h($item['telefono'] ?? '') ?>" maxlength="15" placeholder="Opcional" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                </label>
+                                <label>
+                                    <span>Tipo documento</span>
+                                    <select name="tipo_documento" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                        <?php foreach (['CC' => 'CC', 'TI' => 'TI', 'CE' => 'CE', 'PEP' => 'PEP'] as $docType => $docLabel): ?>
+                                            <option value="<?= admin_h($docType) ?>" <?= (string)($item['tipo_documento'] ?? 'CC') === $docType ? 'selected' : '' ?>>
+                                                <?= admin_h($docLabel) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                                <label class="admin-user-actions-wide">
+                                    <span>Ficha</span>
+                                    <div class="admin-ficha-field">
+                                        <input type="text" name="id_ficha" value="<?= admin_h($item['id_ficha'] ?? '') ?>" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por ficha o programa" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                    </div>
+                                </label>
+                                <label>
                                     <span>Rol</span>
                                     <select name="id_rol" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
                                         <?php foreach ($roles as $role): ?>
@@ -562,7 +643,9 @@ try {
             </label>
             <label class="admin-create-user-wide">
                 <span>Ficha</span>
-                <input type="text" name="nuevo_id_ficha" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por ficha o programa">
+                <div class="admin-ficha-field">
+                    <input type="text" name="nuevo_id_ficha" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por numero de ficha o programa">
+                </div>
             </label>
         </div>
 
@@ -576,7 +659,7 @@ try {
 <datalist id="fichasUsuario">
     <?php foreach ($fichas as $ficha): ?>
         <option value="<?= admin_h($ficha['id_ficha']) ?>">
-            <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
+            <?= admin_h($ficha['id_ficha']) ?> - <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
         </option>
     <?php endforeach; ?>
 </datalist>

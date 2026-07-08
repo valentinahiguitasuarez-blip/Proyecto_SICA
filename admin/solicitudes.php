@@ -454,77 +454,103 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                         <details class="admin-reservation-review">
                             <summary>Revisar</summary>
                             <div class="admin-reservation-review-body">
-                                <div class="admin-reservation-extra">
-                                    <span>Capacidad <strong><?= admin_s_h($solicitud['capacidad']) ?></strong></span>
-                                    <span>Codigo <strong><?= admin_s_h($solicitud['codigo_evento']) ?></strong></span>
-                                </div>
-                            <div class="admin-requester">
-                                <strong><?= admin_s_h($solicitante) ?></strong>
-                                <small><?= admin_s_h($solicitud['correo'] ?? 'Correo no registrado') ?></small>
-                            </div>
-                            <div class="admin-observation">
-                                <strong>Coordinacion:</strong>
-                                <?= admin_s_h($coordinadorAsignado) ?>
-                                <?php if (!empty($solicitud['coord_correo'])): ?>
-                                    <small><?= admin_s_h($solicitud['coord_correo']) ?></small>
-                                <?php endif; ?>
-                            </div>
-                            <?php if (!empty($solicitud['observacion'])): ?>
-                                <div class="admin-observation">
-                                    <?= admin_s_h($solicitud['observacion']) ?>
-                                </div>
-                            <?php endif; ?>
+                                <section class="admin-review-info" aria-label="Detalles de la solicitud">
+                                    <div class="admin-review-info-head">
+                                        <strong>Detalles de la reserva</strong>
+                                        <button type="button" class="admin-review-close" data-close-review>Cerrar</button>
+                                    </div>
+                                    <dl class="admin-review-data">
+                                        <div>
+                                            <dt>Instructor</dt>
+                                            <dd><?= admin_s_h($solicitante) ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Correo</dt>
+                                            <dd><?= admin_s_h($solicitud['correo'] ?? 'Correo no registrado') ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Auditorio</dt>
+                                            <dd><?= admin_s_h($solicitud['nombre_auditorio'] . ' / Bloque ' . $solicitud['bloque']) ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Capacidad</dt>
+                                            <dd><?= admin_s_h($solicitud['capacidad']) ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Codigo</dt>
+                                            <dd><?= admin_s_h($solicitud['codigo_evento']) ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Coordinacion</dt>
+                                            <dd>
+                                                <?= admin_s_h($coordinadorAsignado) ?>
+                                                <?php if (!empty($solicitud['coord_correo'])): ?>
+                                                    <small><?= admin_s_h($solicitud['coord_correo']) ?></small>
+                                                <?php endif; ?>
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                    <?php if (!empty($solicitud['observacion'])): ?>
+                                        <div class="admin-review-note">
+                                            <strong>Indicacion registrada</strong>
+                                            <span><?= admin_s_h($solicitud['observacion']) ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                </section>
 
-                        <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
-                            <div class="admin-reservation-actions-head">
-                                <strong>Gestion de la solicitud</strong>
-                                <button type="button" class="admin-review-close" data-close-review>Cerrar</button>
-                            </div>
-                            <input type="hidden" name="csrf_admin_requests" value="<?= admin_s_h($_SESSION['csrf_admin_requests']) ?>">
-                            <input type="hidden" name="id_evento" value="<?= admin_s_h($solicitud['id_evento']) ?>">
-                            <?php if ($estado === 'Pendiente' && !$tieneDecision): ?>
-                                <label>
-                                    <span>Coordinador</span>
-                                    <select name="id_coordinador" <?= !$coordinadores ? 'disabled' : '' ?>>
-                                        <option value="0">Selecciona coordinador</option>
-                                        <?php foreach ($coordinadores as $coordinador): ?>
-                                            <option value="<?= admin_s_h($coordinador['id_documento']) ?>" <?= (int)$solicitud['coord_documento'] === (int)$coordinador['id_documento'] ? 'selected' : '' ?>>
-                                                <?= admin_s_h(trim((string)$coordinador['nombre'] . ' ' . (string)$coordinador['apellido'])) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </label>
-                                <label>
-                                    <span>Indicaciones</span>
-                                    <textarea name="observacion" maxlength="180"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
-                                </label>
-                            <?php else: ?>
-                                <input type="hidden" name="observacion" value="<?= admin_s_h($solicitud['observacion'] ?? '') ?>">
-                            <?php endif; ?>
-                            <div>
-                                <?php if ($estado === 'Pendiente'): ?>
-                                    <small class="admin-flow-note">
-                                        <?= $enviadoCoordinacion ? 'Enviado a coordinacion. Esperando respuesta.' : 'Pendiente por enviar a coordinacion.' ?>
-                                    </small>
-                                    <button type="submit" name="accion" value="enviar_coordinador"
-                                            data-confirm-kicker="Solicitud de reserva"
-                                            data-confirm-title="<?= $enviadoCoordinacion ? 'Reenviar a coordinacion' : 'Enviar a coordinacion' ?>"
-                                            data-confirm-message="Se enviara la solicitud al coordinador seleccionado para que registre su decision."
-                                            data-confirm-text="<?= $enviadoCoordinacion ? 'Si, reenviar' : 'Si, enviar' ?>">
-                                        <?= $enviadoCoordinacion ? 'Reenviar correo' : 'Enviar a coordinador' ?>
-                                    </button>
-                                <?php elseif ($tieneDecision): ?>
-                                    <small class="admin-flow-note">Coordinacion ya respondio. Informa al instructor.</small>
-                                    <button type="submit" name="accion" value="notificar_instructor"
-                                            data-confirm-kicker="Notificacion"
-                                            data-confirm-title="Notificar instructor"
-                                            data-confirm-message="El instructor recibira por correo la decision registrada por coordinacion."
-                                            data-confirm-text="Si, notificar">Notificar instructor</button>
-                                <?php else: ?>
-                                    <small class="admin-flow-note">Solicitud cerrada.</small>
-                                <?php endif; ?>
-                            </div>
-                        </form>
+                                <div class="admin-review-action">
+                                    <div class="admin-review-action-head">
+                                        <strong>Accion</strong>
+                                        <span><?= $estado === 'Pendiente' ? 'Asignar coordinador' : 'Notificar respuesta' ?></span>
+                                    </div>
+
+                                    <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
+                                        <input type="hidden" name="csrf_admin_requests" value="<?= admin_s_h($_SESSION['csrf_admin_requests']) ?>">
+                                        <input type="hidden" name="id_evento" value="<?= admin_s_h($solicitud['id_evento']) ?>">
+                                        <?php if ($estado === 'Pendiente' && !$tieneDecision): ?>
+                                            <label>
+                                                <span>Coordinador</span>
+                                                <select name="id_coordinador" <?= !$coordinadores ? 'disabled' : '' ?>>
+                                                    <option value="0">Selecciona coordinador</option>
+                                                    <?php foreach ($coordinadores as $coordinador): ?>
+                                                        <option value="<?= admin_s_h($coordinador['id_documento']) ?>" <?= (int)$solicitud['coord_documento'] === (int)$coordinador['id_documento'] ? 'selected' : '' ?>>
+                                                            <?= admin_s_h(trim((string)$coordinador['nombre'] . ' ' . (string)$coordinador['apellido'])) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </label>
+                                            <label>
+                                                <span>Indicaciones</span>
+                                                <textarea name="observacion" maxlength="180"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
+                                            </label>
+                                        <?php else: ?>
+                                            <input type="hidden" name="observacion" value="<?= admin_s_h($solicitud['observacion'] ?? '') ?>">
+                                        <?php endif; ?>
+                                        <div>
+                                            <?php if ($estado === 'Pendiente'): ?>
+                                                <small class="admin-flow-note">
+                                                    <?= $enviadoCoordinacion ? 'Enviado a coordinacion. Esperando respuesta.' : 'Pendiente por enviar a coordinacion.' ?>
+                                                </small>
+                                                <button type="submit" name="accion" value="enviar_coordinador"
+                                                        data-confirm-kicker="Solicitud de reserva"
+                                                        data-confirm-title="<?= $enviadoCoordinacion ? 'Reenviar a coordinacion' : 'Enviar a coordinacion' ?>"
+                                                        data-confirm-message="Se enviara la solicitud al coordinador seleccionado para que registre su decision."
+                                                        data-confirm-text="<?= $enviadoCoordinacion ? 'Si, reenviar' : 'Si, enviar' ?>">
+                                                    <?= $enviadoCoordinacion ? 'Reenviar correo' : 'Enviar a coordinador' ?>
+                                                </button>
+                                            <?php elseif ($tieneDecision): ?>
+                                                <small class="admin-flow-note">Coordinacion ya respondio. Informa al instructor.</small>
+                                                <button type="submit" name="accion" value="notificar_instructor"
+                                                        data-confirm-kicker="Notificacion"
+                                                        data-confirm-title="Notificar instructor"
+                                                        data-confirm-message="El instructor recibira por correo la decision registrada por coordinacion."
+                                                        data-confirm-text="Si, notificar">Notificar instructor</button>
+                                            <?php else: ?>
+                                                <small class="admin-flow-note">Solicitud cerrada.</small>
+                                            <?php endif; ?>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </details>
                     </article>

@@ -1701,76 +1701,22 @@ body {
 .admin-reservation-review-body {
     margin-top: 12px;
     display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.75fr);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.55fr);
     gap: 14px;
     padding-top: 12px;
     border-top: 1px solid var(--admin-line);
 }
 
-.admin-reservation-extra {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.admin-reservation-extra span {
-    padding: 7px 9px;
-    border-radius: 8px;
-    color: #53627a;
-    background: #f5f8fc;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.admin-reservation-extra strong {
-    color: var(--admin-ink);
-}
-
-.admin-requester {
-    margin-top: 0;
-    padding: 10px 12px;
-    border-left: 4px solid var(--reservation-accent);
-    border-radius: 8px;
-    background: #f8fbff;
-}
-
-.admin-requester strong,
-.admin-requester small {
-    display: block;
-}
-
-.admin-requester strong {
-    color: var(--admin-ink);
-    font-weight: 900;
-}
-
-.admin-requester small {
-    color: var(--admin-muted);
-    font-weight: 700;
-}
-
-.admin-observation {
-    margin-top: 0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    color: #53627a;
-    background: rgba(100, 116, 139, 0.08);
-    font-size: 13px;
-    font-weight: 750;
-}
-
-.admin-reservation-actions {
-    display: grid;
-    gap: 10px;
-    grid-column: 2;
-    grid-row: 1 / span 4;
+.admin-review-info,
+.admin-review-action {
     padding: 14px;
     border-radius: 8px;
-    background: #f8fbff;
     border: 1px solid #e2eaf3;
+    background: #f8fbff;
 }
 
-.admin-reservation-actions-head {
+.admin-review-info-head,
+.admin-review-action-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1779,25 +1725,95 @@ body {
     border-bottom: 1px solid var(--admin-line);
 }
 
-.admin-reservation-actions-head strong {
+.admin-review-info-head strong,
+.admin-review-action-head strong {
     color: var(--admin-ink);
     font-size: 14px;
     font-weight: 900;
 }
 
+.admin-review-action-head span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
 .admin-review-close {
-    min-height: 32px;
-    padding: 0 12px;
-    border: 1px solid rgba(22, 93, 255, 0.2);
-    border-radius: 8px;
+    min-height: auto;
+    padding: 0;
+    border: 0;
     color: var(--admin-blue);
-    background: #ffffff;
+    background: transparent;
     font-weight: 900;
 }
 
 .admin-review-close:hover,
 .admin-review-close:focus {
-    background: var(--admin-blue-soft);
+    text-decoration: underline;
+}
+
+.admin-review-data {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 12px 0 0;
+}
+
+.admin-review-data div,
+.admin-review-note {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.admin-review-data dt {
+    margin: 0 0 4px;
+    color: var(--admin-muted);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-review-data dd {
+    margin: 0;
+    color: var(--admin-ink);
+    font-weight: 850;
+    overflow-wrap: anywhere;
+}
+
+.admin-review-data dd small {
+    display: block;
+    margin-top: 4px;
+    color: var(--admin-muted);
+    font-weight: 700;
+}
+
+.admin-review-note {
+    margin-top: 10px;
+    border-left: 4px solid var(--reservation-accent);
+}
+
+.admin-review-note strong,
+.admin-review-note span {
+    display: block;
+}
+
+.admin-review-note strong {
+    color: var(--admin-ink);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.admin-review-note span {
+    margin-top: 4px;
+    color: #53627a;
+    font-weight: 750;
+}
+
+.admin-reservation-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
 }
 
 .admin-reservation-actions label {
@@ -3357,6 +3373,7 @@ body {
     }
 
     .admin-reservation-review-body,
+    .admin-review-data,
     .reservations-panel .admin-user-filters {
         grid-template-columns: 1fr;
     }

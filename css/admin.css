@@ -1701,14 +1701,13 @@ body {
 .admin-reservation-review-body {
     margin-top: 12px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-    gap: 12px;
+    grid-template-columns: minmax(0, 0.95fr) minmax(320px, 0.75fr);
+    gap: 14px;
     padding-top: 12px;
     border-top: 1px solid var(--admin-line);
 }
 
 .admin-reservation-extra {
-    grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -1751,7 +1750,7 @@ body {
 }
 
 .admin-observation {
-    margin-top: 10px;
+    margin-top: 0;
     padding: 10px 12px;
     border-radius: 8px;
     color: #53627a;
@@ -1763,10 +1762,42 @@ body {
 .admin-reservation-actions {
     display: grid;
     gap: 10px;
-    padding: 12px;
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    padding: 14px;
     border-radius: 8px;
     background: #f8fbff;
-    grid-row: span 3;
+    border: 1px solid #e2eaf3;
+}
+
+.admin-reservation-actions-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-reservation-actions-head strong {
+    color: var(--admin-ink);
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.admin-review-close {
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgba(22, 93, 255, 0.2);
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: #ffffff;
+    font-weight: 900;
+}
+
+.admin-review-close:hover,
+.admin-review-close:focus {
+    background: var(--admin-blue-soft);
 }
 
 .admin-reservation-actions label {
@@ -1795,7 +1826,7 @@ body {
 }
 
 .admin-reservation-actions textarea {
-    min-height: 86px;
+    min-height: 74px;
     resize: vertical;
 }
 
@@ -1809,7 +1840,7 @@ body {
     gap: 8px;
 }
 
-.admin-reservation-actions button {
+.admin-reservation-actions button:not(.admin-review-close) {
     min-height: 40px;
     border: 0;
     border-radius: 8px;
@@ -3328,6 +3359,11 @@ body {
     .admin-reservation-review-body,
     .reservations-panel .admin-user-filters {
         grid-template-columns: 1fr;
+    }
+
+    .admin-reservation-actions {
+        grid-column: auto;
+        grid-row: auto;
     }
 
     .admin-create-user-wide,

@@ -476,6 +476,10 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                             <?php endif; ?>
 
                         <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
+                            <div class="admin-reservation-actions-head">
+                                <strong>Gestion de la solicitud</strong>
+                                <button type="button" class="admin-review-close" data-close-review>Cerrar</button>
+                            </div>
                             <input type="hidden" name="csrf_admin_requests" value="<?= admin_s_h($_SESSION['csrf_admin_requests']) ?>">
                             <input type="hidden" name="id_evento" value="<?= admin_s_h($solicitud['id_evento']) ?>">
                             <?php if ($estado === 'Pendiente' && !$tieneDecision): ?>
@@ -491,8 +495,8 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                     </select>
                                 </label>
                                 <label>
-                                    <span>Nota para coordinacion</span>
-                                    <textarea name="observacion" maxlength="180" placeholder="Contexto breve para revisar la solicitud"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
+                                    <span>Indicaciones</span>
+                                    <textarea name="observacion" maxlength="180"><?= admin_s_h($solicitud['observacion'] ?? '') ?></textarea>
                                 </label>
                             <?php else: ?>
                                 <input type="hidden" name="observacion" value="<?= admin_s_h($solicitud['observacion'] ?? '') ?>">
@@ -529,5 +533,14 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
         </section>
     </section>
 </main>
+
+<script>
+document.addEventListener('click', function (event) {
+    const closeButton = event.target.closest('[data-close-review]');
+    if (!closeButton) return;
+    const review = closeButton.closest('.admin-reservation-review');
+    if (review) review.open = false;
+});
+</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

@@ -984,6 +984,79 @@ body {
     padding: 22px;
 }
 
+.admin-create-user-panel {
+    margin-bottom: 18px;
+}
+
+.admin-create-user-form {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.07), rgba(18, 166, 120, 0.05)),
+        #f8fbff;
+}
+
+.admin-create-user-form label {
+    display: grid;
+    gap: 6px;
+}
+
+.admin-create-user-form span {
+    color: var(--admin-muted);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-create-user-form input,
+.admin-create-user-form select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-ink);
+    background: #ffffff;
+    font: inherit;
+    font-weight: 700;
+}
+
+.admin-create-user-wide {
+    grid-column: span 2;
+}
+
+.admin-create-user-submit {
+    grid-column: span 2;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.admin-create-user-submit small {
+    max-width: 320px;
+    color: var(--admin-muted);
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.admin-create-user-submit button {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    box-shadow: 0 10px 20px rgba(22, 93, 255, 0.14);
+    font-weight: 900;
+}
+
 .admin-user-filters {
     display: grid;
     grid-template-columns: minmax(260px, 1.3fr) minmax(160px, 0.7fr) minmax(160px, 0.7fr) auto auto;
@@ -2861,6 +2934,7 @@ body {
     }
 
     .admin-user-filters,
+    .admin-create-user-form,
     .admin-user-card,
     .admin-reservation-card,
     .admin-mail-filters,
@@ -2874,6 +2948,11 @@ body {
 
     .admin-user-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    }
+
+    .admin-create-user-wide,
+    .admin-create-user-submit {
+        grid-column: span 1;
     }
 }
 
@@ -2938,6 +3017,7 @@ body {
 
     .admin-user-actions,
     .admin-user-title,
+    .admin-create-user-submit,
     .admin-reservation-title,
     .admin-reservation-actions div {
         grid-template-columns: 1fr;

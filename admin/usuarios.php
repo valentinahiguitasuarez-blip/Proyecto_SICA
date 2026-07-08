@@ -38,6 +38,7 @@ if (empty($_SESSION['csrf_admin_users'])) {
 
 $roles = [];
 $estados = [];
+$fichas = [];
 $message = $_SESSION['admin_users_message'] ?? '';
 $messageType = $_SESSION['admin_users_message_type'] ?? 'success';
 unset($_SESSION['admin_users_message'], $_SESSION['admin_users_message_type']);
@@ -45,55 +46,144 @@ unset($_SESSION['admin_users_message'], $_SESSION['admin_users_message_type']);
 try {
     $roles = admin_rows($pdo, 'SELECT id_rol, nombre_rol FROM rol ORDER BY id_rol ASC');
     $estados = admin_rows($pdo, 'SELECT id_estado, nombre_estado FROM estado ORDER BY id_estado ASC');
+    $fichas = admin_rows(
+        $pdo,
+        'SELECT f.id_ficha, p.nombre_programa, j.nombre_jornada
+         FROM ficha f
+         LEFT JOIN programa p ON p.id_programa = f.id_programa
+         LEFT JOIN jornada j ON j.id_jornada = p.id_jornada
+         ORDER BY f.id_ficha DESC'
+    );
 } catch (Throwable $exception) {
     error_log('SICA admin usuarios catalogos: ' . $exception->getMessage());
 }
 
 $roleIds = array_map(static fn(array $role): int => (int)$role['id_rol'], $roles);
 $stateIds = array_map(static fn(array $state): int => (int)$state['id_estado'], $estados);
+$fichaIds = array_map(static fn(array $ficha): int => (int)$ficha['id_ficha'], $fichas);
 $activeStateId = null;
+$apprenticeRoleId = null;
 foreach ($estados as $estado) {
     if (mb_strtolower((string)$estado['nombre_estado'], 'UTF-8') === 'activo') {
         $activeStateId = (int)$estado['id_estado'];
         break;
     }
 }
+foreach ($roles as $role) {
+    if (str_contains(mb_strtolower((string)$role['nombre_rol'], 'UTF-8'), 'aprendiz')) {
+        $apprenticeRoleId = (int)$role['id_rol'];
+        break;
+    }
+}
+$defaultRoleId = $apprenticeRoleId ?? ($roleIds[0] ?? 0);
+$defaultStateId = $activeStateId ?? ($stateIds[0] ?? 0);
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $csrf = (string)($_POST['csrf_admin_users'] ?? '');
-    $targetDocument = (int)($_POST['id_documento'] ?? 0);
-    $newRole = (int)($_POST['id_rol'] ?? 0);
-    $newState = (int)($_POST['id_estado'] ?? 0);
+    $action = (string)($_POST['accion'] ?? 'actualizar');
 
     if (!hash_equals((string)$_SESSION['csrf_admin_users'], $csrf)) {
         $_SESSION['admin_users_message'] = 'La sesion expiro. Intenta de nuevo.';
         $_SESSION['admin_users_message_type'] = 'danger';
-    } elseif ($targetDocument <= 0 || !in_array($newRole, $roleIds, true) || !in_array($newState, $stateIds, true)) {
-        $_SESSION['admin_users_message'] = 'Selecciona un usuario, rol y estado validos.';
-        $_SESSION['admin_users_message_type'] = 'danger';
-    } elseif ($targetDocument === $adminDocument && ($newRole !== 1 || ($activeStateId !== null && $newState !== $activeStateId))) {
-        $_SESSION['admin_users_message'] = 'No puedes quitarte el acceso administrativo desde tu propia cuenta.';
-        $_SESSION['admin_users_message_type'] = 'danger';
-    } else {
-        try {
-            $update = $pdo->prepare(
-                'UPDATE usuario
-                 SET id_rol = :id_rol,
-                     id_estado = :id_estado
-                 WHERE id_documento = :id_documento'
-            );
-            $update->execute([
-                ':id_rol' => $newRole,
-                ':id_estado' => $newState,
-                ':id_documento' => $targetDocument,
-            ]);
+    } elseif ($action === 'crear') {
+        $newDocument = (int)($_POST['nuevo_documento'] ?? 0);
+        $newName = trim((string)($_POST['nuevo_nombre'] ?? ''));
+        $newLastName = trim((string)($_POST['nuevo_apellido'] ?? ''));
+        $newMail = mb_strtolower(trim((string)($_POST['nuevo_correo'] ?? '')), 'UTF-8');
+        $newPhone = trim((string)($_POST['nuevo_telefono'] ?? ''));
+        $newPassword = (string)($_POST['nuevo_contrasena'] ?? '');
+        $newRole = (int)($_POST['nuevo_id_rol'] ?? 0);
+        $newState = (int)($_POST['nuevo_id_estado'] ?? 0);
+        $newFichaRaw = trim((string)($_POST['nuevo_id_ficha'] ?? ''));
+        $newFicha = $newFichaRaw === '' ? null : (int)$newFichaRaw;
 
-            $_SESSION['admin_users_message'] = 'Usuario actualizado correctamente.';
-            $_SESSION['admin_users_message_type'] = 'success';
-        } catch (Throwable $exception) {
-            $_SESSION['admin_users_message'] = 'No fue posible actualizar el usuario.';
+        if ($newDocument <= 0) {
+            $_SESSION['admin_users_message'] = 'El documento debe ser un numero valido.';
             $_SESSION['admin_users_message_type'] = 'danger';
-            error_log('SICA admin usuarios actualizar: ' . $exception->getMessage());
+        } elseif ($newName === '' || $newLastName === '' || strlen($newName) > 50 || strlen($newLastName) > 50) {
+            $_SESSION['admin_users_message'] = 'Escribe nombre y apellido de maximo 50 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($newMail === '' || strlen($newMail) > 60 || !filter_var($newMail, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['admin_users_message'] = 'Escribe un correo valido de maximo 60 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($newPhone !== '' && strlen($newPhone) > 15) {
+            $_SESSION['admin_users_message'] = 'El telefono no puede superar 15 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif (strlen($newPassword) < 6 || strlen($newPassword) > 72) {
+            $_SESSION['admin_users_message'] = 'La contrasena temporal debe tener entre 6 y 72 caracteres.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif (!in_array($newRole, $roleIds, true) || !in_array($newState, $stateIds, true)) {
+            $_SESSION['admin_users_message'] = 'Selecciona un rol y estado validos.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($newFicha !== null && !in_array($newFicha, $fichaIds, true)) {
+            $_SESSION['admin_users_message'] = 'Selecciona una ficha valida o deja el campo sin ficha.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } else {
+            try {
+                $insert = $pdo->prepare(
+                    'INSERT INTO usuario
+                        (id_documento, nombre, apellido, correo, contrasena, telefono, fecha_registro, id_rol, id_ficha, id_estado)
+                     VALUES
+                        (:id_documento, :nombre, :apellido, :correo, :contrasena, :telefono, CURDATE(), :id_rol, :id_ficha, :id_estado)'
+                );
+                $insert->execute([
+                    ':id_documento' => $newDocument,
+                    ':nombre' => $newName,
+                    ':apellido' => $newLastName,
+                    ':correo' => $newMail,
+                    ':contrasena' => password_hash($newPassword, PASSWORD_DEFAULT),
+                    ':telefono' => $newPhone !== '' ? $newPhone : null,
+                    ':id_rol' => $newRole,
+                    ':id_ficha' => $newFicha,
+                    ':id_estado' => $newState,
+                ]);
+
+                $_SESSION['admin_users_message'] = 'Usuario creado correctamente. Puede ingresar con el correo y la contrasena temporal.';
+                $_SESSION['admin_users_message_type'] = 'success';
+            } catch (PDOException $exception) {
+                $_SESSION['admin_users_message'] = $exception->getCode() === '23000'
+                    ? 'Ya existe un usuario con ese documento o correo.'
+                    : 'No fue posible crear el usuario.';
+                $_SESSION['admin_users_message_type'] = 'danger';
+                error_log('SICA admin usuarios crear: ' . $exception->getMessage());
+            } catch (Throwable $exception) {
+                $_SESSION['admin_users_message'] = 'No fue posible crear el usuario.';
+                $_SESSION['admin_users_message_type'] = 'danger';
+                error_log('SICA admin usuarios crear: ' . $exception->getMessage());
+            }
+        }
+    } else {
+        $targetDocument = (int)($_POST['id_documento'] ?? 0);
+        $newRole = (int)($_POST['id_rol'] ?? 0);
+        $newState = (int)($_POST['id_estado'] ?? 0);
+
+        if ($targetDocument <= 0 || !in_array($newRole, $roleIds, true) || !in_array($newState, $stateIds, true)) {
+            $_SESSION['admin_users_message'] = 'Selecciona un usuario, rol y estado validos.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($targetDocument === $adminDocument && ($newRole !== 1 || ($activeStateId !== null && $newState !== $activeStateId))) {
+            $_SESSION['admin_users_message'] = 'No puedes quitarte el acceso administrativo desde tu propia cuenta.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } else {
+            try {
+                $update = $pdo->prepare(
+                    'UPDATE usuario
+                     SET id_rol = :id_rol,
+                         id_estado = :id_estado
+                     WHERE id_documento = :id_documento'
+                );
+                $update->execute([
+                    ':id_rol' => $newRole,
+                    ':id_estado' => $newState,
+                    ':id_documento' => $targetDocument,
+                ]);
+
+                $_SESSION['admin_users_message'] = 'Usuario actualizado correctamente.';
+                $_SESSION['admin_users_message_type'] = 'success';
+            } catch (Throwable $exception) {
+                $_SESSION['admin_users_message'] = 'No fue posible actualizar el usuario.';
+                $_SESSION['admin_users_message_type'] = 'danger';
+                error_log('SICA admin usuarios actualizar: ' . $exception->getMessage());
+            }
         }
     }
 
@@ -230,6 +320,81 @@ try {
             </div>
         <?php endif; ?>
 
+        <section class="admin-panel admin-create-user-panel" id="crear-usuario">
+            <div class="admin-panel-head">
+                <div>
+                    <p class="admin-eyebrow">Nueva cuenta</p>
+                    <h2>Crear usuario</h2>
+                </div>
+            </div>
+
+            <form class="admin-create-user-form" method="post" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
+                <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
+                <input type="hidden" name="accion" value="crear">
+
+                <label>
+                    <span>Documento</span>
+                    <input type="number" name="nuevo_documento" min="1" required placeholder="Ej. 1234567890">
+                </label>
+                <label>
+                    <span>Nombre</span>
+                    <input type="text" name="nuevo_nombre" maxlength="50" required placeholder="Nombre">
+                </label>
+                <label>
+                    <span>Apellido</span>
+                    <input type="text" name="nuevo_apellido" maxlength="50" required placeholder="Apellido">
+                </label>
+                <label>
+                    <span>Correo</span>
+                    <input type="email" name="nuevo_correo" maxlength="60" required placeholder="correo@sena.edu.co">
+                </label>
+                <label>
+                    <span>Telefono</span>
+                    <input type="text" name="nuevo_telefono" maxlength="15" placeholder="Opcional">
+                </label>
+                <label>
+                    <span>Contrasena temporal</span>
+                    <input type="text" name="nuevo_contrasena" minlength="6" maxlength="72" required placeholder="Ej. Aprendiz123#">
+                </label>
+                <label>
+                    <span>Rol</span>
+                    <select name="nuevo_id_rol" required>
+                        <?php foreach ($roles as $role): ?>
+                            <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$role['id_rol'] === $defaultRoleId ? 'selected' : '' ?>>
+                                <?= admin_h($role['nombre_rol']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label>
+                    <span>Estado</span>
+                    <select name="nuevo_id_estado" required>
+                        <?php foreach ($estados as $estado): ?>
+                            <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$estado['id_estado'] === $defaultStateId ? 'selected' : '' ?>>
+                                <?= admin_h($estado['nombre_estado']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label class="admin-create-user-wide">
+                    <span>Ficha</span>
+                    <select name="nuevo_id_ficha">
+                        <option value="">Sin ficha</option>
+                        <?php foreach ($fichas as $ficha): ?>
+                            <option value="<?= admin_h($ficha['id_ficha']) ?>">
+                                <?= admin_h($ficha['id_ficha']) ?> - <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+
+                <div class="admin-create-user-submit">
+                    <small>La persona ingresara con este correo y la contrasena temporal.</small>
+                    <button type="submit">Crear usuario</button>
+                </div>
+            </form>
+        </section>
+
         <section class="admin-metrics users-metrics" aria-label="Resumen de usuarios">
             <article class="admin-metric">
                 <span>Total usuarios</span>
@@ -338,6 +503,7 @@ try {
 
                         <form class="admin-user-actions" method="post" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
                             <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
+                            <input type="hidden" name="accion" value="actualizar">
                             <input type="hidden" name="id_documento" value="<?= admin_h($item['id_documento']) ?>">
                             <label>
                                 <span>Rol</span>

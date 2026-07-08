@@ -3712,6 +3712,8 @@ body {
     flex: 0 0 34px;
     display: grid;
     place-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
     border: 1px solid rgba(145, 184, 255, 0.18);
     border-radius: 8px;
     color: #9fc1ff;
@@ -3742,6 +3744,7 @@ body {
     content: "";
     position: absolute;
     display: block;
+    box-sizing: border-box;
 }
 
 .nav-symbol-dashboard::before,
@@ -3807,9 +3810,9 @@ body {
 
 .nav-symbol-mail::after,
 .module-symbol-mail::after {
-    width: 12px;
-    height: 12px;
-    left: 11px;
+    width: 10px;
+    height: 10px;
+    left: 12px;
     top: 8px;
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
@@ -3845,6 +3848,26 @@ body {
     border-radius: 2px;
     background: currentColor;
     box-shadow: 6px -5px 0 currentColor, 12px -10px 0 currentColor;
+}
+
+.nav-symbol-access::before,
+.module-symbol-access::before {
+    width: 18px;
+    height: 18px;
+    left: 8px;
+    top: 8px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+}
+
+.nav-symbol-access::after,
+.module-symbol-access::after {
+    width: 12px;
+    height: 2px;
+    left: 11px;
+    top: 16px;
+    background: currentColor;
+    box-shadow: 0 -4px 0 currentColor, 0 4px 0 currentColor;
 }
 
 .admin-topbar {

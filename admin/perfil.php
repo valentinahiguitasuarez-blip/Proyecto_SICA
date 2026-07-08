@@ -126,7 +126,7 @@ $initials = strtoupper(substr($adminName, 0, 1) . substr($adminLast !== '' ? $ad
 
 <main class="admin-dashboard">
     <aside class="admin-sidebar" aria-label="Menu del administrador">
-        <a class="admin-brand" href="<?= admin_p_h(app_url('admin/index.php')) ?>">
+        <a class="admin-brand admin-brand--with-mark" href="<?= admin_p_h(app_url('admin/index.php')) ?>">
             <span><strong>SICA</strong><small>Sistema Inteligente de Control de Asistencia</small></span>
         </a>
         <a class="admin-profile" href="<?= admin_p_h(app_url('admin/perfil.php')) ?>" aria-label="Perfil del administrador">
@@ -134,12 +134,12 @@ $initials = strtoupper(substr($adminName, 0, 1) . substr($adminLast !== '' ? $ad
             <div><strong><?= admin_p_h($adminName) ?></strong><small><?= admin_p_h($adminMail) ?></small><span>En linea</span></div>
         </a>
         <nav class="admin-nav">
-            <a href="<?= admin_p_h(app_url('admin/index.php')) ?>"><span>PC</span>Panel de Control</a>
-            <a href="<?= admin_p_h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
-            <a href="<?= admin_p_h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes de Reserva</a>
-            <a href="<?= admin_p_h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos y Notificaciones</a>
-            <a href="<?= admin_p_h(app_url('admin/auditorios.php')) ?>"><span>AU</span>Auditorios</a>
-            <a href="<?= admin_p_h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reportes</a>
+            <a href="<?= admin_p_h(app_url('admin/index.php')) ?>"><span class="nav-symbol nav-symbol-dashboard" aria-hidden="true"></span>Panel de Control</a>
+            <a href="<?= admin_p_h(app_url('admin/usuarios.php')) ?>"><span class="nav-symbol nav-symbol-users" aria-hidden="true"></span>Usuarios</a>
+            <a href="<?= admin_p_h(app_url('admin/solicitudes.php')) ?>"><span class="nav-symbol nav-symbol-reservations" aria-hidden="true"></span>Solicitudes de Reserva</a>
+            <a href="<?= admin_p_h(app_url('admin/correos.php')) ?>"><span class="nav-symbol nav-symbol-mail" aria-hidden="true"></span>Correos y Notificaciones</a>
+            <a href="<?= admin_p_h(app_url('admin/auditorios.php')) ?>"><span class="nav-symbol nav-symbol-auditoriums" aria-hidden="true"></span>Auditorios</a>
+            <a href="<?= admin_p_h(app_url('admin/reportes.php')) ?>"><span class="nav-symbol nav-symbol-reports" aria-hidden="true"></span>Reportes</a>
         </nav>
     </aside>
 

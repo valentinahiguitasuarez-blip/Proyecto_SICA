@@ -31,11 +31,83 @@ function admin_a_scalar(PDO $pdo, string $sql, array $params = []): int
     return (int)$stmt->fetchColumn();
 }
 
+function admin_a_equipment_label(mixed $value): string
+{
+    if ($value === null || $value === '') {
+        return 'Por registrar';
+    }
+
+    return (int)$value === 1 ? 'Sí' : 'No';
+}
+
+function admin_a_equipment_value(array $source, string $key): ?int
+{
+    $value = (string)($source[$key] ?? '');
+    if ($value === '') {
+        return null;
+    }
+
+    return $value === '1' ? 1 : 0;
+}
+
 $auditorios = [];
 $stats = ['activos' => 0, 'capacidad' => 0, 'eventos' => 0, 'ocupados' => 0];
 $busqueda = trim((string)($_GET['q'] ?? ''));
 $params = [];
 $where = '';
+$message = $_SESSION['admin_auditorio_message'] ?? '';
+$messageType = $_SESSION['admin_auditorio_message_type'] ?? 'success';
+unset($_SESSION['admin_auditorio_message'], $_SESSION['admin_auditorio_message_type']);
+
+if (empty($_SESSION['csrf_admin_auditorios'])) {
+    $_SESSION['csrf_admin_auditorios'] = bin2hex(random_bytes(32));
+}
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    $csrf = (string)($_POST['csrf'] ?? '');
+    $action = (string)($_POST['action'] ?? '');
+    $idAuditorio = (int)($_POST['id_auditorio'] ?? 0);
+    $computadoresRaw = trim((string)($_POST['cantidad_computadores'] ?? ''));
+
+    try {
+        if (!hash_equals((string)$_SESSION['csrf_admin_auditorios'], $csrf)) {
+            throw new RuntimeException('La sesión expiró. Intenta de nuevo.');
+        }
+        if ($action !== 'update_dotacion' || $idAuditorio <= 0) {
+            throw new RuntimeException('No pudimos identificar el auditorio.');
+        }
+        if ($computadoresRaw !== '' && (!ctype_digit($computadoresRaw) || (int)$computadoresRaw > 999)) {
+            throw new RuntimeException('La cantidad de computadores debe ser un número válido.');
+        }
+
+        $stmt = $pdo->prepare(
+            'UPDATE auditorio
+             SET cantidad_computadores = :computadores,
+                 tiene_aire_acondicionado = :aire,
+                 tiene_ventilador = :ventilador,
+                 tiene_tablero = :tablero,
+                 tiene_televisor = :televisor
+             WHERE id_auditorio = :id'
+        );
+        $stmt->execute([
+            ':computadores' => $computadoresRaw === '' ? null : (int)$computadoresRaw,
+            ':aire' => admin_a_equipment_value($_POST, 'tiene_aire_acondicionado'),
+            ':ventilador' => admin_a_equipment_value($_POST, 'tiene_ventilador'),
+            ':tablero' => admin_a_equipment_value($_POST, 'tiene_tablero'),
+            ':televisor' => admin_a_equipment_value($_POST, 'tiene_televisor'),
+            ':id' => $idAuditorio,
+        ]);
+
+        $_SESSION['admin_auditorio_message'] = 'Dotación del auditorio actualizada.';
+        $_SESSION['admin_auditorio_message_type'] = 'success';
+    } catch (Throwable $exception) {
+        $_SESSION['admin_auditorio_message'] = $exception->getMessage();
+        $_SESSION['admin_auditorio_message_type'] = 'danger';
+    }
+
+    header('Location: ' . app_url('admin/auditorios.php'));
+    exit;
+}
 
 if ($busqueda !== '') {
     $where = ' WHERE a.nombre_auditorio LIKE :q OR a.bloque LIKE :q OR es.nombre_estado LIKE :q';
@@ -63,7 +135,9 @@ try {
 
     $auditorios = admin_a_rows(
         $pdo,
-        'SELECT a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad, es.nombre_estado AS estado,
+        'SELECT a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad,
+                a.cantidad_computadores, a.tiene_aire_acondicionado, a.tiene_ventilador, a.tiene_tablero, a.tiene_televisor,
+                es.nombre_estado AS estado,
                 COUNT(e.id_evento) AS eventos_total,
                 SUM(CASE WHEN evs.nombre_estado IN (\'Activo\', \'Pendiente\') AND DATE(e.fecha_evento) >= CURDATE() THEN 1 ELSE 0 END) AS eventos_proximos
          FROM auditorio a
@@ -71,7 +145,9 @@ try {
          LEFT JOIN evento e ON e.id_auditorio = a.id_auditorio
          LEFT JOIN estado evs ON evs.id_estado = e.id_estado' .
             $where .
-        ' GROUP BY a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad, es.nombre_estado
+        ' GROUP BY a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad,
+                   a.cantidad_computadores, a.tiene_aire_acondicionado, a.tiene_ventilador, a.tiene_tablero, a.tiene_televisor,
+                   es.nombre_estado
           ORDER BY a.nombre_auditorio ASC',
         $params
     );
@@ -120,6 +196,10 @@ try {
             <article class="admin-metric"><span>Con movimiento</span><strong><?= admin_a_h($stats['ocupados']) ?></strong><small>Activos o pendientes</small></article>
         </section>
 
+        <?php if ($message !== ''): ?>
+            <div class="admin-inline-message <?= admin_a_h($messageType) ?>"><?= admin_a_h($message) ?></div>
+        <?php endif; ?>
+
         <section class="admin-panel reservations-panel">
             <div class="admin-panel-head">
                 <div><p class="admin-eyebrow">Inventario</p><h2>Espacios registrados</h2></div>
@@ -144,9 +224,42 @@ try {
                         </div>
                         <div class="admin-reservation-meta">
                             <span>Capacidad <?= admin_a_h($auditorio['capacidad']) ?></span>
+                            <span>Computadores <?= admin_a_h($auditorio['cantidad_computadores'] ?? 'Por registrar') ?></span>
+                            <span>Aire <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_aire_acondicionado'] ?? null)) ?></span>
+                            <span>Ventilador <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_ventilador'] ?? null)) ?></span>
+                            <span>Tablero <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_tablero'] ?? null)) ?></span>
+                            <span>Televisor <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_televisor'] ?? null)) ?></span>
                             <span><?= admin_a_h($auditorio['eventos_total'] ?? 0) ?> eventos</span>
                             <span><?= admin_a_h($auditorio['eventos_proximos'] ?? 0) ?> proximos</span>
                         </div>
+                        <form class="admin-equipment-form" method="post">
+                            <input type="hidden" name="csrf" value="<?= admin_a_h($_SESSION['csrf_admin_auditorios']) ?>">
+                            <input type="hidden" name="action" value="update_dotacion">
+                            <input type="hidden" name="id_auditorio" value="<?= admin_a_h($auditorio['id_auditorio']) ?>">
+                            <label>
+                                <span>Computadores</span>
+                                <input type="number" name="cantidad_computadores" min="0" max="999" value="<?= admin_a_h($auditorio['cantidad_computadores'] ?? '') ?>" placeholder="Ej: 20">
+                            </label>
+                            <?php
+                                $dotaciones = [
+                                    'tiene_aire_acondicionado' => 'Aire acondicionado',
+                                    'tiene_ventilador' => 'Ventilador',
+                                    'tiene_tablero' => 'Tablero / pizarra',
+                                    'tiene_televisor' => 'Televisor',
+                                ];
+                            ?>
+                            <?php foreach ($dotaciones as $field => $label): ?>
+                                <label>
+                                    <span><?= admin_a_h($label) ?></span>
+                                    <select name="<?= admin_a_h($field) ?>">
+                                        <option value="" <?= ($auditorio[$field] ?? null) === null ? 'selected' : '' ?>>Por registrar</option>
+                                        <option value="1" <?= (string)($auditorio[$field] ?? '') === '1' ? 'selected' : '' ?>>Sí</option>
+                                        <option value="0" <?= (string)($auditorio[$field] ?? '') === '0' ? 'selected' : '' ?>>No</option>
+                                    </select>
+                                </label>
+                            <?php endforeach; ?>
+                            <button type="submit">Guardar dotación</button>
+                        </form>
                     </article>
                 <?php endforeach; ?>
             </div>

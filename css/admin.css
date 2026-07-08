@@ -2203,6 +2203,66 @@ body {
     font-weight: 900;
 }
 
+.admin-inline-message {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border: 1px solid rgba(18, 166, 120, 0.18);
+    border-radius: 8px;
+    color: #07523c;
+    background: var(--admin-green-soft);
+    font-weight: 900;
+}
+
+.admin-inline-message.danger {
+    border-color: rgba(220, 53, 69, 0.18);
+    color: #a41428;
+    background: #ffe8eb;
+}
+
+.admin-equipment-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.76);
+}
+
+.admin-equipment-form label {
+    display: grid;
+    gap: 6px;
+}
+
+.admin-equipment-form label span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.admin-equipment-form input,
+.admin-equipment-form select {
+    min-height: 38px;
+    width: 100%;
+    padding: 0 10px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-ink);
+    background: #ffffff;
+    font-weight: 800;
+}
+
+.admin-equipment-form button {
+    grid-column: 1 / -1;
+    min-height: 40px;
+    border: 0;
+    border-radius: 999px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-weight: 900;
+    cursor: pointer;
+}
+
 .admin-report-table {
     display: grid;
     gap: 8px;
@@ -3213,6 +3273,10 @@ body {
 }
 
 @media (max-width: 560px) {
+    .admin-equipment-form {
+        grid-template-columns: 1fr;
+    }
+
     .admin-main {
         padding: 18px;
     }

@@ -7,8 +7,14 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../includes/instructor_panel.php';
 
 $idInstructor = (int)(instructor_user()['id_documento'] ?? 0);
-$idEvento = (int)($_GET['evento'] ?? 0);
+$eventoRaw = trim((string)($_GET['evento'] ?? ''));
+$idEvento = ctype_digit($eventoRaw) ? (int)$eventoRaw : 0;
 $tipo = (string)($_GET['tipo'] ?? 'csv');
+
+if (!in_array($tipo, ['csv', 'pdf'], true) || $idEvento <= 0) {
+    http_response_code(400);
+    exit('Solicitud de exportación inválida.');
+}
 
 $stmt = $pdo->prepare(instructor_event_query() . ' WHERE e.id_evento = :evento AND e.id_solicitante = :instructor LIMIT 1');
 $stmt->execute([':evento' => $idEvento, ':instructor' => $idInstructor]);
@@ -54,11 +60,21 @@ function instructor_pdf_trim_raw(string $value, int $maxChars): string
     return mb_substr($value, 0, max(0, $maxChars - 1), 'UTF-8') . '…';
 }
 
+function instructor_export_filename(array $evento, string $extension): string
+{
+    $base = 'participantes-sica-' . (int)$evento['id_evento'] . '-' . (string)$evento['codigo_evento'];
+    $base = preg_replace('/[^A-Za-z0-9_-]+/', '-', $base) ?? $base;
+    return trim($base, '-') . '.' . $extension;
+}
+
 if ($tipo === 'pdf') {
     // build pages with a nicer table layout: header bar, table header with background,
     // separator lines and footer with generation date.
     $rowsPerPage = 28;
     $chunks = array_chunk($participantes, $rowsPerPage);
+    if (!$chunks) {
+        $chunks = [[]];
+    }
     $pageCount = count($chunks);
     $total = count($participantes);
 
@@ -72,6 +88,9 @@ if ($tipo === 'pdf') {
 
         // header top bar
         $stream .= "q 0.09 0.36 1 rg 36 782 523 42 re f Q\n";
+        $horarioEvento = instructor_hora12((string)$evento['hora_inicio']) . ' - ' . instructor_hora12((string)$evento['hora_fin']);
+        $fechaEvento = date('d/m/Y', strtotime((string)$evento['fecha_evento']));
+
         // Title and meta (white text)
         $title = 'Participantes - ' . (string)$evento['nombre_evento'];
         $stream .= "1 1 1 rg BT /F2 18 Tf 52 810 Td (" . instructor_pdf_text('SICA - Participantes registrados') . ") Tj ET\n";
@@ -79,14 +98,17 @@ if ($tipo === 'pdf') {
         $stream .= "1 1 1 rg BT /F1 10 Tf 440 806 Td (" . instructor_pdf_text('Pagina ' . ($pageIndex + 1) . ' de ' . $pageCount) . ") Tj ET\n";
         $stream .= "1 1 1 rg BT /F1 10 Tf 440 788 Td (" . instructor_pdf_text('Total: ' . $total) . ") Tj ET\n";
 
+        $stream .= "0.04 0.09 0.20 rg BT /F1 10 Tf 52 764 Td (" . instructor_pdf_text('Auditorio: ' . (string)$evento['nombre_auditorio'] . ' / Bloque ' . (string)$evento['bloque']) . ") Tj ET\n";
+        $stream .= "0.04 0.09 0.20 rg BT /F1 10 Tf 300 764 Td (" . instructor_pdf_text('Fecha: ' . $fechaEvento . ' - ' . $horarioEvento) . ") Tj ET\n";
+
         // Table header background
         $stream .= "0.94 0.95 0.98 rg 44 714 515 28 re f\n"; // light row background
         // Column titles (dark text)
         $stream .= "0 0 0 rg BT /F1 10 Tf 50 732 Td (" . instructor_pdf_text('N°') . ") Tj ET\n";
         $stream .= "0 0 0 rg BT /F1 10 Tf 110 732 Td (" . instructor_pdf_text('Documento') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 230 732 Td (" . instructor_pdf_text('Nombre completo') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 420 732 Td (" . instructor_pdf_text('Correo') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 520 732 Td (" . instructor_pdf_text('Asis.') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 10 Tf 220 732 Td (" . instructor_pdf_text('Nombre completo') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 10 Tf 405 732 Td (" . instructor_pdf_text('Ficha') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 10 Tf 485 732 Td (" . instructor_pdf_text('Asistencia') . ") Tj ET\n";
 
         // horizontal separator line under header
         $stream .= "0.8 G 44 710 m 559 710 l S\n";
@@ -97,11 +119,12 @@ if ($tipo === 'pdf') {
         foreach ($chunk as $localIndex => $p) {
             $num = $indexBase + $localIndex + 1;
             $nombre = trim((string)$p['nombre'] . ' ' . (string)$p['apellido']);
-            $correo = (string)($p['correo'] ?? '');
+            $ficha = !empty($p['id_ficha']) ? (string)$p['id_ficha'] : 'Sin ficha';
 
             // Truncate long fields to avoid overlap in PDF columns
-            $nombreDisplay = instructor_pdf_trim_raw($nombre, 36);
-            $correoDisplay = instructor_pdf_trim_raw($correo, 30);
+            $nombreDisplay = instructor_pdf_trim_raw($nombre, 34);
+            $fichaDisplay = instructor_pdf_trim_raw($ficha, 11);
+            $asistenciaDisplay = instructor_pdf_trim_raw((string)$p['asistencia'], 12);
 
             // alternate row background
             if ($localIndex % 2 === 0) {
@@ -110,9 +133,9 @@ if ($tipo === 'pdf') {
 
             $stream .= "0 0 0 rg BT /F1 9 Tf 50 {$y} Td (" . instructor_pdf_text((string)$num) . ") Tj ET\n";
             $stream .= "0 0 0 rg BT /F1 9 Tf 110 {$y} Td (" . instructor_pdf_text((string)$p['id_documento']) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 230 {$y} Td (" . instructor_pdf_text($nombreDisplay) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 420 {$y} Td (" . instructor_pdf_text($correoDisplay) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 520 {$y} Td (" . instructor_pdf_text((string)$p['asistencia']) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 220 {$y} Td (" . instructor_pdf_text($nombreDisplay) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 405 {$y} Td (" . instructor_pdf_text($fichaDisplay) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 485 {$y} Td (" . instructor_pdf_text($asistenciaDisplay) . ") Tj ET\n";
 
             // small separator
             $stream .= "0.9 G 44 " . ($y - 8) . " m 559 " . ($y - 8) . " l S\n";
@@ -167,15 +190,23 @@ if ($tipo === 'pdf') {
     $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n{$xref}\n%%EOF";
 
     header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="participantes-sica-' . (int)$evento['id_evento'] . '.pdf"');
+    header('Content-Disposition: attachment; filename="' . instructor_export_filename($evento, 'pdf') . '"');
     echo $pdf;
     exit;
 }
 
 header('Content-Type: text/csv; charset=UTF-8');
-header('Content-Disposition: attachment; filename="participantes-sica-' . (int)$evento['id_evento'] . '.csv"');
+header('Content-Disposition: attachment; filename="' . instructor_export_filename($evento, 'csv') . '"');
 $out = fopen('php://output', 'w');
 fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
+fputcsv($out, ['SICA - Participantes registrados']);
+fputcsv($out, ['Evento', $evento['nombre_evento']]);
+fputcsv($out, ['Código', $evento['codigo_evento']]);
+fputcsv($out, ['Auditorio', $evento['nombre_auditorio'] . ' / Bloque ' . $evento['bloque']]);
+fputcsv($out, ['Fecha', date('d/m/Y', strtotime((string)$evento['fecha_evento']))]);
+fputcsv($out, ['Horario', instructor_hora12((string)$evento['hora_inicio']) . ' - ' . instructor_hora12((string)$evento['hora_fin'])]);
+fputcsv($out, ['Total participantes', count($participantes)]);
+fputcsv($out, []);
 fputcsv($out, ['Documento', 'Nombre completo', 'Correo', 'Ficha', 'Programa', 'Asistencia', 'Fecha registro', 'Hora ingreso']);
 foreach ($participantes as $p) {
     fputcsv($out, [
@@ -186,7 +217,7 @@ foreach ($participantes as $p) {
         $p['nombre_programa'],
         $p['asistencia'],
         $p['fecha_registro'],
-        $p['hora'],
+        instructor_hora12((string)($p['hora'] ?? '')),
     ]);
 }
 fclose($out);

@@ -56,6 +56,22 @@ function instructor_scalar(PDO $pdo, string $sql, array $params = []): int
     return (int)$stmt->fetchColumn();
 }
 
+function instructor_hora12(?string $hora): string
+{
+    $hora = trim((string)$hora);
+    if ($hora === '') {
+        return '';
+    }
+
+    $timestamp = strtotime($hora);
+    if ($timestamp === false) {
+        return $hora;
+    }
+
+    $formatted = date('g:i A', $timestamp);
+    return str_replace(['AM', 'PM'], ['a. m.', 'p. m.'], $formatted);
+}
+
 function instructor_layout_start(string $active): void
 {
     $user = instructor_user();
@@ -67,13 +83,13 @@ function instructor_layout_start(string $active): void
         'dashboard' => ['IN', 'Dashboard', 'instructor/index.php'],
         'disponibilidad' => ['DI', 'Disponibilidad', 'instructor/disponibilidad.php'],
         'solicitudes' => ['SO', 'Mis solicitudes', 'instructor/mis_solicitudes.php'],
-        'asistencia' => ['QR', 'Asistencia / codigo', 'instructor/asistencia.php'],
+        'asistencia' => ['QR', 'Código / pre-registro', 'instructor/asistencia.php'],
         'participantes' => ['PA', 'Participantes', 'instructor/participantes.php'],
         'perfil' => ['PE', 'Perfil', 'instructor/perfil.php'],
     ];
     ?>
     <main class="instructor-dashboard">
-        <aside class="instructor-sidebar" aria-label="Menu del instructor">
+        <aside class="instructor-sidebar" aria-label="Menú del instructor">
             <a class="instructor-brand" href="<?= instructor_h(app_url('instructor/index.php')) ?>">
                 <span class="brand-mark">S</span>
                 <span>
@@ -126,7 +142,7 @@ function instructor_layout_start(string $active): void
 
             <a class="instructor-logout" href="<?= instructor_h(app_url('login/logout.php')) ?>">
                 <span aria-hidden="true">SL</span>
-                Cerrar sesion
+                Cerrar sesión
             </a>
         </aside>
 
@@ -203,7 +219,7 @@ function instructor_qr_image_url(string $payload, int $size = 220): string
         . '&format=svg&margin=12&data=' . rawurlencode($payload);
 }
 
-function instructor_download_qr_svg(string $code, string $title = 'Codigo SICA', ?string $payload = null): string
+function instructor_download_qr_svg(string $code, string $title = 'Código SICA', ?string $payload = null): string
 {
     $payload = $payload ?? $code;
     $qrUrl = instructor_qr_image_url($payload, 190);

@@ -29,7 +29,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
     try {
         if (!hash_equals((string)$_SESSION['csrf_instructor_profile'], $csrf)) {
-            throw new RuntimeException('La sesion expiro. Intenta de nuevo.');
+            throw new RuntimeException('La sesión expiró. Intenta de nuevo.');
         }
         if ($nombre === '' || $apellido === '' || strlen($nombre) > 50 || strlen($apellido) > 50 || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Revisa nombre, apellido y correo.');

@@ -19,27 +19,48 @@ if (empty($_SESSION['csrf_instructor_request'])) {
     $_SESSION['csrf_instructor_request'] = bin2hex(random_bytes(32));
 }
 
-function instructor_disponibilidad_hora12(?string $hora): string
+function instructor_dotacion_label(mixed $value): string
 {
-    $hora = trim((string)$hora);
-    if ($hora === '') {
-        return '';
+    if ($value === null || $value === '') {
+        return 'Por registrar';
     }
 
-    $timestamp = strtotime($hora);
-    if ($timestamp === false) {
-        return $hora;
-    }
-
-    $formatted = date('g:i A', $timestamp);
-    return str_replace(['AM', 'PM'], ['a. m.', 'p. m.'], $formatted);
+    return (int)$value === 1 ? 'Sí' : 'No';
 }
 
-$auditorios = instructor_rows($pdo, "SELECT a.* FROM auditorio a INNER JOIN estado e ON e.id_estado = a.id_estado WHERE e.nombre_estado = 'Activo' ORDER BY a.nombre_auditorio");
+function instructor_disponibilidad_texto_valido(string $value, int $max): bool
+{
+    if ($value === '' || mb_strlen($value, 'UTF-8') > $max) {
+        return false;
+    }
+
+    return !preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', $value);
+}
+
+$auditorios = instructor_rows($pdo, "SELECT a.*, e.nombre_estado AS estado FROM auditorio a INNER JOIN estado e ON e.id_estado = a.id_estado WHERE e.nombre_estado = 'Activo' ORDER BY a.nombre_auditorio");
 $tipos = instructor_rows($pdo, 'SELECT * FROM tipo_evento ORDER BY nombre_tipo');
-$selectedAuditorio = (int)($_GET['auditorio'] ?? ($auditorios[0]['id_auditorio'] ?? 0));
-$month = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['mes'] ?? '')) ? (string)$_GET['mes'] : date('Y-m');
-$prefillDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['fecha'] ?? '')) ? (string)$_GET['fecha'] : '';
+$auditorioRaw = trim((string)($_GET['auditorio'] ?? ''));
+$selectedAuditorio = $auditorioRaw !== '' && ctype_digit($auditorioRaw) ? (int)$auditorioRaw : (int)($auditorios[0]['id_auditorio'] ?? 0);
+$selectedAuditorioData = null;
+foreach ($auditorios as $auditorio) {
+    if ((int)$auditorio['id_auditorio'] === $selectedAuditorio) {
+        $selectedAuditorioData = $auditorio;
+        break;
+    }
+}
+if (!$selectedAuditorioData && $auditorios) {
+    $selectedAuditorioData = $auditorios[0];
+    $selectedAuditorio = (int)$selectedAuditorioData['id_auditorio'];
+}
+$monthRaw = (string)($_GET['mes'] ?? '');
+$month = preg_match('/^\d{4}-\d{2}$/', $monthRaw) && checkdate((int)substr($monthRaw, 5, 2), 1, (int)substr($monthRaw, 0, 4))
+    ? $monthRaw
+    : date('Y-m');
+$prefillRaw = (string)($_GET['fecha'] ?? '');
+$prefillDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', $prefillRaw)
+    && checkdate((int)substr($prefillRaw, 5, 2), (int)substr($prefillRaw, 8, 2), (int)substr($prefillRaw, 0, 4))
+    ? $prefillRaw
+    : '';
 $monthLabels = [1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'];
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -54,7 +75,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $titulo = trim((string)($_POST['nombre_evento'] ?? ''));
     $descripcion = trim((string)($_POST['descripcion'] ?? ''));
     $today = date('Y-m-d');
+    $maxDate = (new DateTimeImmutable('+18 months'))->format('Y-m-d');
     $error = '';
+    $inicio = null;
+    $fin = null;
 
     $convertTo24Hour = static function (string $time, string $period): ?string {
             if (!preg_match('/^(0?[1-9]|1[0-2]):([0-5][0-9])$/', $time, $matches)) {
@@ -73,20 +97,45 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
             return sprintf('%02d:%s', $hour, $minute);
         };
+    $auditorioExiste = $idAuditorio > 0 ? instructor_scalar(
+        $pdo,
+        "SELECT COUNT(*) FROM auditorio a INNER JOIN estado e ON e.id_estado = a.id_estado WHERE a.id_auditorio = :id AND e.nombre_estado = 'Activo'",
+        [':id' => $idAuditorio]
+    ) : 0;
+    $tipoExiste = $idTipo > 0 ? instructor_scalar($pdo, 'SELECT COUNT(*) FROM tipo_evento WHERE id_tipo_evento = :id', [':id' => $idTipo]) : 0;
+
     if (!hash_equals((string)$_SESSION['csrf_instructor_request'], $csrf)) {
-        $error = 'La sesion expiro. Recarga la pagina e intenta de nuevo.';
-    } elseif ($idAuditorio <= 0 || $idTipo <= 0 || $titulo === '' || strlen($titulo) > 100) {
-        $error = 'Completa el auditorio, tipo de evento y titulo.';
-    } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) || $fecha < $today) {
-        $error = 'Selecciona una fecha valida desde hoy en adelante.';
+        $error = 'La sesión expiró. Recarga la página e intenta de nuevo.';
+    } elseif ($idInstructor <= 0) {
+        $error = 'No pudimos identificar tu usuario. Cierra sesión e intenta de nuevo.';
+    } elseif ($auditorioExiste === 0) {
+        $error = 'Selecciona un auditorio activo válido.';
+    } elseif ($tipoExiste === 0) {
+        $error = 'Selecciona un tipo de evento válido.';
+    } elseif (!instructor_disponibilidad_texto_valido($titulo, 100)) {
+        $error = 'Escribe un título válido de máximo 100 caracteres.';
+    } elseif ($descripcion !== '' && !instructor_disponibilidad_texto_valido($descripcion, 150)) {
+        $error = 'La descripción debe tener máximo 150 caracteres y no contener caracteres inválidos.';
+    } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) || !checkdate((int)substr($fecha, 5, 2), (int)substr($fecha, 8, 2), (int)substr($fecha, 0, 4)) || $fecha < $today || $fecha > $maxDate) {
+        $error = 'Selecciona una fecha válida entre hoy y los próximos 18 meses.';
     } else {
         $inicio = $convertTo24Hour($inicioRaw, $inicioPeriodo);
         $fin = $convertTo24Hour($finRaw, $finPeriodo);
 
         if ($inicio === null || $fin === null) {
-            $error = 'El formato de hora no es valido. Usa HH:MM y selecciona AM o PM.';
+            $error = 'El formato de hora no es válido. Usa HH:MM y selecciona AM o PM.';
         } elseif ($inicio >= $fin) {
             $error = 'La hora final debe ser mayor que la hora inicial.';
+        } else {
+            $inicioMinutos = ((int)substr($inicio, 0, 2) * 60) + (int)substr($inicio, 3, 2);
+            $finMinutos = ((int)substr($fin, 0, 2) * 60) + (int)substr($fin, 3, 2);
+            $duracion = $finMinutos - $inicioMinutos;
+
+            if ($duracion < 30) {
+                $error = 'La reserva debe durar mínimo 30 minutos.';
+            } elseif ($duracion > 480) {
+                $error = 'La reserva no puede superar 8 horas continuas.';
+            }
         }
     }
 
@@ -113,12 +162,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if ($overlaps) {
             $eventoOcupado = $overlaps[0];
             $instructorOcupado = trim((string)($eventoOcupado['nombre'] ?? '') . ' ' . (string)($eventoOcupado['apellido'] ?? ''));
-            $error = 'No pudimos enviar la solicitud porque esa franja horaria ya esta ocupada.';
+            $error = 'No pudimos enviar la solicitud porque esa franja horaria ya está ocupada.';
             $conflictDetails = [
                 'evento' => (string)$eventoOcupado['nombre_evento'],
                 'instructor' => $instructorOcupado !== '' ? $instructorOcupado : 'Instructor SICA',
                 'auditorio' => (string)$eventoOcupado['nombre_auditorio'] . ' / Bloque ' . (string)$eventoOcupado['bloque'],
-                'horario' => instructor_disponibilidad_hora12((string)$eventoOcupado['hora_inicio']) . ' - ' . instructor_disponibilidad_hora12((string)$eventoOcupado['hora_fin']),
+                'horario' => instructor_hora12((string)$eventoOcupado['hora_inicio']) . ' - ' . instructor_hora12((string)$eventoOcupado['hora_fin']),
             ];
         }
     }
@@ -152,7 +201,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         ':estado' => $estadoPendiente,
     ]);
 
-    $_SESSION['instructor_message'] = 'Solicitud enviada. Administracion la revisara y recibiras la respuesta en SICA.';
+    $_SESSION['instructor_message'] = 'Solicitud enviada. Administración la revisará y recibirás la respuesta en SICA.';
     header('Location: ' . app_url('instructor/detalle_solicitud.php?id=' . (int)$pdo->lastInsertId()));
     exit;
 }
@@ -189,7 +238,7 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
     <div>
         <p class="eyebrow">Disponibilidad</p>
         <h1>Calendario de auditorios</h1>
-        <span>Selecciona una fecha libre y envia tu solicitud desde esta pantalla.</span>
+        <span>Selecciona una fecha libre y envía tu solicitud desde esta pantalla.</span>
     </div>
     <div class="topbar-actions">
         <a class="top-action" href="<?= instructor_h(app_url('instructor/mis_solicitudes.php')) ?>">Mis solicitudes</a>
@@ -238,8 +287,28 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
             <input type="hidden" name="mes" value="<?= instructor_h($month) ?>">
             <a href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $nextMonth)) ?>">Siguiente</a>
         </form>
+        <?php if ($selectedAuditorioData): ?>
+            <article class="auditorium-feature-card" aria-label="Características del auditorio seleccionado">
+                <div>
+                    <p class="eyebrow">Características del auditorio</p>
+                    <h3><?= instructor_h($selectedAuditorioData['nombre_auditorio']) ?></h3>
+                    <span>Información disponible para decidir antes de enviar la solicitud.</span>
+                </div>
+                <div class="auditorium-feature-grid">
+                    <span><strong><?= instructor_h($selectedAuditorioData['bloque']) ?></strong> Bloque</span>
+                    <span><strong><?= instructor_h($selectedAuditorioData['capacidad']) ?></strong> Cupos máximos</span>
+                    <span><strong><?= instructor_h($selectedAuditorioData['cantidad_computadores'] ?? 'Por registrar') ?></strong> Computadores</span>
+                    <span><strong><?= instructor_h(instructor_dotacion_label($selectedAuditorioData['tiene_aire_acondicionado'] ?? null)) ?></strong> Aire acondicionado</span>
+                    <span><strong><?= instructor_h(instructor_dotacion_label($selectedAuditorioData['tiene_ventilador'] ?? null)) ?></strong> Ventilador</span>
+                    <span><strong><?= instructor_h(instructor_dotacion_label($selectedAuditorioData['tiene_tablero'] ?? null)) ?></strong> Tablero / pizarra</span>
+                    <span><strong><?= instructor_h(instructor_dotacion_label($selectedAuditorioData['tiene_televisor'] ?? null)) ?></strong> Televisor</span>
+                    <span><strong><?= instructor_h($selectedAuditorioData['estado']) ?></strong> Estado</span>
+                </div>
+                <small>Estos datos los actualiza administración desde el inventario de auditorios.</small>
+            </article>
+        <?php endif; ?>
         <div class="calendar-grid">
-            <?php foreach (['Lun','Mar','Mie','Jue','Vie','Sab','Dom'] as $day): ?><div class="calendar-day-name"><?= instructor_h($day) ?></div><?php endforeach; ?>
+            <?php foreach (['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] as $day): ?><div class="calendar-day-name"><?= instructor_h($day) ?></div><?php endforeach; ?>
             <?php for ($i = 1; $i < $firstWeekday; $i++): ?><div class="calendar-cell muted"></div><?php endfor; ?>
             <?php for ($day = 1; $day <= $daysInMonth; $day++): ?>
                 <?php $date = $start->setDate((int)$start->format('Y'), (int)$start->format('m'), $day)->format('Y-m-d'); ?>
@@ -267,7 +336,7 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
                     <?php foreach ($events as $event): ?>
                         <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : 'busy'; ?>
                         <span class="calendar-event <?= instructor_h($class) ?>" title="<?= instructor_h($event['nombre_evento']) ?>" aria-hidden="true">
-                            <strong><?= instructor_h(instructor_disponibilidad_hora12((string)$event['hora_inicio'])) ?></strong>
+                            <strong><?= instructor_h(instructor_hora12((string)$event['hora_inicio'])) ?></strong>
                             <?= instructor_h($event['nombre_evento']) ?>
                         </span>
                     <?php endforeach; ?>
@@ -306,8 +375,8 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
                     </select>
                 </div>
             </label>
-            <label class="wide"><span>Titulo del evento</span><input type="text" name="nombre_evento" maxlength="100" required placeholder="Ej: Taller de orientacion"></label>
-            <label class="wide"><span>Descripcion</span><textarea name="descripcion" maxlength="150" placeholder="Cuéntanos el objetivo del evento"></textarea></label>
+            <label class="wide"><span>Título del evento</span><input type="text" name="nombre_evento" maxlength="100" required placeholder="Ej: Taller de orientación"></label>
+            <label class="wide"><span>Descripción</span><textarea name="descripcion" maxlength="150" placeholder="Cuéntanos el objetivo del evento"></textarea></label>
             <button class="primary-btn wide" type="submit">Enviar solicitud</button>
         </form>
     </aside>

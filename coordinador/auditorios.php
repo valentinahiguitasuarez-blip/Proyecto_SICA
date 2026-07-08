@@ -9,19 +9,32 @@ require_once __DIR__ . '/../includes/coordinador_panel.php';
 $pageTitle = 'Auditorios - Coordinador SICA';
 $pageStyles = ['css/admin.css'];
 
+function coord_auditorio_dotacion_label(mixed $value): string
+{
+    if ($value === null || $value === '') {
+        return 'Por registrar';
+    }
+
+    return (int)$value === 1 ? 'Sí' : 'No';
+}
+
 $auditorios = [];
 $stats = ['total' => 0, 'activos' => 0, 'capacidadTotal' => 0];
 try {
     $auditorios = coord_rows(
         $pdo,
-        'SELECT a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad, aes.nombre_estado AS estado,
+        'SELECT a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad,
+                a.cantidad_computadores, a.tiene_aire_acondicionado, a.tiene_ventilador, a.tiene_tablero, a.tiene_televisor,
+                aes.nombre_estado AS estado,
                 SUM(CASE WHEN es.nombre_estado = \'Pendiente\' THEN 1 ELSE 0 END) AS pendientes,
                 SUM(CASE WHEN es.nombre_estado = \'Activo\' AND e.fecha_evento >= CURDATE() THEN 1 ELSE 0 END) AS proximos
          FROM auditorio a
          INNER JOIN estado aes ON aes.id_estado = a.id_estado
          LEFT JOIN evento e ON e.id_auditorio = a.id_auditorio
          LEFT JOIN estado es ON es.id_estado = e.id_estado
-         GROUP BY a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad, aes.nombre_estado
+         GROUP BY a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad,
+                  a.cantidad_computadores, a.tiene_aire_acondicionado, a.tiene_ventilador, a.tiene_tablero, a.tiene_televisor,
+                  aes.nombre_estado
          ORDER BY a.nombre_auditorio ASC'
     );
     $stats['total'] = count($auditorios);
@@ -94,6 +107,11 @@ try {
                         </div>
                         <div class="admin-auditorio-meta">
                             <span>Capacidad <strong><?= coord_h($auditorio['capacidad']) ?></strong></span>
+                            <span>Computadores <strong><?= coord_h($auditorio['cantidad_computadores'] ?? 'Por registrar') ?></strong></span>
+                            <span>Aire <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_aire_acondicionado'] ?? null)) ?></strong></span>
+                            <span>Ventilador <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_ventilador'] ?? null)) ?></strong></span>
+                            <span>Tablero <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_tablero'] ?? null)) ?></strong></span>
+                            <span>Televisor <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_televisor'] ?? null)) ?></strong></span>
                             <span>Pendientes <strong><?= coord_h((int)$auditorio['pendientes']) ?></strong></span>
                             <span>Proximas activas <strong><?= coord_h((int)$auditorio['proximos']) ?></strong></span>
                         </div>

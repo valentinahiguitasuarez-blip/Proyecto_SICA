@@ -10,6 +10,10 @@ $pageTitle = 'Mis solicitudes - Instructor SICA';
 $pageStyles = ['css/instructor.css'];
 $idInstructor = (int)(instructor_user()['id_documento'] ?? 0);
 $estadoFiltro = trim((string)($_GET['estado'] ?? ''));
+$estadosPermitidos = ['Pendiente', 'Activo', 'Cancelado', 'Finalizado'];
+if ($estadoFiltro !== '' && !in_array($estadoFiltro, $estadosPermitidos, true)) {
+    $estadoFiltro = '';
+}
 $params = [':id' => $idInstructor];
 $where = ' WHERE e.id_solicitante = :id';
 if ($estadoFiltro !== '') {
@@ -34,7 +38,7 @@ foreach ($countStmt->fetchAll() as $row) {
 // 2) separate: "en proceso" (Pendiente OR Activo con fecha futura) and historical
 // Upcoming / in-process: Pendiente (any date) OR Activo with fecha_evento >= CURDATE()
 $perPage = 15;
-$pagina = max(1, (int)($_GET['pagina'] ?? 1));
+$pagina = min(200, max(1, (int)($_GET['pagina'] ?? 1)));
 
 $upcomingSql = instructor_event_query() . $where . " AND (es.nombre_estado = 'Pendiente' OR (es.nombre_estado = 'Activo' AND DATE(e.fecha_evento) >= CURDATE())) ORDER BY e.fecha_evento ASC, e.hora_inicio ASC";
 $upcoming = instructor_rows($pdo, $upcomingSql, $params);
@@ -74,8 +78,8 @@ function instructor_request_step_data(array $evento): array
 
     return [
         ['key' => 'solicitado', 'label' => 'Solicitado', 'extra' => ''],
-        ['key' => 'revision', 'label' => 'En revision', 'extra' => ''],
-        ['key' => 'decision', 'label' => 'Decision', 'extra' => $active === 'decision' && $decisionDate !== '' ? ' - ' . $decisionDate : ''],
+        ['key' => 'revision', 'label' => 'En revisión', 'extra' => ''],
+        ['key' => 'decision', 'label' => 'Decisión', 'extra' => $active === 'decision' && $decisionDate !== '' ? ' - ' . $decisionDate : ''],
         ['key' => 'notificado', 'label' => 'Notificado', 'extra' => $active === 'notificado' && $decisionDate !== '' ? ' - ' . $decisionDate : ''],
     ];
 }
@@ -129,14 +133,14 @@ function instructor_step_class(array $step, string $estado): string
         <form class="calendar-toolbar" method="get">
             <select name="estado" onchange="this.form.submit()">
                 <option value="">Todos los estados</option>
-                <?php foreach (['Pendiente','Activo','Cancelado','Finalizado'] as $estado): ?>
+                <?php foreach ($estadosPermitidos as $estado): ?>
                     <option value="<?= instructor_h($estado) ?>" <?= $estadoFiltro === $estado ? 'selected' : '' ?>><?= instructor_h($estado) ?></option>
                 <?php endforeach; ?>
             </select>
         </form>
     </div>
     <div class="metric-grid requests-metrics">
-        <article class="metric-tile amber"><span>Pendientes</span><strong><?= instructor_h($counts['Pendiente'] ?? 0) ?></strong><small>En revision</small></article>
+        <article class="metric-tile amber"><span>Pendientes</span><strong><?= instructor_h($counts['Pendiente'] ?? 0) ?></strong><small>En revisión</small></article>
         <article class="metric-tile navy"><span>Activos</span><strong><?= instructor_h($counts['Activo'] ?? 0) ?></strong><small>Aprobados</small></article>
         <article class="metric-tile red"><span>Cancelados</span><strong><?= instructor_h($counts['Cancelado'] ?? 0) ?></strong><small>Cancelados</small></article>
         <article class="metric-tile green"><span>Finalizados</span><strong><?= instructor_h($counts['Finalizado'] ?? 0) ?></strong><small>Completados</small></article>
@@ -145,7 +149,7 @@ function instructor_step_class(array $step, string $estado): string
     <div class="request-list">
         <div class="section-heading">
             <p class="eyebrow">En proceso</p>
-            <h3>Reservas activas o en revision</h3>
+            <h3>Reservas activas o en revisión</h3>
         </div>
         <?php if (!$upcoming): ?><div class="empty-state">No hay solicitudes en proceso.</div><?php endif; ?>
         <?php foreach ($upcoming as $evento): ?>
@@ -160,14 +164,14 @@ function instructor_step_class(array $step, string $estado): string
             <?php if ($isCancelado && trim((string)($evento['observacion'] ?? '')) !== ''): ?>
                 <div class="obs-banner"><?= instructor_h($evento['observacion']) ?></div>
             <?php endif; ?>
-            <article class="request-row">
+            <article class="request-row <?= instructor_h(instructor_status_class($estado)) ?>">
                 <div class="request-date"><?= instructor_h($fecha->format('d M')) ?></div>
                 <div class="request-content">
                     <div class="request-title">
                       <h3><?= instructor_h($evento['nombre_evento']) ?></h3>
                       <?php if ($isNuevo): ?><span class="badge-new">Nuevo</span><?php endif; ?>
                     </div>
-                    <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
+                    <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(instructor_hora12((string)$evento['hora_inicio'])) ?> a <?= instructor_h(instructor_hora12((string)$evento['hora_fin'])) ?></small>
 
                     <div class="stepper" aria-hidden="true">
                         <?php foreach ($steps as $step): ?>
@@ -200,14 +204,14 @@ function instructor_step_class(array $step, string $estado): string
             <?php if ($isCancelado && trim((string)($evento['observacion'] ?? '')) !== ''): ?>
                 <div class="obs-banner"><?= instructor_h($evento['observacion']) ?></div>
             <?php endif; ?>
-            <article class="request-row">
+            <article class="request-row <?= instructor_h(instructor_status_class($estado)) ?>">
                 <div class="request-date"><?= instructor_h($fecha->format('d M')) ?></div>
                 <div class="request-content">
                     <div class="request-title">
                       <h3><?= instructor_h($evento['nombre_evento']) ?></h3>
                       <?php if ($isNuevo): ?><span class="badge-new">Nuevo</span><?php endif; ?>
                     </div>
-                    <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'], 0, 5)) ?></small>
+                    <small><?= instructor_h($evento['nombre_auditorio']) ?> / <?= instructor_h($evento['nombre_tipo']) ?> - <?= instructor_h(instructor_hora12((string)$evento['hora_inicio'])) ?> a <?= instructor_h(instructor_hora12((string)$evento['hora_fin'])) ?></small>
 
                     <div class="stepper" aria-hidden="true">
                         <?php foreach ($steps as $step): ?>
@@ -219,7 +223,7 @@ function instructor_step_class(array $step, string $estado): string
             </article>
         <?php endforeach; ?>
 
-        <div class="pagination-actions" aria-label="Paginacion de solicitudes">
+        <div class="pagination-actions" aria-label="Paginación de solicitudes">
             <?php
             $baseQuery = [];
             if ($estadoFiltro !== '') $baseQuery['estado'] = $estadoFiltro;

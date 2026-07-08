@@ -243,12 +243,6 @@ if ($eventoSeleccionado > 0) {
                     <b>Crear pre-registro</b>
                 </summary>
 
-                <?php if ($formMessage !== ''): ?>
-                    <div class="event-alert <?= htmlspecialchars($formMessageType, ENT_QUOTES, 'UTF-8') ?>">
-                        <?= htmlspecialchars($formMessage, ENT_QUOTES, 'UTF-8') ?>
-                    </div>
-                <?php endif; ?>
-
                 <form class="preregister-form" method="post" action="<?= htmlspecialchars(app_url('aprendiz/preregistro.php'), ENT_QUOTES, 'UTF-8') ?>">
                     <input type="hidden" name="action" value="create_preregistro">
                     <input type="hidden" name="csrf_preregistro" value="<?= htmlspecialchars($_SESSION['csrf_preregistro'], ENT_QUOTES, 'UTF-8') ?>">
@@ -289,10 +283,15 @@ if ($eventoSeleccionado > 0) {
                             <strong><?= htmlspecialchars($eventoFijoTexto, ENT_QUOTES, 'UTF-8') ?></strong>
                             <small><?= htmlspecialchars('Cupos disponibles: ' . (string)$cuposDisponiblesFijo, ENT_QUOTES, 'UTF-8') ?></small>
                         </label>
+                        <div class="capacity-preview <?= $cuposDisponiblesFijo > 0 ? 'available' : 'full' ?>" data-capacity-preview>
+                            <span><?= $cuposDisponiblesFijo > 0 ? 'Tiene cupo' : 'Sin cupos' ?></span>
+                            <strong><?= htmlspecialchars((string)$cuposDisponiblesFijo, ENT_QUOTES, 'UTF-8') ?></strong>
+                            <small><?= $cuposDisponiblesFijo > 0 ? 'Puedes enviar tu pre-registro.' : 'Si envías, el sistema te avisará que el auditorio está lleno.' ?></small>
+                        </div>
                     <?php else: ?>
                         <label class="event-select-field">
                             <span>Evento disponible</span>
-                            <select name="id_evento" required <?= !$eventosFormulario ? 'disabled' : '' ?>>
+                            <select name="id_evento" required <?= !$eventosFormulario ? 'disabled' : '' ?> data-event-select>
                                 <option value="">Selecciona un evento</option>
                                 <?php foreach ($eventosFormulario as $evento): ?>
                                     <?php
@@ -303,12 +302,21 @@ if ($eventoSeleccionado > 0) {
                                         $optionText .= ' - registrado';
                                     }
                                     ?>
-                                    <option value="<?= htmlspecialchars((string)$evento['id_evento'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <option
+                                        value="<?= htmlspecialchars((string)$evento['id_evento'], ENT_QUOTES, 'UTF-8') ?>"
+                                        data-cupos="<?= htmlspecialchars((string)$cuposDisponibles, ENT_QUOTES, 'UTF-8') ?>"
+                                        data-registrado="<?= !empty($evento['id_preregistro']) ? '1' : '0' ?>"
+                                    >
                                         <?= htmlspecialchars($optionText, ENT_QUOTES, 'UTF-8') ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </label>
+                        <div class="capacity-preview idle" data-capacity-preview>
+                            <span>Cupos</span>
+                            <strong>--</strong>
+                            <small>Selecciona un evento para ver si todavía tiene cupo.</small>
+                        </div>
                     <?php endif; ?>
                     <button type="submit" <?= !$eventosFormulario ? 'disabled' : '' ?>>
                         Enviar pre-registro
@@ -322,6 +330,22 @@ if ($eventoSeleccionado > 0) {
                 <?php endif; ?>
             </details>
         </section>
+
+        <?php if ($formMessage !== ''): ?>
+            <div class="preregister-modal-backdrop" data-preregister-modal>
+                <section class="preregister-modal <?= htmlspecialchars($formMessageType, ENT_QUOTES, 'UTF-8') ?>" role="dialog" aria-modal="true" aria-labelledby="preregisterModalTitle">
+                    <button type="button" class="preregister-modal-close" data-preregister-modal-close aria-label="Cerrar mensaje">×</button>
+                    <span class="preregister-modal-icon" aria-hidden="true">
+                        <?= $formMessageType === 'success' ? 'OK' : ($formMessageType === 'info' ? 'IN' : 'NO') ?>
+                    </span>
+                    <h2 id="preregisterModalTitle">
+                        <?= $formMessageType === 'success' ? 'Cupo reservado' : ($formMessageType === 'info' ? 'Aviso del pre-registro' : 'No fue posible reservar') ?>
+                    </h2>
+                    <p><?= htmlspecialchars($formMessage, ENT_QUOTES, 'UTF-8') ?></p>
+                    <button type="button" data-preregister-modal-close>Entendido</button>
+                </section>
+            </div>
+        <?php endif; ?>
 
         <section class="preregister-stats" aria-label="Indicadores de pre-registro">
             <article>
@@ -397,5 +421,62 @@ if ($eventoSeleccionado > 0) {
         </section>
     </section>
 </main>
+
+<script>
+(() => {
+    const select = document.querySelector('[data-event-select]');
+    const preview = document.querySelector('[data-capacity-preview]');
+
+    const updateCapacity = () => {
+        if (!select || !preview) {
+            return;
+        }
+
+        const option = select.options[select.selectedIndex];
+        const cupos = option ? option.dataset.cupos : '';
+        const registrado = option ? option.dataset.registrado === '1' : false;
+
+        preview.classList.remove('idle', 'available', 'full', 'registered');
+
+        if (!option || select.value === '' || cupos === '') {
+            preview.classList.add('idle');
+            preview.querySelector('span').textContent = 'Cupos';
+            preview.querySelector('strong').textContent = '--';
+            preview.querySelector('small').textContent = 'Selecciona un evento para ver si todavía tiene cupo.';
+            return;
+        }
+
+        if (registrado) {
+            preview.classList.add('registered');
+            preview.querySelector('span').textContent = 'Ya registrado';
+            preview.querySelector('small').textContent = 'Ya tienes cupo separado para este evento.';
+        } else if (Number(cupos) > 0) {
+            preview.classList.add('available');
+            preview.querySelector('span').textContent = 'Tiene cupo';
+            preview.querySelector('small').textContent = 'Puedes enviar tu pre-registro.';
+        } else {
+            preview.classList.add('full');
+            preview.querySelector('span').textContent = 'Sin cupos';
+            preview.querySelector('small').textContent = 'El sistema te avisará que el auditorio está lleno.';
+        }
+
+        preview.querySelector('strong').textContent = cupos;
+    };
+
+    if (select) {
+        select.addEventListener('change', updateCapacity);
+        updateCapacity();
+    }
+
+    document.querySelectorAll('[data-preregister-modal-close]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('[data-preregister-modal]');
+            if (modal) {
+                modal.remove();
+            }
+        });
+    });
+})();
+</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

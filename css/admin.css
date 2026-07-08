@@ -1513,31 +1513,37 @@ body {
 }
 
 .reservation-metrics {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.reservation-metrics .admin-metric {
+    min-height: 108px;
+    padding: 16px;
 }
 
 .reservations-panel {
-    padding: 22px;
+    padding: 20px;
 }
 
 .admin-reservation-list {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .admin-reservation-card {
     --reservation-accent: var(--admin-blue);
     --reservation-soft: rgba(22, 93, 255, 0.08);
     display: grid;
-    grid-template-columns: 74px minmax(0, 1fr) 270px;
-    gap: 16px;
-    align-items: start;
-    padding: 16px;
+    grid-template-columns: 62px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
     border: 1px solid color-mix(in srgb, var(--reservation-accent), transparent 76%);
     border-radius: 8px;
-    background:
-        linear-gradient(90deg, var(--reservation-soft), #ffffff 40%),
-        #ffffff;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(28, 45, 74, 0.045);
 }
 
 .admin-reservation-card.pending {
@@ -1561,7 +1567,7 @@ body {
 }
 
 .admin-reservation-card time {
-    min-height: 74px;
+    min-height: 62px;
     display: grid;
     place-items: center;
     align-content: center;
@@ -1577,7 +1583,7 @@ body {
 }
 
 .admin-reservation-card time strong {
-    font-size: 28px;
+    font-size: 23px;
     line-height: 1;
 }
 
@@ -1621,16 +1627,20 @@ body {
 }
 
 .admin-reservation-title h3 {
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     color: var(--admin-ink);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
 }
 
 .admin-reservation-main p {
-    margin: 8px 0 12px;
+    margin: 6px 0 10px;
     color: var(--admin-muted);
     overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .admin-reservation-meta {
@@ -1648,8 +1658,77 @@ body {
     font-weight: 800;
 }
 
-.admin-requester {
+.admin-reservation-review {
+    min-width: 154px;
+}
+
+.admin-reservation-review summary {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0 16px;
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: var(--admin-blue-soft);
+    cursor: pointer;
+    font-weight: 900;
+    list-style: none;
+}
+
+.admin-reservation-review summary::-webkit-details-marker {
+    display: none;
+}
+
+.admin-reservation-review summary:hover,
+.admin-reservation-review summary:focus {
+    color: #ffffff;
+    background: var(--admin-blue);
+}
+
+.admin-reservation-review[open] {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.admin-reservation-review[open] summary {
+    width: max-content;
+    min-width: 154px;
+    margin-left: auto;
+}
+
+.admin-reservation-review-body {
     margin-top: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--admin-line);
+}
+
+.admin-reservation-extra {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-reservation-extra span {
+    padding: 7px 9px;
+    border-radius: 8px;
+    color: #53627a;
+    background: #f5f8fc;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-reservation-extra strong {
+    color: var(--admin-ink);
+}
+
+.admin-requester {
+    margin-top: 0;
     padding: 10px 12px;
     border-left: 4px solid var(--reservation-accent);
     border-radius: 8px;
@@ -1687,6 +1766,7 @@ body {
     padding: 12px;
     border-radius: 8px;
     background: #f8fbff;
+    grid-row: span 3;
 }
 
 .admin-reservation-actions label {
@@ -1748,6 +1828,11 @@ body {
     color: var(--admin-muted);
     font-size: 12px;
     font-weight: 800;
+}
+
+.reservations-panel .admin-user-filters {
+    grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.35fr) minmax(190px, 0.45fr) auto auto;
+    margin-bottom: 16px;
 }
 
 .admin-flow-note {
@@ -3238,6 +3323,11 @@ body {
 
     .admin-user-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    }
+
+    .admin-reservation-review-body,
+    .reservations-panel .admin-user-filters {
+        grid-template-columns: 1fr;
     }
 
     .admin-create-user-wide,

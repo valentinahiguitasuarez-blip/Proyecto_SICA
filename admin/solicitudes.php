@@ -228,8 +228,22 @@ $params = [];
 $where = [];
 
 if ($search !== '') {
-    $where[] = '(e.nombre_evento LIKE :search OR e.codigo_evento LIKE :search OR u.nombre LIKE :search OR u.apellido LIKE :search OR u.correo LIKE :search)';
-    $params[':search'] = '%' . $search . '%';
+    $searchColumns = [
+        'e.nombre_evento',
+        'e.codigo_evento',
+        'u.nombre',
+        'u.apellido',
+        "CONCAT(u.nombre, ' ', u.apellido)",
+        "CONCAT(u.apellido, ' ', u.nombre)",
+        'u.correo',
+    ];
+    $searchParts = [];
+    foreach ($searchColumns as $index => $column) {
+        $param = ':search_' . $index;
+        $searchParts[] = $column . ' LIKE ' . $param;
+        $params[$param] = '%' . $search . '%';
+    }
+    $where[] = '(' . implode(' OR ', $searchParts) . ')';
 }
 
 if ($estadoFiltro !== '') {
@@ -324,7 +338,7 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
             <div>
                 <p class="admin-eyebrow">Reservas de auditorio</p>
                 <h1>Solicitudes de reserva</h1>
-                <span>Recibe las solicitudes de los instructores, remitelas a coordinacion y comunica la respuesta final.</span>
+                <span>Bandeja de revision para asignar coordinacion y notificar respuestas.</span>
             </div>
             <div class="admin-top-actions">
                 <a href="<?= admin_s_h(app_url('admin/index.php')) ?>">Panel <strong>IN</strong></a>
@@ -348,11 +362,6 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                 <span>Aprobadas</span>
                 <strong><?= admin_s_h($counts['Activo'] ?? 0) ?></strong>
                 <small>Reservas activas</small>
-            </article>
-            <article class="admin-metric">
-                <span>Canceladas</span>
-                <strong><?= admin_s_h($counts['Cancelado'] ?? 0) ?></strong>
-                <small>No autorizadas</small>
             </article>
             <article class="admin-metric">
                 <span>Finalizadas</span>
@@ -434,13 +443,21 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                 </div>
                                 <em><?= admin_s_h($estado) ?></em>
                             </div>
-                            <p><?= admin_s_h($solicitud['descripcion'] ?? 'Solicitud de reserva de auditorio.') ?></p>
-                            <div class="admin-reservation-meta">
-                                <span><?= admin_s_h(substr((string)$solicitud['hora_inicio'], 0, 5) . ' - ' . substr((string)$solicitud['hora_fin'], 0, 5)) ?></span>
-                                <span><?= admin_s_h($solicitud['nombre_auditorio'] . ' / Bloque ' . $solicitud['bloque']) ?></span>
-                                <span>Capacidad <?= admin_s_h($solicitud['capacidad']) ?></span>
-                                <span>Codigo <?= admin_s_h($solicitud['codigo_evento']) ?></span>
+                    <p><?= admin_s_h($solicitud['descripcion'] ?? 'Solicitud de reserva de auditorio.') ?></p>
+                    <div class="admin-reservation-meta">
+                        <span><?= admin_s_h(substr((string)$solicitud['hora_inicio'], 0, 5) . ' - ' . substr((string)$solicitud['hora_fin'], 0, 5)) ?></span>
+                        <span><?= admin_s_h($solicitud['nombre_auditorio'] . ' / Bloque ' . $solicitud['bloque']) ?></span>
+                                <span><?= admin_s_h($solicitante) ?></span>
                             </div>
+                        </div>
+
+                        <details class="admin-reservation-review">
+                            <summary>Revisar</summary>
+                            <div class="admin-reservation-review-body">
+                                <div class="admin-reservation-extra">
+                                    <span>Capacidad <strong><?= admin_s_h($solicitud['capacidad']) ?></strong></span>
+                                    <span>Codigo <strong><?= admin_s_h($solicitud['codigo_evento']) ?></strong></span>
+                                </div>
                             <div class="admin-requester">
                                 <strong><?= admin_s_h($solicitante) ?></strong>
                                 <small><?= admin_s_h($solicitud['correo'] ?? 'Correo no registrado') ?></small>
@@ -457,7 +474,6 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                     <?= admin_s_h($solicitud['observacion']) ?>
                                 </div>
                             <?php endif; ?>
-                        </div>
 
                         <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
                             <input type="hidden" name="csrf_admin_requests" value="<?= admin_s_h($_SESSION['csrf_admin_requests']) ?>">
@@ -505,6 +521,8 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                 <?php endif; ?>
                             </div>
                         </form>
+                            </div>
+                        </details>
                     </article>
                 <?php endforeach; ?>
             </div>

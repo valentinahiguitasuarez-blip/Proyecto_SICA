@@ -155,9 +155,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             <?php endif; ?>
 
             <div class="access-request-steps" aria-label="Proceso de acceso">
-                <span>1. Envias tus datos</span>
-                <span>2. El admin aprueba</span>
-                <span>3. Recibes tu acceso</span>
+                <span><strong>1</strong> Envias tus datos</span>
+                <span><strong>2</strong> El admin aprueba</span>
+                <span><strong>3</strong> Recibes tu acceso</span>
             </div>
 
             <form class="access-request-form" method="post" action="<?= access_h(app_url('login/solicitar_acceso.php')) ?>">
@@ -178,7 +178,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             <option value="<?= access_h($role['id_rol']) ?>" <?= (int)($old['id_rol'] ?? 4) === (int)$role['id_rol'] ? 'selected' : '' ?>><?= access_h($role['nombre_rol']) ?></option>
                         <?php endforeach; ?>
                     </select></label>
-                    <label data-ficha-field><span>Ficha</span><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" placeholder="Buscar por ficha o programa" value="<?= access_h($old['id_ficha'] ?? '') ?>"></label>
+                    <label class="access-request-wide" data-ficha-field><span>Ficha</span><div class="access-ficha-field"><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" placeholder="Buscar por numero de ficha o programa" value="<?= access_h($old['id_ficha'] ?? '') ?>"></div></label>
                 </div>
                 <button type="submit" class="login-submit access-request-submit">Enviar solicitud</button>
             </form>

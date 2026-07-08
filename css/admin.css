@@ -981,19 +981,53 @@ body {
 }
 
 .admin-alert {
-    margin-bottom: 16px;
-    padding: 14px 16px;
+    position: fixed;
+    top: 22px;
+    right: 24px;
+    z-index: 50;
+    width: min(420px, calc(100vw - 32px));
+    padding: 16px 18px 16px 46px;
     border-radius: 8px;
     color: #08734b;
-    background: rgba(18, 166, 120, 0.12);
+    background: #e3f8f1;
     border: 1px solid rgba(18, 166, 120, 0.22);
+    box-shadow: 0 18px 44px rgba(28, 45, 74, 0.16);
     font-weight: 800;
+    line-height: 1.35;
+    animation: adminToastIn 180ms ease-out;
+}
+
+.admin-alert::before {
+    content: "";
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--admin-green);
+    transform: translateY(-50%);
 }
 
 .admin-alert.danger {
     color: #a2172a;
-    background: rgba(220, 53, 69, 0.1);
+    background: #fdecef;
     border-color: rgba(220, 53, 69, 0.2);
+}
+
+.admin-alert.danger::before {
+    background: var(--admin-red);
+}
+
+@keyframes adminToastIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .users-metrics {
@@ -3390,6 +3424,13 @@ body {
 }
 
 @media (max-width: 820px) {
+    .admin-alert {
+        top: 14px;
+        right: 14px;
+        left: 14px;
+        width: auto;
+    }
+
     .admin-dashboard {
         grid-template-columns: 1fr;
     }

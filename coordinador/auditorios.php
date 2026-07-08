@@ -44,9 +44,13 @@ try {
                 <h1>Auditorios disponibles</h1>
                 <span>Consulta capacidad y ocupacion antes de aprobar una solicitud. Solo el administrador puede crear o editar espacios.</span>
             </div>
+            <div class="admin-top-actions">
+                <a href="<?= coord_h(app_url('coordinador/calendario.php')) ?>">Calendario <strong>CA</strong></a>
+                <a href="<?= coord_h(app_url('coordinador/index.php')) ?>">Solicitudes <strong>SR</strong></a>
+            </div>
         </header>
 
-        <section class="admin-metrics" aria-label="Resumen de auditorios">
+        <section class="admin-metrics coord-metrics" aria-label="Resumen de auditorios">
             <article class="admin-metric">
                 <span>Total auditorios</span>
                 <strong><?= coord_h($stats['total']) ?></strong>
@@ -64,11 +68,12 @@ try {
             </article>
         </section>
 
-        <section class="admin-panel">
+        <section class="admin-panel coord-auditoriums-panel">
             <div class="admin-panel-head">
                 <div>
                     <p class="admin-eyebrow">Directorio</p>
                     <h2>Espacios registrados</h2>
+                    <span class="admin-panel-note">Consulta la capacidad y movimiento reciente de cada espacio antes de tomar decisiones.</span>
                 </div>
             </div>
 
@@ -82,6 +87,7 @@ try {
 
                 <?php foreach ($auditorios as $auditorio): ?>
                     <article class="admin-auditorio-card <?= (string)$auditorio['estado'] === 'Activo' ? 'ok' : 'off' ?>">
+                        <div class="coord-auditorio-icon" aria-hidden="true">AU</div>
                         <div>
                             <h3><?= coord_h($auditorio['nombre_auditorio']) ?></h3>
                             <span>Bloque <?= coord_h($auditorio['bloque']) ?></span>

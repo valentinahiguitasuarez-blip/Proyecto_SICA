@@ -10,6 +10,7 @@
     --admin-green: #12a678;
     --admin-green-soft: #e3f8f1;
     --admin-amber: #d98b09;
+    --admin-amber-soft: #fff4dc;
     --admin-red: #dc3545;
     --admin-shadow: 0 18px 42px rgba(28, 45, 74, 0.08);
 }
@@ -3561,4 +3562,525 @@ body {
 
 .admin-export-link:hover {
     background: var(--admin-blue-soft);
+}
+
+/* ===== Coordinador: identidad visual unificada ===== */
+.coord-dashboard {
+    background:
+        radial-gradient(circle at 92% 0%, rgba(18, 166, 120, 0.14), transparent 28%),
+        radial-gradient(circle at 35% 10%, rgba(22, 93, 255, 0.10), transparent 26%),
+        linear-gradient(180deg, #f8fbff 0%, #eef4f9 100%);
+}
+
+.coord-dashboard .admin-sidebar {
+    background: #0b1b34;
+}
+
+.coord-brand-mark {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    border-radius: 8px;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--admin-blue), #39c6a5);
+    font-size: 26px;
+    font-style: italic;
+    font-weight: 900;
+    box-shadow: 0 14px 28px rgba(22, 93, 255, 0.24);
+}
+
+.coord-dashboard .admin-brand {
+    padding-bottom: 18px;
+}
+
+.coord-dashboard .admin-avatar {
+    overflow: hidden;
+}
+
+.coord-dashboard .admin-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.coord-dashboard .admin-profile-link {
+    margin-top: 2px;
+    color: #91b8ff;
+    font-size: 12px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.coord-dashboard .admin-profile-link:hover {
+    color: #ffffff;
+}
+
+.coord-dashboard .admin-topbar {
+    align-items: center;
+}
+
+.coord-hero-panel {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.36fr);
+    gap: 24px;
+    align-items: stretch;
+    margin-bottom: 18px;
+    padding: clamp(24px, 4vw, 38px);
+    border: 1px solid rgba(22, 93, 255, 0.14);
+    border-radius: 18px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.13), rgba(18, 166, 120, 0.08)),
+        #ffffff;
+    box-shadow: 0 18px 42px rgba(28, 45, 74, 0.08);
+}
+
+.coord-hero-panel h2 {
+    max-width: 820px;
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: clamp(30px, 4vw, 52px);
+    line-height: 1.04;
+    font-weight: 900;
+}
+
+.coord-hero-panel p:not(.admin-eyebrow) {
+    max-width: 690px;
+    margin: 14px 0 20px;
+    color: var(--admin-muted);
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+.coord-live-pill {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: #07523c;
+    background: var(--admin-green-soft);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-live-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--admin-green);
+    box-shadow: 0 0 0 5px rgba(18, 166, 120, 0.12);
+}
+
+.coord-hero-actions,
+.coord-calendar-toolbar,
+.coord-dashboard .admin-top-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.coord-primary-action,
+.coord-secondary-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.coord-primary-action {
+    color: #ffffff;
+    background: var(--admin-blue);
+    box-shadow: 0 14px 28px rgba(22, 93, 255, 0.18);
+}
+
+.coord-secondary-action {
+    color: var(--admin-blue);
+    background: var(--admin-blue-soft);
+}
+
+.coord-primary-action:hover,
+.coord-secondary-action:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.coord-command-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.coord-command-card div {
+    min-height: 112px;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 16px;
+    border: 1px solid rgba(22, 93, 255, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 12px 28px rgba(28, 45, 74, 0.06);
+}
+
+.coord-command-card span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-command-card strong {
+    color: var(--admin-blue);
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 900;
+}
+
+.coord-metrics .admin-metric {
+    min-height: 132px;
+}
+
+.coord-request-list {
+    gap: 14px;
+}
+
+.coord-request-list .admin-reservation-card {
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(28, 45, 74, 0.06);
+}
+
+.coord-request-list .admin-reservation-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 34px rgba(28, 45, 74, 0.10);
+}
+
+.coord-date-card {
+    background: linear-gradient(180deg, #f3ecff, #efe8ff) !important;
+    color: #3b0f6b !important;
+}
+
+.coord-date-card span {
+    color: #6b46c1 !important;
+}
+
+.coord-dashboard .admin-reservation-title h3 {
+    font-size: 20px;
+}
+
+.coord-dashboard .admin-reservation-actions button {
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.coord-dashboard .admin-reservation-actions button:hover {
+    transform: translateY(-1px);
+}
+
+/* ===== Coordinador: calendario propio ===== */
+.coord-calendar-panel {
+    overflow: hidden;
+}
+
+.coord-calendar-toolbar {
+    align-items: end;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.coord-calendar-toolbar label {
+    min-width: min(420px, 100%);
+    display: grid;
+    gap: 6px;
+}
+
+.coord-calendar-toolbar label span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-calendar-toolbar select {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-ink);
+    background: #ffffff;
+    font: inherit;
+    font-weight: 800;
+}
+
+.coord-calendar-wide {
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.coord-calendar-grid {
+    min-width: 920px;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    border: 1px solid var(--admin-line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.coord-calendar-day-name,
+.coord-calendar-cell {
+    border-right: 1px solid var(--admin-line);
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.coord-calendar-day-name {
+    min-height: 46px;
+    display: grid;
+    place-items: center;
+    color: var(--admin-muted);
+    background: #f6f9fd;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-calendar-cell {
+    min-height: 132px;
+    padding: 12px;
+    background: #ffffff;
+}
+
+.coord-calendar-cell.available {
+    background: rgba(18, 166, 120, 0.08);
+}
+
+.coord-calendar-cell.muted {
+    background: #f8fafc;
+}
+
+.coord-calendar-date {
+    margin-bottom: 8px;
+    color: var(--admin-ink);
+    font-weight: 900;
+}
+
+.coord-calendar-event {
+    display: block;
+    margin-top: 7px;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.coord-calendar-event.pending {
+    color: #7a5000;
+    background: var(--admin-amber-soft);
+}
+
+.coord-calendar-event.busy {
+    color: #07523c;
+    background: var(--admin-green-soft);
+}
+
+.coord-calendar-event strong {
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+/* ===== Coordinador: historial ===== */
+.coord-history-chart {
+    overflow: hidden;
+}
+
+.coord-bars {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(48px, 1fr));
+    gap: 10px;
+    align-items: end;
+    min-height: 190px;
+}
+
+.coord-bar {
+    display: grid;
+    gap: 7px;
+    justify-items: center;
+    align-self: stretch;
+}
+
+.coord-bar progress {
+    width: 100%;
+    height: 132px;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #eef3f8;
+}
+
+.coord-bar progress::-webkit-progress-bar {
+    background: #eef3f8;
+}
+
+.coord-bar progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--admin-blue), var(--admin-green));
+}
+
+.coord-bar progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--admin-blue), var(--admin-green));
+}
+
+.coord-bar small {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-bar strong {
+    color: var(--admin-blue);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.coord-history-panel .admin-user-filters {
+    margin-bottom: 14px;
+}
+
+/* ===== Coordinador: auditorios ===== */
+.coord-auditoriums-panel .admin-auditorios-list {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.coord-auditoriums-panel .admin-auditorio-card {
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: start;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(28, 45, 74, 0.06);
+}
+
+.coord-auditoriums-panel .admin-auditorio-meta,
+.coord-auditoriums-panel .admin-auditorio-card em {
+    grid-column: 1 / -1;
+}
+
+.coord-auditorio-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--admin-blue);
+    background: var(--admin-blue-soft);
+    font-weight: 900;
+}
+
+.coord-auditoriums-panel .admin-auditorio-card.ok .coord-auditorio-icon {
+    color: #07523c;
+    background: var(--admin-green-soft);
+}
+
+/* ===== Coordinador: perfil ===== */
+.coord-profile-grid {
+    gap: 24px;
+}
+
+.coord-profile-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    margin-top: 12px;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: #07523c;
+    background: var(--admin-green-soft);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.coord-form-intro {
+    grid-column: 1 / -1;
+    padding: 16px;
+    border: 1px solid var(--admin-line);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.07), rgba(18, 166, 120, 0.07)),
+        #f8fafc;
+}
+
+.coord-form-intro h2 {
+    margin: 0 0 6px;
+    color: var(--admin-ink);
+    font-weight: 900;
+}
+
+.coord-form-intro span {
+    color: var(--admin-muted);
+    font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+    .coord-hero-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .coord-bars {
+        overflow-x: auto;
+        grid-template-columns: repeat(12, minmax(54px, 1fr));
+    }
+}
+
+@media (max-width: 820px) {
+    .coord-dashboard .admin-topbar {
+        align-items: flex-start;
+    }
+
+    .coord-command-card,
+    .coord-auditoriums-panel .admin-auditorio-card {
+        grid-template-columns: 1fr;
+    }
+
+    .coord-calendar-toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .coord-calendar-toolbar a,
+    .coord-calendar-toolbar label {
+        width: 100%;
+    }
+
+    .coord-calendar-grid {
+        min-width: 760px;
+    }
+}
+
+@media (max-width: 560px) {
+    .coord-hero-panel {
+        padding: 20px;
+    }
+
+    .coord-hero-actions a,
+    .coord-dashboard .admin-top-actions a {
+        width: 100%;
+    }
 }

@@ -108,9 +108,13 @@ $maxMonth = max(1, max($decisionesPorMes));
                 <h1>Decisiones registradas</h1>
                 <span>Consulta las reservas que ya aprobaste o cancelaste.</span>
             </div>
+            <div class="admin-top-actions">
+                <a href="<?= coord_h(app_url('coordinador/index.php')) ?>">Solicitudes <strong>SR</strong></a>
+                <a href="<?= coord_h(app_url('coordinador/exportar_historial.php?' . http_build_query(['estado' => $estadoFiltro, 'q' => $busqueda, 'desde' => $fechaDesde, 'hasta' => $fechaHasta]))) ?>">Exportar <strong>CSV</strong></a>
+            </div>
         </header>
 
-        <section class="admin-metrics reservation-metrics" aria-label="Resumen de decisiones">
+        <section class="admin-metrics reservation-metrics coord-metrics" aria-label="Resumen de decisiones">
             <article class="admin-metric">
                 <span>Aprobadas</span>
                 <strong><?= coord_h($stats['aprobadas']) ?></strong>
@@ -128,7 +132,7 @@ $maxMonth = max(1, max($decisionesPorMes));
             </article>
         </section>
 
-        <section class="admin-panel chart-panel">
+        <section class="admin-panel chart-panel coord-history-chart">
             <div class="admin-panel-head">
                 <div>
                     <p class="admin-eyebrow">Este año</p>
@@ -136,21 +140,23 @@ $maxMonth = max(1, max($decisionesPorMes));
                 </div>
             </div>
             <p class="admin-panel-note">Cuantas solicitudes aprobaste o cancelaste cada mes de <?= coord_h(date('Y')) ?>. Te sirve para ver en que meses tienes mas carga de revision.</p>
-            <div class="admin-bars" aria-label="Grafica de decisiones por mes">
+            <div class="coord-bars" aria-label="Grafica de decisiones por mes">
                 <?php foreach ($decisionesPorMes as $mes => $total): ?>
-                    <div class="admin-bar">
-                        <span style="height: <?= coord_h(max(8, (int)round(($total / $maxMonth) * 100))) ?>%"></span>
+                    <div class="coord-bar">
+                        <progress value="<?= coord_h($total) ?>" max="<?= coord_h($maxMonth) ?>"><?= coord_h($total) ?></progress>
                         <small><?= coord_h($monthLabels[$mes]) ?></small>
+                        <strong><?= coord_h($total) ?></strong>
                     </div>
                 <?php endforeach; ?>
             </div>
         </section>
 
-        <section class="admin-panel reservations-panel">
+        <section class="admin-panel reservations-panel coord-history-panel">
             <div class="admin-panel-head">
                 <div>
                     <p class="admin-eyebrow">Detalle</p>
                     <h2>Historial de solicitudes</h2>
+                    <span class="admin-panel-note">Filtra por estado, fecha o texto para ubicar decisiones especificas.</span>
                 </div>
             </div>
 
@@ -186,7 +192,7 @@ $maxMonth = max(1, max($decisionesPorMes));
                 </a>
             </div>
 
-            <div class="admin-reservation-list">
+            <div class="admin-reservation-list coord-request-list">
                 <?php if (!$decisiones && !$hayFiltroActivo): ?>
                     <article class="admin-empty-state">
                         <strong>Aun no tienes decisiones registradas.</strong>
@@ -212,9 +218,9 @@ $maxMonth = max(1, max($decisionesPorMes));
                     $instructor = $instructor !== '' ? $instructor : 'Instructor SICA';
                     ?>
                     <article class="admin-reservation-card <?= coord_h($statusClass) ?>">
-                        <time>
+                        <time class="coord-date-card">
                             <strong><?= coord_h($fecha->format('d')) ?></strong>
-                            <span><?= coord_h($fecha->format('M')) ?></span>
+                            <span><?= coord_h($monthLabels[(int)$fecha->format('n')]) ?></span>
                         </time>
                         <div class="admin-reservation-main">
                             <div class="admin-reservation-title">

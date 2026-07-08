@@ -271,9 +271,7 @@ if ($evento) {
                 <?php $pct = $totalRegs > 0 ? (int)round(($confirmadas / $totalRegs) * 100) : 0; ?>
                 <div>
                     <strong><?= instructor_h($confirmadas) ?> de <?= instructor_h($totalRegs) ?> asistieron (<?= instructor_h($pct) ?>%)</strong>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: <?= instructor_h((string)$pct) ?>%;"></div>
-                    </div>
+                    <progress class="attendance-progress" value="<?= instructor_h($pct) ?>" max="100"><?= instructor_h($pct) ?>%</progress>
                 </div>
             </div>
 
@@ -346,6 +344,79 @@ if ($evento) {
             <?php endif; ?>
         </div>
         <?php endif; ?>
+
+        <?php if ($vista === 'agregar'): ?>
+            <div class="add-participants-panel">
+                <?php if (!$evento): ?>
+                    <div class="empty-state">Selecciona un evento para agregar aprendices.</div>
+                <?php else: ?>
+                    <div class="panel-sub">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Agregar</p>
+                                <h2>Buscar aprendices disponibles</h2>
+                                <span class="panel-subtitle">Puedes agregar un aprendiz individual o cargar una ficha completa por numero.</span>
+                            </div>
+                        </div>
+                        <form class="search-toolbar" method="get" action="<?= instructor_h(app_url('instructor/participantes.php')) ?>">
+                            <input type="hidden" name="evento" value="<?= instructor_h($selectedId) ?>">
+                            <input type="hidden" name="vista" value="agregar">
+                            <input type="search" name="buscar" value="<?= instructor_h($buscar) ?>" placeholder="Nombre, documento o ficha">
+                            <button class="secondary-btn" type="submit">Buscar</button>
+                            <a class="top-action" href="<?= instructor_h(app_url('instructor/participantes.php?evento=' . (int)$selectedId . '&vista=agregar')) ?>">Limpiar</a>
+                        </form>
+                    </div>
+
+                    <form class="ficha-add-form" method="post"
+                          data-confirm-kicker="Participantes"
+                          data-confirm-title="Agregar ficha"
+                          data-confirm-message="Se agregaran los aprendices activos de la ficha que no esten registrados en este evento."
+                          data-confirm-text="Si, agregar ficha">
+                        <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                        <input type="hidden" name="action" value="add_ficha">
+                        <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                        <label>
+                            <span>Ficha completa</span>
+                            <input type="number" name="id_ficha" min="1" placeholder="Numero de ficha" required>
+                        </label>
+                        <button class="primary-btn" type="submit">Agregar ficha</button>
+                    </form>
+
+                    <div class="available-learners">
+                        <?php if (!$aprendicesDisponibles): ?>
+                            <div class="empty-state">No hay aprendices disponibles para agregar con ese criterio.</div>
+                        <?php endif; ?>
+                        <?php foreach ($aprendicesDisponibles as $aprendiz): ?>
+                            <?php
+                            $fullName = trim((string)$aprendiz['nombre'] . ' ' . (string)$aprendiz['apellido']);
+                            $avatarLabel = trim((string)mb_substr((string)$aprendiz['nombre'], 0, 1, 'UTF-8') . (string)mb_substr((string)$aprendiz['apellido'], 0, 1, 'UTF-8'));
+                            $avatarText = $avatarLabel !== '' ? mb_strtoupper($avatarLabel, 'UTF-8') : '?';
+                            ?>
+                            <article class="available-learner-row">
+                                <b><?= instructor_h($avatarText) ?></b>
+                                <div>
+                                    <strong><?= instructor_h($fullName !== '' ? $fullName : 'Aprendiz SICA') ?></strong>
+                                    <small>
+                                        <?= instructor_h($aprendiz['correo']) ?>
+                                        · Ficha <?= instructor_h($aprendiz['id_ficha'] ?? 'N/A') ?>
+                                        <?php if (!empty($aprendiz['nombre_programa'])): ?>
+                                            · <?= instructor_h($aprendiz['nombre_programa']) ?>
+                                        <?php endif; ?>
+                                    </small>
+                                </div>
+                                <form method="post">
+                                    <input type="hidden" name="csrf" value="<?= instructor_h($_SESSION['csrf_participants']) ?>">
+                                    <input type="hidden" name="action" value="add_participant">
+                                    <input type="hidden" name="id_evento" value="<?= instructor_h($evento['id_evento']) ?>">
+                                    <input type="hidden" name="id_documento" value="<?= instructor_h($aprendiz['id_documento']) ?>">
+                                    <button class="primary-btn" type="submit">Agregar</button>
+                                </form>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </article>
 
     <aside class="panel">
@@ -356,8 +427,6 @@ if ($evento) {
         </div>
     </aside>
 </section>
-
-<?php // Se eliminó el bloque de "Aprendices sugeridos" a pedido del usuario. ?>
 
 <?php instructor_layout_end(); ?>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

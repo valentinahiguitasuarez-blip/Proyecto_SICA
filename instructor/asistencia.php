@@ -91,41 +91,37 @@ if ($evento) {
                 <div class="qr-card">
                     <img src="<?= instructor_h($qrImageUrl) ?>" alt="Codigo QR del evento <?= instructor_h($evento['nombre_evento']) ?>">
 
-                    <!-- Validity text -->
-                    <div style="margin-top:8px;">
+                    <div class="qr-validity">
                         <strong>Válido el <?= instructor_h($fechaEvento->format('d/m/Y')) ?> de <?= instructor_h(substr((string)$evento['hora_inicio'],0,5)) ?> a <?= instructor_h(substr((string)$evento['hora_fin'],0,5)) ?></strong>
                     </div>
 
-                    <!-- Backup numeric code (last 6 chars uppercase spaced) -->
                     <?php $code = strtoupper((string)$evento['codigo_evento']); $backup = substr($code, -6); $backupSpaced = implode(' ', str_split($backup)); ?>
-                    <div style="margin:8px 0; font-size:22px; letter-spacing:4px; font-weight:700;"><?= instructor_h($backupSpaced) ?></div>
+                    <div class="qr-backup-code"><?= instructor_h($backupSpaced) ?></div>
 
                     <span class="panel-subtitle"><?= instructor_h($evento['nombre_evento']) ?></span>
                     <small>Al escanearlo abre el pre-registro del aprendiz para este evento.</small>
 
-                    <!-- Live counts and progress bar -->
-                    <div style="margin-top:12px;">
-                        <div style="display:flex; gap:12px; align-items:center;">
-                            <div><small>Pre-registrados</small><div style="font-weight:700"><?= instructor_h($preTotal) ?></div></div>
-                            <div><small>Confirmados</small><div style="font-weight:700"><?= instructor_h($preConfirmados) ?></div></div>
+                    <div class="attendance-summary">
+                        <div class="attendance-stats">
+                            <div><small>Pre-registrados</small><strong><?= instructor_h($preTotal) ?></strong></div>
+                            <div><small>Confirmados</small><strong><?= instructor_h($preConfirmados) ?></strong></div>
                         </div>
                         <?php $pct = $preTotal > 0 ? (int)round(($preConfirmados / $preTotal) * 100) : 0; ?>
-                        <div style="background:#eee; height:10px; border-radius:6px; margin-top:8px; overflow:hidden;"><div style="height:100%; width:<?= instructor_h((string)$pct) ?>%; background:var(--ins-green, #10b981);"></div></div>
+                        <progress class="attendance-progress" value="<?= instructor_h($pct) ?>" max="100"><?= instructor_h($pct) ?>%</progress>
                     </div>
 
-                    <div style="margin-top:10px; display:flex; gap:8px;">
+                    <div class="qr-actions">
                         <a class="primary-btn" href="<?= instructor_h(app_url('instructor/descargar_codigo.php?evento=' . (int)$evento['id_evento'])) ?>">Descargar QR</a>
-                        <a class="top-action" href="<?= instructor_h(app_url('instructor/participantes.php?evento=' . (int)$evento['id_evento'])) ?>">Ver participantes</a>
+                        <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/participantes.php?evento=' . (int)$evento['id_evento'])) ?>">Ver participantes</a>
                     </div>
                 </div>
 
             <?php elseif (($estado === 'Activo' || $estado === 'Finalizado') && $isPast): ?>
-                <?php // final summary replacing QR ?>
                 <div class="qr-card">
                     <?php $finalText = sprintf('Evento finalizado — %d de %d asistieron', $preConfirmados, $preTotal); ?>
                     <h3><?= instructor_h($finalText) ?></h3>
                     <small><?= instructor_h($evento['nombre_evento']) ?> — <?= instructor_h($evento['nombre_auditorio']) ?> (<?= instructor_h($fechaEvento->format('d/m/Y')) ?>)</small>
-                    <div style="margin-top:12px;"><a class="primary-btn" href="<?= instructor_h(app_url('instructor/exportar_participantes.php?evento=' . (int)$evento['id_evento'])) ?>">Exportar participantes</a></div>
+                    <div class="qr-actions"><a class="primary-btn" href="<?= instructor_h(app_url('instructor/exportar_participantes.php?evento=' . (int)$evento['id_evento'])) ?>">Exportar participantes</a></div>
                 </div>
 
             <?php else: ?>

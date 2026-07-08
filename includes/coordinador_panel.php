@@ -106,9 +106,10 @@ function coord_layout_start(string $active): void
         'perfil' => ['PE', 'Perfil', 'coordinador/perfil.php', 0],
     ];
     ?>
-    <main class="admin-dashboard">
+    <main class="admin-dashboard coord-dashboard">
         <aside class="admin-sidebar" aria-label="Menu del coordinador">
             <a class="admin-brand" href="<?= coord_h(app_url('coordinador/index.php')) ?>">
+                <span class="coord-brand-mark">S</span>
                 <span>
                     <strong>SICA</strong>
                     <small>Coordinacion de auditorios</small>

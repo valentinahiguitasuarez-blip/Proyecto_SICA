@@ -150,13 +150,17 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                 <h1>Mis datos de coordinacion</h1>
                 <span>Actualiza tus datos de contacto para las notificaciones de reservas.</span>
             </div>
+            <div class="admin-top-actions">
+                <a href="<?= coord_h(app_url('coordinador/index.php')) ?>">Solicitudes <strong>SR</strong></a>
+                <a href="<?= coord_h(app_url('coordinador/historial.php')) ?>">Historial <strong>HI</strong></a>
+            </div>
         </header>
 
         <?php if ($message !== ''): ?>
             <div class="admin-alert <?= coord_h($messageType) ?>"><?= coord_h($message) ?></div>
         <?php endif; ?>
 
-        <section class="admin-profile-grid">
+        <section class="admin-profile-grid coord-profile-grid">
             <article class="admin-panel admin-profile-summary admin-profile-summary--coordinator">
                 <div class="admin-profile-photo" aria-hidden="true">
                     <?php if ($fotoPerfil !== ''): ?>
@@ -168,6 +172,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                 <p class="admin-eyebrow">Credencial activa</p>
                 <h2><?= coord_h($nombreCompleto) ?></h2>
                 <span><?= coord_h($perfil['correo']) ?></span>
+                <div class="coord-profile-badge">Coordinador activo</div>
                 <dl class="admin-profile-facts">
                     <div><dt>Documento</dt><dd><?= coord_h($perfil['id_documento']) ?></dd></div>
                     <div><dt>Rol</dt><dd><?= coord_h($perfil['nombre_rol']) ?></dd></div>
@@ -178,6 +183,12 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
 
             <form class="admin-panel admin-profile-form admin-profile-form--coordinator" method="post" action="<?= coord_h(app_url('coordinador/perfil.php')) ?>" enctype="multipart/form-data">
                 <input type="hidden" name="csrf" value="<?= coord_h($_SESSION['csrf_coord_profile']) ?>">
+
+                <div class="coord-form-intro">
+                    <p class="admin-eyebrow">Informacion personal</p>
+                    <h2>Datos visibles en SICA</h2>
+                    <span>Estos datos se usan para identificarte en el flujo de aprobacion y notificaciones.</span>
+                </div>
 
                 <div class="admin-profile-field wide">
                     <span>Foto de perfil</span>

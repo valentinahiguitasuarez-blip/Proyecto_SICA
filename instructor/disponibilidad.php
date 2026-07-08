@@ -12,10 +12,27 @@ $user = instructor_user();
 $idInstructor = (int)($user['id_documento'] ?? 0);
 $message = $_SESSION['instructor_message'] ?? '';
 $messageType = $_SESSION['instructor_message_type'] ?? 'success';
-unset($_SESSION['instructor_message'], $_SESSION['instructor_message_type']);
+$conflictDetails = $_SESSION['instructor_conflict'] ?? null;
+unset($_SESSION['instructor_message'], $_SESSION['instructor_message_type'], $_SESSION['instructor_conflict']);
 
 if (empty($_SESSION['csrf_instructor_request'])) {
     $_SESSION['csrf_instructor_request'] = bin2hex(random_bytes(32));
+}
+
+function instructor_disponibilidad_hora12(?string $hora): string
+{
+    $hora = trim((string)$hora);
+    if ($hora === '') {
+        return '';
+    }
+
+    $timestamp = strtotime($hora);
+    if ($timestamp === false) {
+        return $hora;
+    }
+
+    $formatted = date('g:i A', $timestamp);
+    return str_replace(['AM', 'PM'], ['a. m.', 'p. m.'], $formatted);
 }
 
 $auditorios = instructor_rows($pdo, "SELECT a.* FROM auditorio a INNER JOIN estado e ON e.id_estado = a.id_estado WHERE e.nombre_estado = 'Activo' ORDER BY a.nombre_auditorio");
@@ -23,6 +40,7 @@ $tipos = instructor_rows($pdo, 'SELECT * FROM tipo_evento ORDER BY nombre_tipo')
 $selectedAuditorio = (int)($_GET['auditorio'] ?? ($auditorios[0]['id_auditorio'] ?? 0));
 $month = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['mes'] ?? '')) ? (string)$_GET['mes'] : date('Y-m');
 $prefillDate = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['fecha'] ?? '')) ? (string)$_GET['fecha'] : '';
+$monthLabels = [1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'];
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $csrf = (string)($_POST['csrf'] ?? '');
@@ -73,25 +91,44 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     }
 
     if ($error === '') {
-        $overlap = instructor_scalar(
+        $overlaps = instructor_rows(
             $pdo,
-            "SELECT COUNT(*)
+            "SELECT e.nombre_evento, e.hora_inicio, e.hora_fin,
+                    a.nombre_auditorio, a.bloque,
+                    u.nombre, u.apellido
              FROM evento e
              INNER JOIN estado es ON es.id_estado = e.id_estado
+             INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
+             LEFT JOIN usuario u ON u.id_documento = e.id_solicitante
              WHERE e.id_auditorio = :auditorio
                AND e.fecha_evento = :fecha
                AND es.nombre_estado IN ('Activo', 'Pendiente')
-               AND NOT (e.hora_fin <= :inicio OR e.hora_inicio >= :fin)",
+               AND NOT (e.hora_fin <= :inicio OR e.hora_inicio >= :fin)
+             ORDER BY
+               CASE es.nombre_estado WHEN 'Activo' THEN 1 ELSE 2 END,
+               e.hora_inicio ASC
+             LIMIT 1",
             [':auditorio' => $idAuditorio, ':fecha' => $fecha, ':inicio' => $inicio . ':00', ':fin' => $fin . ':00']
         );
-        if ($overlap > 0) {
-            $error = 'Horario no se encuentra disponible.';
+        if ($overlaps) {
+            $eventoOcupado = $overlaps[0];
+            $instructorOcupado = trim((string)($eventoOcupado['nombre'] ?? '') . ' ' . (string)($eventoOcupado['apellido'] ?? ''));
+            $error = 'No pudimos enviar la solicitud porque esa franja horaria ya esta ocupada.';
+            $conflictDetails = [
+                'evento' => (string)$eventoOcupado['nombre_evento'],
+                'instructor' => $instructorOcupado !== '' ? $instructorOcupado : 'Instructor SICA',
+                'auditorio' => (string)$eventoOcupado['nombre_auditorio'] . ' / Bloque ' . (string)$eventoOcupado['bloque'],
+                'horario' => instructor_disponibilidad_hora12((string)$eventoOcupado['hora_inicio']) . ' - ' . instructor_disponibilidad_hora12((string)$eventoOcupado['hora_fin']),
+            ];
         }
     }
 
     if ($error !== '') {
         $_SESSION['instructor_message'] = $error;
         $_SESSION['instructor_message_type'] = 'danger';
+        if (is_array($conflictDetails)) {
+            $_SESSION['instructor_conflict'] = $conflictDetails;
+        }
         header('Location: ' . app_url('instructor/disponibilidad.php?auditorio=' . $idAuditorio . '&mes=' . substr($fecha ?: $month, 0, 7)));
         exit;
     }
@@ -127,7 +164,7 @@ $daysInMonth = (int)$start->format('t');
 $firstWeekday = (int)$start->format('N');
 $events = instructor_rows(
     $pdo,
-    instructor_event_query() . ' WHERE e.id_auditorio = :auditorio AND DATE_FORMAT(e.fecha_evento, "%Y-%m") = :mes ORDER BY e.fecha_evento, e.hora_inicio',
+    instructor_event_query() . " WHERE e.id_auditorio = :auditorio AND DATE_FORMAT(e.fecha_evento, \"%Y-%m\") = :mes AND es.nombre_estado IN ('Activo', 'Pendiente') ORDER BY e.fecha_evento, e.hora_inicio",
     [':auditorio' => $selectedAuditorio, ':mes' => $month]
 );
 $eventsByDay = [];
@@ -160,13 +197,33 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
 </header>
 
 <?php if ($message !== ''): ?><div class="form-message <?= instructor_h($messageType) ?>"><?= instructor_h($message) ?></div><?php endif; ?>
+<?php if (is_array($conflictDetails)): ?>
+    <article class="schedule-conflict-card" aria-label="Detalle del horario ocupado">
+        <div>
+            <p class="eyebrow">Horario ocupado</p>
+            <h2><?= instructor_h($conflictDetails['evento'] ?? 'Evento programado') ?></h2>
+            <span>Ese cruce corresponde a <?= instructor_h($conflictDetails['instructor'] ?? 'otro instructor') ?>.</span>
+        </div>
+        <dl>
+            <div>
+                <dt>Auditorio</dt>
+                <dd><?= instructor_h($conflictDetails['auditorio'] ?? 'Auditorio SICA') ?></dd>
+            </div>
+            <div>
+                <dt>Horario</dt>
+                <dd><?= instructor_h($conflictDetails['horario'] ?? 'Horario no disponible') ?></dd>
+            </div>
+        </dl>
+        <strong>Elige otra franja horaria para enviar la solicitud.</strong>
+    </article>
+<?php endif; ?>
 
 <section class="calendar-layout">
     <article class="panel">
         <div class="panel-head">
             <div>
                 <p class="eyebrow">Auditorio</p>
-                <h2><?= instructor_h($start->format('F Y')) ?></h2>
+                <h2><?= instructor_h($monthLabels[(int)$start->format('n')] . ' ' . $start->format('Y')) ?></h2>
             </div>
         </div>
         <form class="calendar-toolbar" method="get">
@@ -188,17 +245,30 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
                 <?php $date = $start->setDate((int)$start->format('Y'), (int)$start->format('m'), $day)->format('Y-m-d'); ?>
                 <?php $events = $eventsByDay[$date] ?? []; 
                       $hasActive = false;
-                      foreach ($events as $ev) { if (trim((string)$ev['estado']) === 'Activo') { $hasActive = true; break; } }
+                      $hasPending = false;
+                      foreach ($events as $ev) {
+                          $estadoEvento = trim((string)$ev['estado']);
+                          if ($estadoEvento === 'Activo') {
+                              $hasActive = true;
+                          }
+                          if ($estadoEvento === 'Pendiente') {
+                              $hasPending = true;
+                          }
+                      }
+                      $dayStatusClass = empty($events) ? ' available' : ($hasActive ? ' has-active' : ' has-pending');
+                      $dayStatusText = empty($events) ? 'Libre' : ($hasActive ? 'Con reservas' : 'Con pendientes');
                 ?>
-                <div class="calendar-cell<?= empty($events) ? ' available' : '' ?>">
+                <div class="calendar-cell<?= instructor_h($dayStatusClass) ?>">
                     <div class="calendar-date">
                         <span><?= instructor_h($day) ?></span>
                         <a class="calendar-request-link" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $month . '&fecha=' . $date)) ?>">Crear</a>
                     </div>
+                    <small class="calendar-day-status"><?= instructor_h($dayStatusText) ?></small>
                     <?php foreach ($events as $event): ?>
                         <?php $class = (string)$event['estado'] === 'Pendiente' ? 'pending' : 'busy'; ?>
                         <span class="calendar-event <?= instructor_h($class) ?>" title="<?= instructor_h($event['nombre_evento']) ?>" aria-hidden="true">
-                            <?= instructor_h(substr((string)$event['hora_inicio'], 0, 5)) ?> <?= instructor_h($event['nombre_evento']) ?>
+                            <strong><?= instructor_h(instructor_disponibilidad_hora12((string)$event['hora_inicio'])) ?></strong>
+                            <?= instructor_h($event['nombre_evento']) ?>
                         </span>
                     <?php endforeach; ?>
                 </div>
@@ -245,32 +315,3 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
 
 <?php instructor_layout_end(); ?>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>
-<script>
-/* Igualar alturas de celdas del calendario para que todos los días tengan el mismo tamaño.
-   Recalcula en load y resize. */
-(function(){
-    function equalizeCalendarCells(){
-        var cells = document.querySelectorAll('.calendar-grid .calendar-cell');
-        if(!cells || cells.length === 0) return;
-        // Reset any inline minHeight to measure natural heights
-        cells.forEach(function(c){ c.style.minHeight = '0'; });
-        var max = 0;
-        cells.forEach(function(c){
-            var h = c.getBoundingClientRect().height;
-            if(h > max) max = h;
-        });
-        // Set all cells to the tallest measured height
-        cells.forEach(function(c){ c.style.minHeight = Math.ceil(max) + 'px'; });
-    }
-    window.addEventListener('load', equalizeCalendarCells);
-    var resizeTimer = null;
-    window.addEventListener('resize', function(){
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(equalizeCalendarCells, 120);
-    });
-    // Also run after DOM changes (e.g., when events are loaded dynamically)
-    var observer = new MutationObserver(function(){ equalizeCalendarCells(); });
-    var grid = document.querySelector('.calendar-grid');
-    if(grid) observer.observe(grid, { childList: true, subtree: true });
-})();
-</script>

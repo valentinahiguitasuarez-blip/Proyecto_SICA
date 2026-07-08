@@ -17,6 +17,11 @@ if (!$evento) {
     exit('Codigo no disponible.');
 }
 
+if ((string)$evento['estado'] !== 'Activo') {
+    http_response_code(403);
+    exit('El codigo solo esta disponible para eventos aprobados.');
+}
+
 $svg = instructor_download_qr_svg(
     (string)$evento['codigo_evento'],
     (string)$evento['nombre_evento'],

@@ -178,6 +178,13 @@ function instructor_event_qr_payload(array $evento): string
 {
     $path = 'aprendiz/preregistro.php?evento=' . (int)$evento['id_evento']
         . '&codigo=' . rawurlencode((string)$evento['codigo_evento']);
+    $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+
+    if ($host !== '') {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        return $scheme . '://' . $host . app_url($path);
+    }
+
     $configPath = __DIR__ . '/../config/app.php';
     $config = is_file($configPath) ? require $configPath : [];
     $baseUrl = rtrim((string)($config['base_url'] ?? ''), '/');
@@ -186,9 +193,7 @@ function instructor_event_qr_payload(array $evento): string
         return $baseUrl . '/' . ltrim($path, '/');
     }
 
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
-    return $scheme . '://' . $host . app_url($path);
+    return 'http://localhost' . app_url($path);
 }
 
 function instructor_qr_image_url(string $payload, int $size = 220): string

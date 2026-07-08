@@ -997,10 +997,18 @@ body {
     background: var(--admin-blue);
     box-shadow: 0 10px 20px rgba(22, 93, 255, 0.14);
     font-weight: 900;
+    text-decoration: none;
 }
 
 .admin-create-user-open {
     white-space: nowrap;
+}
+
+.admin-panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .admin-create-user-dialog {
@@ -1430,6 +1438,28 @@ body {
     color: var(--admin-muted);
     font-size: 12px;
     font-weight: 800;
+}
+
+.admin-access-actions {
+    min-width: 220px;
+    display: grid;
+    gap: 8px;
+    justify-self: end;
+}
+
+.admin-access-actions button {
+    min-height: 40px;
+    border: 0;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-weight: 900;
+}
+
+.admin-access-actions button.secondary {
+    color: var(--admin-blue);
+    border: 1px solid rgba(22, 93, 255, 0.2);
+    background: #ffffff;
 }
 
 .admin-empty-state {

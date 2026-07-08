@@ -436,7 +436,10 @@ try {
                     <p class="admin-eyebrow">Directorio</p>
                     <h2>Usuarios registrados</h2>
                 </div>
-                <button type="button" class="admin-create-user-open" data-open-create-user>Crear usuario</button>
+                <div class="admin-panel-actions">
+                    <a class="admin-create-user-open" href="<?= admin_h(app_url('admin/solicitudes_usuarios.php')) ?>">Solicitudes de acceso</a>
+                    <button type="button" class="admin-create-user-open" data-open-create-user>Crear usuario</button>
+                </div>
             </div>
 
             <form class="admin-user-filters" method="get" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">

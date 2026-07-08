@@ -399,11 +399,11 @@ body[data-theme="dark"] .logout-cancel-btn {
 
 .login-field .form-control.is-valid,
 .was-validated .login-field .form-control:valid {
-    border-color: #dce3ee;
+    border-color: #18a86b;
     background-image: none !important;
     background-color: #ffffff !important;
     padding-right: 44px;
-    box-shadow: 0 2px 9px rgba(46, 73, 116, 0.04);
+    box-shadow: 0 0 0 4px rgba(24, 168, 107, 0.1);
 }
 
 .password-field .form-control.is-valid,
@@ -419,6 +419,12 @@ body[data-theme="dark"] .logout-cancel-btn {
     border-color: #dce3ee;
     box-shadow: 0 0 0 1000px #ffffff inset, 0 2px 9px rgba(46, 73, 116, 0.04);
     transition: background-color 9999s ease-out;
+}
+
+.login-field .form-control.is-valid:-webkit-autofill,
+.was-validated .login-field .form-control:valid:-webkit-autofill {
+    border-color: #18a86b;
+    box-shadow: 0 0 0 1000px #ffffff inset, 0 0 0 4px rgba(24, 168, 107, 0.1);
 }
 
 .field-icon {
@@ -879,10 +885,10 @@ body[data-theme="dark"] .login-field .form-control {
 
 body[data-theme="dark"] .login-field .form-control.is-valid,
 body[data-theme="dark"] .was-validated .login-field .form-control:valid {
-    border-color: #2a3853;
+    border-color: #34d399;
     background-image: none !important;
     background-color: #111a2d !important;
-    box-shadow: 0 2px 9px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.12);
 }
 
 body[data-theme="dark"] .login-field .form-control:-webkit-autofill,
@@ -892,6 +898,12 @@ body[data-theme="dark"] .login-field .form-control:-webkit-autofill:focus {
     caret-color: var(--login-text);
     border-color: #2a3853;
     box-shadow: 0 0 0 1000px #111a2d inset, 0 2px 9px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="dark"] .login-field .form-control.is-valid:-webkit-autofill,
+body[data-theme="dark"] .was-validated .login-field .form-control:valid:-webkit-autofill {
+    border-color: #34d399;
+    box-shadow: 0 0 0 1000px #111a2d inset, 0 0 0 4px rgba(52, 211, 153, 0.12);
 }
 
 body[data-theme="dark"] .login-field .form-control::placeholder {

@@ -301,18 +301,20 @@ body {
     font-weight: 800;
 }
 
+.admin-top-actions .admin-logout,
 .admin-logout {
     min-height: 60px;
     gap: 14px;
     padding: 0 22px;
     color: #ffffff;
-    background: linear-gradient(135deg, var(--admin-blue), #2563ff);
+    background: linear-gradient(135deg, #0b18e8, #2764ff);
     border-color: rgba(22, 93, 255, 0.28);
     box-shadow: 0 14px 28px rgba(22, 93, 255, 0.20);
     font-size: 18px;
     font-weight: 900;
 }
 
+.admin-top-actions .admin-logout::before,
 .admin-logout::before {
     content: "SL";
     width: 38px;
@@ -326,6 +328,8 @@ body {
     font-weight: 900;
 }
 
+.admin-top-actions .admin-logout:hover,
+.admin-top-actions .admin-logout:focus,
 .admin-logout:hover,
 .admin-logout:focus {
     color: #ffffff;

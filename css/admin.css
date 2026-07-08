@@ -1004,6 +1004,19 @@ body {
     white-space: nowrap;
 }
 
+.admin-create-user-secondary {
+    color: var(--admin-blue);
+    background: #ffffff;
+    border: 1px solid rgba(22, 93, 255, 0.2);
+    box-shadow: none;
+}
+
+.admin-create-user-secondary:hover,
+.admin-create-user-secondary:focus {
+    color: var(--admin-blue);
+    background: var(--admin-blue-soft);
+}
+
 .admin-panel-actions {
     display: flex;
     flex-wrap: wrap;

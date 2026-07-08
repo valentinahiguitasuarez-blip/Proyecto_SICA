@@ -41,8 +41,6 @@ $stats = [
 ];
 $reservas = ['Pendiente' => 0, 'Activo' => 0, 'Cancelado' => 0, 'Finalizado' => 0];
 $eventosRecientes = [];
-$correosRecientes = [];
-$actividadReciente = [];
 $auditorios = [];
 $bandejaTrabajo = [];
 $eventosHoy = [];
@@ -53,7 +51,6 @@ $todayStats = [
     'eventos_activos' => 0,
     'auditorios_ocupados' => 0,
 ];
-$eventosPorMes = array_fill(1, 12, 0);
 
 try {
     $stats['usuarios'] = scalarQuery($pdo, 'SELECT COUNT(*) FROM usuario');
@@ -94,10 +91,6 @@ try {
         }
     }
 
-    foreach (rowsQuery($pdo, 'SELECT MONTH(fecha_evento) mes, COUNT(*) total FROM evento GROUP BY MONTH(fecha_evento)') as $row) {
-        $eventosPorMes[(int)$row['mes']] = (int)$row['total'];
-    }
-
     $eventosRecientes = rowsQuery(
         $pdo,
         'SELECT e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin,
@@ -129,27 +122,6 @@ try {
             e.fecha_evento ASC,
             e.hora_inicio ASC
          LIMIT 6'
-    );
-
-    $correosRecientes = rowsQuery(
-        $pdo,
-        'SELECT e.nombre_evento, es.nombre_estado AS estado, e.fecha_aprobacion, e.fecha_evento,
-                a.nombre_auditorio, u.correo
-         FROM evento e
-         INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
-         INNER JOIN estado es ON es.id_estado = e.id_estado
-         LEFT JOIN usuario u ON u.id_documento = e.id_solicitante
-         ORDER BY COALESCE(e.fecha_aprobacion, e.fecha_evento) DESC
-         LIMIT 4'
-    );
-
-    $actividadReciente = rowsQuery(
-        $pdo,
-        'SELECT u.nombre, u.apellido, u.fecha_registro, e.nombre_estado AS estado
-         FROM usuario u
-         INNER JOIN estado e ON e.id_estado = u.id_estado
-         ORDER BY u.fecha_registro DESC
-         LIMIT 4'
     );
 
     $auditorios = rowsQuery(
@@ -202,10 +174,7 @@ try {
 }
 
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
-$maxMonth = max(1, max($eventosPorMes));
 $totalReservas = max(1, array_sum($reservas));
-$maxAuditoriumEvents = max(1, ...array_map(static fn(array $auditorio): int => (int)$auditorio['eventos_programados'], $auditorios ?: [['eventos_programados' => 0]]));
-$timelineBase = $bandejaTrabajo[0] ?? null;
 $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_pendientes'] ?? 0);
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
@@ -256,153 +225,135 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
             </div>
         </header>
 
-        <form class="admin-global-search" action="<?= h(app_url('admin/solicitudes.php')) ?>" method="get" role="search">
-            <span aria-hidden="true">BU</span>
-            <input type="search" name="q" placeholder="Buscar usuario, evento, auditorio o codigo">
-            <button type="submit">Buscar</button>
-        </form>
+        <section class="admin-home-summary" aria-label="Resumen del panel">
+            <article>
+                <span>Solicitudes pendientes</span>
+                <strong><?= h($reservas['Pendiente']) ?></strong>
+                <small>Revisar y asignar coordinador</small>
+            </article>
+            <article>
+                <span>Correos por gestionar</span>
+                <strong><?= h($stats['correos_pendientes'] ?? 0) ?></strong>
+                <small>Confirmaciones y avisos</small>
+            </article>
+            <article>
+                <span>Eventos aprobados</span>
+                <strong><?= h($stats['eventos']) ?></strong>
+                <small>Reservas activas o finalizadas</small>
+            </article>
+            <article>
+                <span>Auditorios activos</span>
+                <strong><?= h($stats['auditorios']) ?></strong>
+                <small>Espacios disponibles</small>
+            </article>
+        </section>
 
-        <section class="admin-focus-layout">
-            <article class="admin-panel admin-work-queue">
+        <section class="admin-home-grid">
+            <article class="admin-panel admin-work-queue admin-home-primary">
                 <div class="admin-panel-head">
                     <div>
-                        <p class="admin-eyebrow">Bandeja de trabajo</p>
-                        <h2>Solicitudes que requieren atencion</h2>
+                        <p class="admin-eyebrow">Prioridad</p>
+                        <h2>Lo que necesita accion</h2>
                     </div>
-                    <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Ver todas</a>
+                    <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Abrir solicitudes</a>
                 </div>
-                <div class="admin-work-table">
-                    <div class="admin-work-head"><span>Prioridad</span><span>Evento</span><span>Estado</span><span>Accion</span></div>
+
+                <form class="admin-global-search admin-home-search" action="<?= h(app_url('admin/solicitudes.php')) ?>" method="get" role="search">
+                    <span aria-hidden="true">BU</span>
+                    <input type="search" name="q" placeholder="Buscar evento, codigo, instructor o correo">
+                    <button type="submit">Buscar</button>
+                </form>
+
+                <div class="admin-task-list">
+                    <?php if (!$bandejaTrabajo): ?>
+                        <div class="admin-empty-state">
+                            <strong>No hay solicitudes pendientes.</strong>
+                            <span>Cuando llegue una reserva nueva, aparecera aqui.</span>
+                        </div>
+                    <?php endif; ?>
                     <?php foreach ($bandejaTrabajo as $item): ?>
                         <?php
                             $estado = (string)$item['estado'];
                             $prioridad = 'Baja';
                             $priorityClass = 'low';
                             $estadoTrabajo = $estado;
+                            $accionTrabajo = 'Revisar';
                             if ($estado === 'Pendiente' && empty($item['id_coordinador'])) {
                                 $prioridad = 'Alta';
                                 $priorityClass = 'high';
-                                $estadoTrabajo = 'Pendiente';
+                                $estadoTrabajo = 'Falta coordinador';
+                                $accionTrabajo = 'Asignar';
                             } elseif ($estado === 'Pendiente') {
                                 $prioridad = 'Media';
                                 $priorityClass = 'medium';
-                                $estadoTrabajo = 'Esperando coordinacion';
+                                $estadoTrabajo = 'En coordinacion';
                             } elseif (!empty($item['fecha_aprobacion'])) {
                                 $estadoTrabajo = 'Listo para notificar';
+                                $accionTrabajo = 'Notificar';
                             }
                         ?>
-                        <div class="admin-work-row <?= h($priorityClass) ?>">
+                        <a class="admin-task-item <?= h($priorityClass) ?>" href="<?= h(app_url('admin/solicitudes.php?q=' . urlencode((string)$item['nombre_evento']))) ?>">
                             <span><?= h($prioridad) ?></span>
-                            <strong><?= h($item['nombre_evento']) ?></strong>
-                            <em><?= h($estadoTrabajo) ?></em>
-                            <a href="<?= h(app_url('admin/solicitudes.php?q=' . urlencode((string)$item['nombre_evento']))) ?>">Revisar</a>
-                        </div>
+                            <div>
+                                <strong><?= h($item['nombre_evento']) ?></strong>
+                                <small><?= h($item['nombre_auditorio']) ?> · <?= h($estadoTrabajo) ?></small>
+                            </div>
+                            <em><?= h($accionTrabajo) ?></em>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             </article>
 
-            <aside class="admin-focus-side" aria-label="Resumen operativo">
-                <article class="admin-panel admin-today-card">
-                    <div>
-                        <p class="admin-eyebrow">Hoy</p>
-                        <h2>Operacion del dia</h2>
-                    </div>
-                    <div class="admin-today-mini">
-                        <div><strong><?= h($todayStats['solicitudes']) ?></strong><small>Solicitudes</small></div>
-                        <div><strong><?= h($todayStats['correos']) ?></strong><small>Correos</small></div>
-                        <div><strong><?= h($todayStats['eventos_activos']) ?></strong><small>Eventos</small></div>
-                        <div><strong><?= h($todayStats['auditorios_ocupados']) ?> / <?= h(max(1, count($auditorios))) ?></strong><small>Auditorios</small></div>
-                    </div>
-                </article>
-
-                <section class="quick-actions quick-actions-compact" id="reportes">
+            <aside class="admin-side-stack" aria-label="Acciones y agenda">
+                <section class="quick-actions admin-home-actions">
                     <div>
                         <span class="admin-eyebrow">Accesos</span>
-                        <h2>Acciones rapidas</h2>
+                        <h2>Trabajar rapido</h2>
                     </div>
                     <nav aria-label="Acciones rapidas del administrador">
-                        <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>+</span>Nueva reserva</a>
-                        <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Crear usuario</a>
-                        <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CO</span>Enviar correo</a>
-                        <a href="<?= h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reporte</a>
+                        <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes</a>
+                        <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
+                        <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos</a>
+                        <a href="<?= h(app_url('admin/auditorios.php')) ?>"><span>AU</span>Auditorios</a>
+                        <a href="<?= h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reportes</a>
                     </nav>
                 </section>
+
+                <article class="admin-panel admin-today-card">
+                    <div class="admin-panel-head">
+                        <div>
+                            <p class="admin-eyebrow">Hoy</p>
+                            <h2>Agenda del dia</h2>
+                        </div>
+                        <strong class="admin-occupancy"><?= h($todayStats['auditorios_ocupados']) ?> / <?= h(max(1, count($auditorios))) ?></strong>
+                    </div>
+                    <div class="admin-day-list">
+                        <?php if (!$eventosHoy): ?>
+                            <div>
+                                <strong>Sin eventos para hoy</strong>
+                                <span>La agenda esta libre.</span>
+                            </div>
+                        <?php endif; ?>
+                        <?php foreach ($eventosHoy as $eventoHoy): ?>
+                            <div>
+                                <time><?= h(substr((string)$eventoHoy['hora_inicio'], 0, 5)) ?></time>
+                                <strong><?= h($eventoHoy['nombre_evento']) ?></strong>
+                                <span><?= h($eventoHoy['nombre_auditorio']) ?> · <?= h($eventoHoy['estado']) ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </article>
             </aside>
         </section>
 
-        <section class="admin-metrics admin-metrics-compact" aria-label="Indicadores generales">
-            <article class="admin-metric">
-                <span>Usuarios</span>
-                <strong><?= h($stats['usuarios']) ?></strong>
-                <small>Cuentas activas y roles</small>
-            </article>
-            <article class="admin-metric">
-                <span>Eventos</span>
-                <strong><?= h($stats['eventos']) ?></strong>
-                <small>Reservas aprobadas</small>
-            </article>
-            <article class="admin-metric">
-                <span>Correos pendientes</span>
-                <strong><?= h($stats['correos_pendientes'] ?? 0) ?></strong>
-                <small>Por confirmar o avisar</small>
-            </article>
-            <article class="admin-metric">
-                <span>Auditorios</span>
-                <strong><?= h($stats['auditorios']) ?></strong>
-                <small>Espacios activos</small>
-            </article>
-        </section>
-
-        <details class="admin-insights">
-            <summary>
-                <span>Analitica y trazabilidad</span>
-                <strong>Ver detalles del sistema</strong>
-            </summary>
-
-            <section class="admin-insights-grid">
-                <article class="admin-panel admin-flow-panel">
-                    <div class="admin-panel-head">
-                        <div>
-                            <p class="admin-eyebrow">Flujo SICA</p>
-                            <h2>Flujo de solicitudes</h2>
-                        </div>
-                    </div>
-                    <ol class="admin-flow-list">
-                        <li>Solicitud creada</li>
-                        <li>Revision administrador</li>
-                        <li>Enviada a coordinacion</li>
-                        <li>Aprobada / Rechazada</li>
-                        <li>Correo automatico</li>
-                        <li>Reserva confirmada</li>
-                        <li>Registro de asistencia</li>
-                        <li>Certificado generado</li>
-                    </ol>
-                </article>
-
-                <article class="admin-panel admin-timeline-panel">
-                    <div class="admin-panel-head">
-                        <div>
-                            <p class="admin-eyebrow">Trazabilidad</p>
-                            <h2>Linea de tiempo</h2>
-                        </div>
-                    </div>
-                    <div class="admin-timeline">
-                        <div><time>09:10</time><span>Solicitud recibida<?= $timelineBase ? ': ' . h($timelineBase['nombre_evento']) : '' ?></span></div>
-                        <div><time>09:25</time><span>Coordinacion revisa disponibilidad</span></div>
-                        <div><time>09:30</time><span>Correo enviado al responsable</span></div>
-                        <div><time>09:45</time><span>Auditorio reservado y flujo activo</span></div>
-                    </div>
-                </article>
-            </section>
-
-            <section class="admin-grid">
-            <article class="admin-panel upcoming-panel">
+        <section class="admin-secondary-grid" aria-label="Informacion complementaria">
+            <article class="admin-panel">
                 <div class="admin-panel-head">
                     <div>
-                        <p class="admin-eyebrow">Proximos eventos</p>
-                        <h2>Agenda de auditorios</h2>
+                        <p class="admin-eyebrow">Proximos</p>
+                        <h2>Eventos recientes</h2>
                     </div>
-                    <a href="#reservas">Ver todas</a>
+                    <a href="<?= h(app_url('admin/reportes.php')) ?>">Reportes</a>
                 </div>
                 <div class="admin-event-list">
                     <?php foreach ($eventosRecientes as $evento): ?>
@@ -414,7 +365,7 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                             </time>
                             <div>
                                 <strong><?= h($evento['nombre_evento']) ?></strong>
-                                <span><?= h($evento['nombre_auditorio']) ?> - <?= h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= h(substr((string)$evento['hora_fin'], 0, 5)) ?></span>
+                                <span><?= h($evento['nombre_auditorio']) ?> · <?= h(substr((string)$evento['hora_inicio'], 0, 5)) ?> a <?= h(substr((string)$evento['hora_fin'], 0, 5)) ?></span>
                             </div>
                             <em><?= h($evento['estado']) ?></em>
                         </div>
@@ -422,72 +373,11 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                 </div>
             </article>
 
-            <article class="admin-panel chart-panel">
+            <article class="admin-panel">
                 <div class="admin-panel-head">
                     <div>
-                        <p class="admin-eyebrow">Calendario</p>
-                        <h2>Eventos por mes</h2>
-                    </div>
-                </div>
-                <div class="admin-bars" aria-label="Grafica de eventos por mes">
-                    <?php foreach ($eventosPorMes as $month => $count): ?>
-                        <div class="admin-bar">
-                            <span style="height: <?= h(max(8, (int)round(($count / $maxMonth) * 100))) ?>%"></span>
-                            <small><?= h($monthLabels[$month]) ?></small>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-
-            <article class="admin-panel auditorium-status" id="auditorios">
-                <div class="admin-panel-head">
-                    <div>
-                        <p class="admin-eyebrow">Auditorios</p>
-                        <h2>Estado de ocupacion</h2>
-                    </div>
-                </div>
-                <div class="auditorium-ring">
-                    <strong><?= h(count($auditorios)) ?></strong>
-                    <span>Total</span>
-                </div>
-                <div class="auditorium-list auditorium-bars">
-                    <?php foreach ($auditorios as $auditorio): ?>
-                        <?php $ocupacion = min(100, (int)round(((int)$auditorio['eventos_programados'] / $maxAuditoriumEvents) * 100)); ?>
-                        <div>
-                            <span><?= h($auditorio['nombre_auditorio']) ?></span>
-                            <strong><?= h($ocupacion) ?>%</strong>
-                            <i><b style="width: <?= h($ocupacion) ?>%"></b></i>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-
-            <article class="admin-panel" id="eventos-hoy">
-                <div class="admin-panel-head">
-                    <div>
-                        <p class="admin-eyebrow">Hoy</p>
-                        <h2>Eventos del dia</h2>
-                    </div>
-                </div>
-                <div class="admin-today-events">
-                    <?php if (!$eventosHoy): ?>
-                        <div><strong>Sin eventos activos para hoy.</strong><span>La agenda aparecera aqui cuando haya reservas.</span></div>
-                    <?php endif; ?>
-                    <?php foreach ($eventosHoy as $eventoHoy): ?>
-                        <div>
-                            <time><?= h(substr((string)$eventoHoy['hora_inicio'], 0, 5)) ?></time>
-                            <strong><?= h($eventoHoy['nombre_evento']) ?></strong>
-                            <span><?= h($eventoHoy['nombre_auditorio']) ?> - <?= h($eventoHoy['estado']) ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-
-            <article class="admin-panel reservation-panel" id="reservas">
-                <div class="admin-panel-head">
-                    <div>
-                        <p class="admin-eyebrow">Solicitudes</p>
-                        <h2>Reservas de auditorio</h2>
+                        <p class="admin-eyebrow">Estado</p>
+                        <h2>Reservas</h2>
                     </div>
                 </div>
                 <div class="reservation-summary">
@@ -501,48 +391,26 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                 </div>
             </article>
 
-            <article class="admin-panel mail-panel" id="correos">
+            <article class="admin-panel admin-login-route">
                 <div class="admin-panel-head">
                     <div>
-                        <p class="admin-eyebrow">Correos</p>
-                        <h2>Notificaciones de reserva</h2>
+                        <p class="admin-eyebrow">Acceso</p>
+                        <h2>Inicio de sesion</h2>
                     </div>
-                    <a href="#">Administrar</a>
                 </div>
-                <div class="admin-mail-list">
-                    <?php foreach ($correosRecientes as $correo): ?>
-                        <div>
-                            <span>Correo</span>
-                            <strong>Confirmacion de reserva - <?= h($correo['nombre_evento']) ?></strong>
-                            <small>Para: <?= h($correo['correo'] ?? 'solicitante@sica.edu.co') ?></small>
-                            <em><?= h($correo['estado']) ?></em>
-                        </div>
-                    <?php endforeach; ?>
+                <ol>
+                    <li>El usuario entra con correo y contrasena.</li>
+                    <li>El sistema valida que la cuenta este activa.</li>
+                    <li>Segun el rol, lo envia a su panel.</li>
+                </ol>
+                <div>
+                    <span>Admin</span>
+                    <span>Coordinador</span>
+                    <span>Instructor</span>
+                    <span>Aprendiz</span>
                 </div>
             </article>
-
-            <article class="admin-panel activity-panel" id="usuarios">
-                <div class="admin-panel-head">
-                    <div>
-                        <p class="admin-eyebrow">Usuarios</p>
-                        <h2>Actividad reciente</h2>
-                    </div>
-                    <a href="#">Ver usuarios</a>
-                </div>
-                <div class="admin-activity-list">
-                    <?php foreach ($actividadReciente as $actividad): ?>
-                        <div>
-                            <span>US</span>
-                            <div>
-                                <strong><?= h(trim((string)$actividad['nombre'] . ' ' . (string)$actividad['apellido'])) ?></strong>
-                                <small><?= h($actividad['estado']) ?> - Registro <?= h($actividad['fecha_registro']) ?></small>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </article>
-            </section>
-        </details>
+        </section>
 
     </section>
 </main>

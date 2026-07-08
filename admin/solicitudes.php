@@ -396,24 +396,17 @@ $estadoActivo = isset($seccionesSolicitud[$estadoFiltro]) ? $estadoFiltro : 'Pen
             </div>
         <?php endif; ?>
 
-        <section class="admin-request-guide" aria-label="Ruta de gestion de solicitudes">
-            <div>
-                <p class="admin-eyebrow">Flujo de trabajo</p>
-                <h2>Gestiona cada reserva desde un solo lugar</h2>
-                <span>Usa las pestañas de abajo para ver solo el estado que necesitas revisar. Desde cada solicitud puedes asignar coordinador, reenviar la revisión o notificar la respuesta final.</span>
-            </div>
-            <ol>
-                <li><strong>1</strong><span>Revisa pendientes</span></li>
-                <li><strong>2</strong><span>Asigna coordinación</span></li>
-                <li><strong>3</strong><span>Notifica respuesta</span></li>
-            </ol>
-        </section>
-
         <section class="admin-panel reservations-panel">
             <div class="admin-panel-head">
                 <div>
                     <p class="admin-eyebrow">Revision</p>
                     <h2>Solicitudes registradas</h2>
+                    <span class="admin-panel-note">Filtra por estado y trabaja solo el grupo que necesitas revisar.</span>
+                </div>
+                <div class="admin-request-quickflow" aria-label="Ruta de gestion">
+                    <span><strong>1</strong> Pendientes</span>
+                    <span><strong>2</strong> Coordinación</span>
+                    <span><strong>3</strong> Respuesta</span>
                 </div>
             </div>
 

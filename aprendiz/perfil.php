@@ -277,7 +277,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
             </span>
         </a>
 
-        <section class="apprentice-person" aria-label="Aprendiz activo">
+        <a class="apprentice-person" href="<?= e(app_url('aprendiz/perfil.php')) ?>" aria-label="Ver perfil del aprendiz">
             <div class="apprentice-person-avatar">
                 <?php if ($fotoPerfil !== ''): ?>
                     <img src="<?= e(app_url($fotoPerfil)) ?>" alt="">
@@ -289,7 +289,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                 <strong><?= e($nombreCompleto) ?></strong>
                 <small><?= e((string)$perfil['correo']) ?></small>
             </div>
-        </section>
+        </a>
 
         <nav class="apprentice-nav">
             <a href="<?= e(app_url('aprendiz/index.php')) ?>"><span aria-hidden="true">IN</span>Dashboard</a>
@@ -297,34 +297,6 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
             <a href="<?= e(app_url('aprendiz/preregistro.php')) ?>"><span aria-hidden="true">PR</span>Pre-registro</a>
             <a class="active" href="<?= e(app_url('aprendiz/perfil.php')) ?>"><span aria-hidden="true">PE</span>Perfil</a>
         </nav>
-
-        <section class="learner-id-card" aria-label="Credencial del aprendiz">
-            <span class="sidebar-label">Credencial del aprendiz</span>
-            <div class="learner-photo-card">
-                <div class="learner-photo" aria-hidden="true">
-                    <?php if ($fotoPerfil !== ''): ?>
-                        <img src="<?= e(app_url($fotoPerfil)) ?>" alt="">
-                    <?php else: ?>
-                        <span><?= e($iniciales) ?></span>
-                    <?php endif; ?>
-                </div>
-                <div class="learner-scan" aria-hidden="true"></div>
-            </div>
-            <div class="learner-id-copy">
-                <strong><?= e($nombreCompleto) ?></strong>
-                <small><?= e((string)$perfil['nombre_estado']) ?></small>
-            </div>
-            <div class="learner-id-data">
-                <div>
-                    <span>Ficha</span>
-                    <strong><?= e($perfil['id_ficha'] ?? 'Sin ficha') ?></strong>
-                </div>
-                <div>
-                    <span>Programa</span>
-                    <strong><?= e($perfil['nombre_programa'] ?? 'Programa no asignado') ?></strong>
-                </div>
-            </div>
-        </section>
     </aside>
 
     <section class="apprentice-main">

@@ -3590,7 +3590,7 @@ body {
 }
 
 /* ===== Coordinador: badge de pendientes en el menu ===== */
-.admin-nav a {
+.coord-dashboard .admin-nav a {
     justify-content: space-between;
 }
 

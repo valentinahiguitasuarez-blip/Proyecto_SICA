@@ -283,15 +283,23 @@ $params = [];
 $where = [];
 
 if ($search !== '') {
-    $where[] = '(CAST(u.id_documento AS CHAR) LIKE :search
-        OR u.nombre LIKE :search
-        OR u.apellido LIKE :search
-        OR CONCAT(u.nombre, " ", u.apellido) LIKE :search
-        OR CONCAT(u.apellido, " ", u.nombre) LIKE :search
-        OR u.correo LIKE :search
-        OR CAST(f.id_ficha AS CHAR) LIKE :search
-        OR p.nombre_programa LIKE :search)';
-    $params[':search'] = '%' . $search . '%';
+    $searchColumns = [
+        'CAST(u.id_documento AS CHAR)',
+        'u.nombre',
+        'u.apellido',
+        "CONCAT(u.nombre, ' ', u.apellido)",
+        "CONCAT(u.apellido, ' ', u.nombre)",
+        'u.correo',
+        'CAST(f.id_ficha AS CHAR)',
+        'p.nombre_programa',
+    ];
+    $searchParts = [];
+    foreach ($searchColumns as $index => $column) {
+        $param = ':search_' . $index;
+        $searchParts[] = $column . ' LIKE ' . $param;
+        $params[$param] = '%' . $search . '%';
+    }
+    $where[] = '(' . implode(' OR ', $searchParts) . ')';
 }
 
 if ($roleFilter > 0) {

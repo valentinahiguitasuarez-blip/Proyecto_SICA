@@ -302,22 +302,27 @@ body {
 }
 
 .admin-logout {
+    min-height: 60px;
+    gap: 14px;
+    padding: 0 22px;
     color: #ffffff;
     background: linear-gradient(135deg, var(--admin-blue), #2563ff);
     border-color: rgba(22, 93, 255, 0.28);
     box-shadow: 0 14px 28px rgba(22, 93, 255, 0.20);
+    font-size: 18px;
+    font-weight: 900;
 }
 
 .admin-logout::before {
     content: "SL";
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
     display: grid;
     place-items: center;
     border-radius: 8px;
     color: var(--admin-blue);
     background: rgba(255, 255, 255, 0.92);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 900;
 }
 

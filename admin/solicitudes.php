@@ -486,12 +486,20 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                     <small class="admin-flow-note">
                                         <?= $enviadoCoordinacion ? 'Enviado a coordinacion. Esperando respuesta.' : 'Pendiente por enviar a coordinacion.' ?>
                                     </small>
-                                    <button type="submit" name="accion" value="enviar_coordinador">
+                                    <button type="submit" name="accion" value="enviar_coordinador"
+                                            data-confirm-kicker="Solicitud de reserva"
+                                            data-confirm-title="<?= $enviadoCoordinacion ? 'Reenviar a coordinacion' : 'Enviar a coordinacion' ?>"
+                                            data-confirm-message="Se enviara la solicitud al coordinador seleccionado para que registre su decision."
+                                            data-confirm-text="<?= $enviadoCoordinacion ? 'Si, reenviar' : 'Si, enviar' ?>">
                                         <?= $enviadoCoordinacion ? 'Reenviar correo' : 'Enviar a coordinador' ?>
                                     </button>
                                 <?php elseif ($tieneDecision): ?>
                                     <small class="admin-flow-note">Coordinacion ya respondio. Informa al instructor.</small>
-                                    <button type="submit" name="accion" value="notificar_instructor">Notificar instructor</button>
+                                    <button type="submit" name="accion" value="notificar_instructor"
+                                            data-confirm-kicker="Notificacion"
+                                            data-confirm-title="Notificar instructor"
+                                            data-confirm-message="El instructor recibira por correo la decision registrada por coordinacion."
+                                            data-confirm-text="Si, notificar">Notificar instructor</button>
                                 <?php else: ?>
                                     <small class="admin-flow-note">Solicitud cerrada.</small>
                                 <?php endif; ?>

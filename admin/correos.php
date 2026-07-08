@@ -388,8 +388,16 @@ try {
                             <form class="admin-mail-actions" method="post" action="<?= admin_c_h(app_url('admin/correos.php')) ?>">
                                 <input type="hidden" name="csrf_admin_mail" value="<?= admin_c_h($_SESSION['csrf_admin_mail']) ?>">
                                 <input type="hidden" name="id_evento" value="<?= admin_c_h($notificacion['id_evento']) ?>">
-                                <button type="submit" name="accion" value="reenviar_coordinador">Reenviar a coordinador</button>
-                                <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>>
+                                <button type="submit" name="accion" value="reenviar_coordinador"
+                                        data-confirm-kicker="Correo de coordinacion"
+                                        data-confirm-title="Reenviar a coordinador"
+                                        data-confirm-message="Se enviara nuevamente la solicitud al coordinador asignado."
+                                        data-confirm-text="Si, reenviar">Reenviar a coordinador</button>
+                                <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>
+                                        data-confirm-kicker="Correo al instructor"
+                                        data-confirm-title="Notificar instructor"
+                                        data-confirm-message="El instructor recibira la decision final de la reserva por correo."
+                                        data-confirm-text="Si, notificar">
                                     Notificar instructor
                                 </button>
                             </form>

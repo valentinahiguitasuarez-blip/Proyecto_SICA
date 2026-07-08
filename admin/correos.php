@@ -240,7 +240,7 @@ $seccionesCorreo = [
         'class' => 'waiting',
     ],
     'por_notificar' => [
-        'titulo' => 'Por notificar',
+        'titulo' => 'Notificar instructor',
         'descripcion' => 'La respuesta final se envia al instructor.',
         'class' => 'ready',
     ],
@@ -490,22 +490,26 @@ if (!isset($seccionesCorreo[$panelCorreoActivo])) {
                             </div>
                         <?php else: ?>
                             <form class="admin-mail-actions" method="post" action="<?= admin_c_h(app_url('admin/correos.php')) ?>">
-                                <strong>Siguiente paso</strong>
+                                <strong><?= $decidida ? 'Enviar respuesta al instructor' : 'Enviar solicitud al coordinador' ?></strong>
                                 <input type="hidden" name="csrf_admin_mail" value="<?= admin_c_h($_SESSION['csrf_admin_mail']) ?>">
                                 <input type="hidden" name="id_evento" value="<?= admin_c_h($notificacion['id_evento']) ?>">
-                                <button type="submit" name="accion" value="reenviar_coordinador"
-                                        data-confirm-kicker="Correo de coordinación"
-                                        data-confirm-title="Enviar al coordinador"
-                                        data-confirm-message="Se enviará la solicitud al coordinador asignado."
-                                        data-confirm-text="Sí, enviar">Enviar al coordinador</button>
-                                <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>
-                                        data-confirm-kicker="Correo al instructor"
-                                        data-confirm-title="Enviar respuesta al instructor"
-                                        data-confirm-message="El instructor recibirá la decisión final de la reserva por correo."
-                                        data-confirm-text="Sí, notificar">
-                                    Enviar al instructor
-                                </button>
-                                <small><?= $decidida ? 'La respuesta final ya está lista para enviar.' : 'El botón de notificar se activa cuando coordinación decida.' ?></small>
+                                <?php if ($decidida): ?>
+                                    <button type="submit" name="accion" value="notificar_instructor"
+                                            data-confirm-kicker="Correo al instructor"
+                                            data-confirm-title="Enviar respuesta al instructor"
+                                            data-confirm-message="El instructor recibirá la decisión final de la reserva por correo."
+                                            data-confirm-text="Sí, notificar">
+                                        Enviar al instructor
+                                    </button>
+                                    <small>Destinatario: <?= admin_c_h($instructor !== '' ? $instructor : 'Instructor') ?>.</small>
+                                <?php else: ?>
+                                    <button type="submit" name="accion" value="reenviar_coordinador"
+                                            data-confirm-kicker="Correo de coordinación"
+                                            data-confirm-title="Enviar al coordinador"
+                                            data-confirm-message="Se enviará la solicitud al coordinador asignado."
+                                            data-confirm-text="Sí, enviar">Enviar al coordinador</button>
+                                    <small>Destinatario: <?= admin_c_h($coordinador !== '' ? $coordinador : 'Coordinador asignado') ?>.</small>
+                                <?php endif; ?>
                             </form>
                         <?php endif; ?>
                     </article>

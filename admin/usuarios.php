@@ -63,6 +63,15 @@ try {
 $roleIds = array_map(static fn(array $role): int => (int)$role['id_rol'], $roles);
 $stateIds = array_map(static fn(array $state): int => (int)$state['id_estado'], $estados);
 $fichaIds = array_map(static fn(array $ficha): int => (int)$ficha['id_ficha'], $fichas);
+$accountStates = array_values(array_filter(
+    $estados,
+    static fn(array $state): bool => in_array(
+        mb_strtolower((string)$state['nombre_estado'], 'UTF-8'),
+        ['activo', 'inactivo'],
+        true
+    )
+));
+$accountStateIds = array_map(static fn(array $state): int => (int)$state['id_estado'], $accountStates);
 $activeStateId = null;
 $apprenticeRoleId = null;
 foreach ($estados as $estado) {
@@ -119,7 +128,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         } elseif (strlen($newPassword) < 6 || strlen($newPassword) > 72) {
             $_SESSION['admin_users_message'] = 'La contrasena temporal debe tener entre 6 y 72 caracteres.';
             $_SESSION['admin_users_message_type'] = 'danger';
-        } elseif (!in_array($newRole, $roleIds, true) || !in_array($newState, $stateIds, true)) {
+        } elseif (!in_array($newRole, $roleIds, true) || !in_array($newState, $accountStateIds, true)) {
             $_SESSION['admin_users_message'] = 'Selecciona un rol y estado validos.';
             $_SESSION['admin_users_message_type'] = 'danger';
         } elseif ($newFicha !== null && !in_array($newFicha, $fichaIds, true)) {
@@ -172,7 +181,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $newRole = (int)($_POST['id_rol'] ?? 0);
         $newState = (int)($_POST['id_estado'] ?? 0);
 
-        if ($targetDocument <= 0 || !in_array($newRole, $roleIds, true) || !in_array($newState, $stateIds, true)) {
+        if ($targetDocument <= 0 || !in_array($newRole, $roleIds, true) || !in_array($newState, $accountStateIds, true)) {
             $_SESSION['admin_users_message'] = 'Selecciona un usuario, rol y estado validos.';
             $_SESSION['admin_users_message_type'] = 'danger';
         } elseif ($targetDocument === $adminDocument && ($newRole !== 1 || ($activeStateId !== null && $newState !== $activeStateId))) {
@@ -389,7 +398,7 @@ try {
                     <span>Estado</span>
                     <select name="estado">
                         <option value="0">Todos</option>
-                        <?php foreach ($estados as $estado): ?>
+                        <?php foreach ($accountStates as $estado): ?>
                             <option value="<?= admin_h($estado['id_estado']) ?>" <?= $stateFilter === (int)$estado['id_estado'] ? 'selected' : '' ?>>
                                 <?= admin_h($estado['nombre_estado']) ?>
                             </option>
@@ -463,7 +472,7 @@ try {
                                 <label>
                                     <span>Estado</span>
                                     <select name="id_estado" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
-                                        <?php foreach ($estados as $estado): ?>
+                                        <?php foreach ($accountStates as $estado): ?>
                                             <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$item['id_estado'] === (int)$estado['id_estado'] ? 'selected' : '' ?>>
                                                 <?= admin_h($estado['nombre_estado']) ?>
                                             </option>
@@ -501,9 +510,9 @@ try {
             <label>
                 <span>Tipo documento</span>
                 <select name="nuevo_tipo_documento" required>
-                    <option value="CC">Cedula de ciudadania</option>
+                    <option value="CC">C&eacute;dula de ciudadan&iacute;a</option>
                     <option value="TI">Tarjeta de identidad</option>
-                    <option value="CE">Cedula de extranjeria</option>
+                    <option value="CE">C&eacute;dula de extranjer&iacute;a</option>
                     <option value="PEP">PEP</option>
                 </select>
             </label>
@@ -544,7 +553,7 @@ try {
             <label>
                 <span>Estado</span>
                 <select name="nuevo_id_estado" required>
-                    <?php foreach ($estados as $estado): ?>
+                    <?php foreach ($accountStates as $estado): ?>
                         <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$estado['id_estado'] === $defaultStateId ? 'selected' : '' ?>>
                             <?= admin_h($estado['nombre_estado']) ?>
                         </option>
@@ -553,14 +562,7 @@ try {
             </label>
             <label class="admin-create-user-wide">
                 <span>Ficha</span>
-                <select name="nuevo_id_ficha">
-                    <option value="">Sin ficha</option>
-                    <?php foreach ($fichas as $ficha): ?>
-                        <option value="<?= admin_h($ficha['id_ficha']) ?>">
-                            <?= admin_h($ficha['id_ficha']) ?> - <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <input type="text" name="nuevo_id_ficha" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por ficha o programa">
             </label>
         </div>
 
@@ -570,6 +572,14 @@ try {
         </div>
     </form>
 </dialog>
+
+<datalist id="fichasUsuario">
+    <?php foreach ($fichas as $ficha): ?>
+        <option value="<?= admin_h($ficha['id_ficha']) ?>">
+            <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
+        </option>
+    <?php endforeach; ?>
+</datalist>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

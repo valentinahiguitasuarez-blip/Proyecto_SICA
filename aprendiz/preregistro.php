@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([4]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/aprendiz_helpers.php';
 
 $pageTitle = 'Pre-registro del Aprendiz - SICA';
 $pageStyles = ['css/aprendiz.css'];
@@ -39,10 +40,10 @@ function asistenciaTexto(?string $asistencia): string
     }
 
     if (stripos($valor, 'No') !== false) {
-        return 'No asistio';
+        return 'No asistió';
     }
 
-    return 'Asistio';
+    return 'Asistió';
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') === 'create_preregistro') {
@@ -50,7 +51,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') ==
     $eventId = (int)($_POST['id_evento'] ?? 0);
 
     if (!hash_equals((string)$_SESSION['csrf_preregistro'], $csrf)) {
-        $_SESSION['preregister_message'] = 'La sesion expiro. Intenta de nuevo.';
+        $_SESSION['preregister_message'] = 'La sesión expiró. Intenta de nuevo.';
         $_SESSION['preregister_message_type'] = 'danger';
     } elseif ($idDocumento <= 0 || $eventId <= 0) {
         $_SESSION['preregister_message'] = 'Selecciona un evento disponible.';
@@ -73,25 +74,42 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') ==
                 $_SESSION['preregister_message'] = 'Ya tienes un pre-registro para ese evento.';
                 $_SESSION['preregister_message_type'] = 'info';
             } else {
-                $insertStmt = $pdo->prepare(
-                    'INSERT INTO preregistro (id_documento, id_evento, fecha_registro, asistencia)
-                     SELECT :id_documento, e.id_evento, CURDATE(), :asistencia
+                $capacityStmt = $pdo->prepare(
+                    'SELECT e.id_evento, a.capacidad, COUNT(pr.id_preregistro) AS registrados
                      FROM evento e
+                     INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
                      INNER JOIN estado es ON es.id_estado = e.id_estado
+                     LEFT JOIN preregistro pr ON pr.id_evento = e.id_evento
                      WHERE e.id_evento = :id_evento
                        AND es.nombre_estado = \'Activo\'
+                     GROUP BY e.id_evento, a.capacidad
                      LIMIT 1'
                 );
-                $insertStmt->execute([
-                    ':id_documento' => $idDocumento,
+                $capacityStmt->execute([
                     ':id_evento' => $eventId,
-                    ':asistencia' => 'Pendiente',
                 ]);
+                $capacityInfo = $capacityStmt->fetch();
 
-                $_SESSION['preregister_message'] = $insertStmt->rowCount() > 0
-                    ? 'Pre-registro realizado. Tu cupo quedo reservado para el evento.'
-                    : 'Este evento no esta disponible para pre-registro.';
-                $_SESSION['preregister_message_type'] = $insertStmt->rowCount() > 0 ? 'success' : 'danger';
+                if (!$capacityInfo) {
+                    $_SESSION['preregister_message'] = 'Este evento no está disponible para pre-registro.';
+                    $_SESSION['preregister_message_type'] = 'danger';
+                } elseif ((int)$capacityInfo['registrados'] >= (int)$capacityInfo['capacidad']) {
+                    $_SESSION['preregister_message'] = 'El auditorio ya no tiene cupos disponibles para este evento.';
+                    $_SESSION['preregister_message_type'] = 'danger';
+                } else {
+                    $insertStmt = $pdo->prepare(
+                        'INSERT INTO preregistro (id_documento, id_evento, fecha_registro, asistencia)
+                         VALUES (:id_documento, :id_evento, CURDATE(), :asistencia)'
+                    );
+                    $insertStmt->execute([
+                        ':id_documento' => $idDocumento,
+                        ':id_evento' => $eventId,
+                        ':asistencia' => 'Pendiente',
+                    ]);
+
+                    $_SESSION['preregister_message'] = 'Pre-registro realizado. Tu cupo quedó reservado para el evento.';
+                    $_SESSION['preregister_message_type'] = 'success';
+                }
             }
         } catch (Throwable $exception) {
             error_log('SICA: error creando pre-registro: ' . $exception->getMessage());
@@ -100,7 +118,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') ==
         }
     }
 
-    header('Location: ' . app_url('aprendiz/preregistro.php'));
+    $redirectUrl = app_url('aprendiz/preregistro.php' . ($eventId > 0 ? '?evento=' . $eventId : ''));
+    header('Location: ' . $redirectUrl);
     exit;
 }
 
@@ -152,13 +171,17 @@ $eventosFormulario = [];
 try {
     $availableStmt = $pdo->prepare(
         'SELECT e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin,
-                a.nombre_auditorio, a.bloque, t.nombre_tipo, pr.id_preregistro
+                a.nombre_auditorio, a.bloque, a.capacidad, t.nombre_tipo, pr.id_preregistro,
+                COUNT(pr_all.id_preregistro) AS registros_actuales
          FROM evento e
          INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
          INNER JOIN tipo_evento t ON t.id_tipo_evento = e.id_tipo_evento
          INNER JOIN estado es ON es.id_estado = e.id_estado
          LEFT JOIN preregistro pr ON pr.id_evento = e.id_evento AND pr.id_documento = :id_documento
+         LEFT JOIN preregistro pr_all ON pr_all.id_evento = e.id_evento
          WHERE es.nombre_estado = \'Activo\'
+         GROUP BY e.id_evento, e.nombre_evento, e.fecha_evento, e.hora_inicio, e.hora_fin,
+                  a.nombre_auditorio, a.bloque, a.capacidad, t.nombre_tipo, pr.id_preregistro
          ORDER BY e.fecha_evento ASC, e.hora_inicio ASC'
     );
     $availableStmt->execute([':id_documento' => $idDocumento]);
@@ -169,7 +192,7 @@ try {
 
 $totalPreregistros = count($preregistros);
 $pendientes = count(array_filter($preregistros, static fn(array $item): bool => (string)$item['asistencia'] === 'Pendiente'));
-$asistidos = count(array_filter($preregistros, static fn(array $item): bool => asistenciaTexto((string)$item['asistencia']) === 'Asistio'));
+$asistidos = count(array_filter($preregistros, static fn(array $item): bool => asistenciaTexto((string)$item['asistencia']) === 'Asistió'));
 $certificados = count(array_filter($preregistros, static fn(array $item): bool => !empty($item['ruta_certificado'])));
 $eventoFijo = null;
 if ($eventoSeleccionado > 0) {
@@ -184,47 +207,7 @@ if ($eventoSeleccionado > 0) {
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
 <main class="apprentice-dashboard">
-    <aside class="apprentice-sidebar" aria-label="Menu del aprendiz">
-        <a class="apprentice-brand" href="<?= htmlspecialchars(app_url('aprendiz/index.php'), ENT_QUOTES, 'UTF-8') ?>">
-            <span>
-                <strong>SICA</strong>
-                <small>Registro de asistencia</small>
-            </span>
-        </a>
-
-        <a class="apprentice-person" href="<?= htmlspecialchars(app_url('aprendiz/perfil.php'), ENT_QUOTES, 'UTF-8') ?>" aria-label="Ver perfil del aprendiz">
-            <div class="apprentice-person-avatar">
-                <?php if ($fotoPerfil !== ''): ?>
-                    <img src="<?= htmlspecialchars(app_url($fotoPerfil), ENT_QUOTES, 'UTF-8') ?>" alt="">
-                <?php else: ?>
-                    <?= htmlspecialchars($iniciales, ENT_QUOTES, 'UTF-8') ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <strong><?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?></strong>
-                <small><?= htmlspecialchars($correoAprendiz, ENT_QUOTES, 'UTF-8') ?></small>
-            </div>
-        </a>
-
-        <nav class="apprentice-nav">
-            <a href="<?= htmlspecialchars(app_url('aprendiz/index.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">IN</span>
-                Dashboard
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">EV</span>
-                Eventos
-            </a>
-            <a class="active" href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">PR</span>
-                Pre-registro
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/certificados.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">CE</span>
-                Certificados
-            </a>
-        </nav>
-    </aside>
+    <?php apprentice_sidebar('preregistro', $nombreCompleto, $iniciales, $fotoPerfil, $correoAprendiz); ?>
 
     <section class="apprentice-main">
         <header class="apprentice-topbar">
@@ -236,7 +219,7 @@ if ($eventoSeleccionado > 0) {
 
             <a class="top-logout" href="<?= htmlspecialchars(app_url('login/logout.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span aria-hidden="true">SL</span>
-                Cerrar sesion
+                Cerrar sesión
             </a>
         </header>
 
@@ -244,9 +227,9 @@ if ($eventoSeleccionado > 0) {
             <div>
                 <p class="eyebrow">Control de ingreso</p>
                 <h2><?= htmlspecialchars((string)$pendientes, ENT_QUOTES, 'UTF-8') ?> eventos pendientes</h2>
-                <span>Cuando llegues al auditorio, el responsable del evento validara tu asistencia.</span>
+                <span>Cuando llegues al auditorio, el responsable del evento validará tu asistencia.</span>
             </div>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">Buscar mas eventos</a>
+            <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">Buscar más eventos</a>
         </section>
 
         <section class="preregister-form-panel" aria-label="Formulario de pre-registro">
@@ -255,7 +238,7 @@ if ($eventoSeleccionado > 0) {
                     <span>
                         <small>Nuevo pre-registro</small>
                         <strong>Registrarme a un evento</strong>
-                        <em>Abre el formulario, confirma tus datos y reserva tu cupo.</em>
+                        <em>Confirma el evento y reserva tu cupo sin modificar tus datos personales.</em>
                     </span>
                     <b>Crear pre-registro</b>
                 </summary>
@@ -270,40 +253,41 @@ if ($eventoSeleccionado > 0) {
                     <input type="hidden" name="action" value="create_preregistro">
                     <input type="hidden" name="csrf_preregistro" value="<?= htmlspecialchars($_SESSION['csrf_preregistro'], ENT_QUOTES, 'UTF-8') ?>">
 
-                    <label class="form-input-field">
+                    <div class="form-readonly">
                         <span>Nombre completo</span>
-                        <input type="text" name="nombre_completo" value="<?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?>" required maxlength="120">
-                    </label>
-                    <label class="form-input-field">
+                        <strong><?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </div>
+                    <div class="form-readonly">
                         <span>Documento</span>
-                        <input type="text" name="documento_visible" value="<?= htmlspecialchars((string)$idDocumento, ENT_QUOTES, 'UTF-8') ?>" required maxlength="20" inputmode="numeric">
-                    </label>
-                    <label class="form-input-field">
+                        <strong><?= htmlspecialchars((string)$idDocumento, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </div>
+                    <div class="form-readonly">
                         <span>Correo personal</span>
-                        <input type="email" name="correo_personal" value="<?= htmlspecialchars($correoAprendiz, ENT_QUOTES, 'UTF-8') ?>" required maxlength="100">
-                    </label>
-                    <label class="form-input-field">
+                        <strong><?= htmlspecialchars($correoAprendiz, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </div>
+                    <div class="form-readonly">
                         <span>Ficha</span>
-                        <input type="text" name="ficha_visible" value="<?= htmlspecialchars($fichaAprendiz, ENT_QUOTES, 'UTF-8') ?>" required maxlength="20">
-                    </label>
-                    <label class="form-input-field program-field">
+                        <strong><?= htmlspecialchars($fichaAprendiz, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </div>
+                    <div class="form-readonly program-field">
                         <span>Programa</span>
-                        <input type="text" name="programa_visible" value="<?= htmlspecialchars($programaAprendiz, ENT_QUOTES, 'UTF-8') ?>" required maxlength="120">
-                    </label>
-                    <label class="form-input-field">
+                        <strong><?= htmlspecialchars($programaAprendiz, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </div>
+                    <div class="form-readonly">
                         <span>Jornada</span>
-                        <input type="text" name="jornada_visible" value="<?= htmlspecialchars($jornadaAprendiz, ENT_QUOTES, 'UTF-8') ?>" required maxlength="40">
-                    </label>
+                        <strong><?= htmlspecialchars($jornadaAprendiz, ENT_QUOTES, 'UTF-8') ?></strong>
+                    </div>
                     <?php if ($eventoFijo): ?>
                         <?php
                         $fechaEventoFijo = new DateTime((string)$eventoFijo['fecha_evento']);
+                        $cuposDisponiblesFijo = max(0, (int)$eventoFijo['capacidad'] - (int)$eventoFijo['registros_actuales']);
                         $eventoFijoTexto = $eventoFijo['nombre_evento'] . ' - ' . $fechaEventoFijo->format('d/m') . ' ' . substr((string)$eventoFijo['hora_inicio'], 0, 5);
                         ?>
                         <label class="event-select-field fixed-event-field">
                             <span>Evento seleccionado</span>
                             <input type="hidden" name="id_evento" value="<?= htmlspecialchars((string)$eventoFijo['id_evento'], ENT_QUOTES, 'UTF-8') ?>">
                             <strong><?= htmlspecialchars($eventoFijoTexto, ENT_QUOTES, 'UTF-8') ?></strong>
-                            <small>Este evento viene desde el boton Pre-registrarme y no se puede modificar aqui.</small>
+                            <small><?= htmlspecialchars('Cupos disponibles: ' . (string)$cuposDisponiblesFijo, ENT_QUOTES, 'UTF-8') ?></small>
                         </label>
                     <?php else: ?>
                         <label class="event-select-field">
@@ -313,7 +297,8 @@ if ($eventoSeleccionado > 0) {
                                 <?php foreach ($eventosFormulario as $evento): ?>
                                     <?php
                                     $fechaEvento = new DateTime((string)$evento['fecha_evento']);
-                                    $optionText = $evento['nombre_evento'] . ' - ' . $fechaEvento->format('d/m') . ' ' . substr((string)$evento['hora_inicio'], 0, 5);
+                                    $cuposDisponibles = max(0, (int)$evento['capacidad'] - (int)$evento['registros_actuales']);
+                                    $optionText = $evento['nombre_evento'] . ' - ' . $fechaEvento->format('d/m') . ' ' . substr((string)$evento['hora_inicio'], 0, 5) . ' - cupos ' . $cuposDisponibles;
                                     if (!empty($evento['id_preregistro'])) {
                                         $optionText .= ' - registrado';
                                     }
@@ -333,7 +318,7 @@ if ($eventoSeleccionado > 0) {
                 <?php if (!$eventosFormulario): ?>
                     <p class="form-note">No hay eventos abiertos para pre-registro en este momento.</p>
                 <?php else: ?>
-                    <p class="form-note">Si eliges un evento donde ya estas registrado, el sistema te avisara y no duplicara el cupo.</p>
+                    <p class="form-note">Si eliges un evento donde ya estás registrado, el sistema te avisará y no duplicará el cupo.</p>
                 <?php endif; ?>
             </details>
         </section>
@@ -348,7 +333,7 @@ if ($eventoSeleccionado > 0) {
                 <strong><?= htmlspecialchars((string)$pendientes, ENT_QUOTES, 'UTF-8') ?></strong>
             </article>
             <article>
-                <span>Asistidos</span>
+                        <span>Asistidos</span>
                 <strong><?= htmlspecialchars((string)$asistidos, ENT_QUOTES, 'UTF-8') ?></strong>
             </article>
             <article>
@@ -369,7 +354,7 @@ if ($eventoSeleccionado > 0) {
             <div class="preregister-list">
                 <?php if (!$preregistros): ?>
                     <article class="event-empty">
-                        <strong>Aun no tienes pre-registros.</strong>
+                        <strong>Aún no tienes pre-registros.</strong>
                         <span>Explora eventos disponibles y separa tu cupo.</span>
                     </article>
                 <?php endif; ?>
@@ -378,12 +363,12 @@ if ($eventoSeleccionado > 0) {
                     <?php
                     $fechaEvento = new DateTime((string)$item['fecha_evento']);
                     $asistencia = asistenciaTexto((string)$item['asistencia']);
-                    $statusClass = $asistencia === 'Pendiente' ? 'pending' : ($asistencia === 'Asistio' ? 'ok' : 'missed');
+                    $statusClass = $asistencia === 'Pendiente' ? 'pending' : ($asistencia === 'Asistió' ? 'ok' : 'missed');
                     ?>
                     <article class="preregister-card <?= htmlspecialchars($statusClass, ENT_QUOTES, 'UTF-8') ?>">
                         <div class="preregister-date">
                             <strong><?= htmlspecialchars($fechaEvento->format('d'), ENT_QUOTES, 'UTF-8') ?></strong>
-                            <span><?= htmlspecialchars($fechaEvento->format('M'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <span><?= htmlspecialchars(apprentice_month($fechaEvento), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                         <div class="preregister-body">
                             <span class="event-type"><?= htmlspecialchars((string)$item['nombre_tipo'], ENT_QUOTES, 'UTF-8') ?></span>

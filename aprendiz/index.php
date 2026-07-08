@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([4]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/aprendiz_helpers.php';
 
 $pageTitle = 'Panel del Aprendiz - SICA';
 $pageStyles = ['css/aprendiz.css'];
@@ -82,63 +83,47 @@ $certificadosDestacados = array_values(array_filter(
 ));
 $certificadosDestacados = array_slice($certificadosDestacados, 0, 2);
 $eventosCercanos = array_slice($eventosDestacados, 0, 3);
+
+$asistenciasPorMes = [];
+foreach ($eventosAprendiz as $evento) {
+    if (empty($evento['id_preregistro']) || (string)($evento['asistencia'] ?? 'Pendiente') === 'Pendiente') {
+        continue;
+    }
+
+    $fechaAsistencia = new DateTime((string)$evento['fecha_evento']);
+    $key = $fechaAsistencia->format('Y-m');
+    $asistenciasPorMes[$key] = ($asistenciasPorMes[$key] ?? 0) + 1;
+}
+
+$attendanceBars = [];
+$cursorMes = new DateTime('first day of this month');
+$cursorMes->modify('-5 months');
+for ($i = 0; $i < 6; $i++) {
+    $key = $cursorMes->format('Y-m');
+    $attendanceBars[] = [
+        'label' => apprentice_month($cursorMes),
+        'value' => $asistenciasPorMes[$key] ?? 0,
+    ];
+    $cursorMes->modify('+1 month');
+}
+$maxAsistenciasMes = max(1, ...array_column($attendanceBars, 'value'));
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
 <main class="apprentice-dashboard">
-    <aside class="apprentice-sidebar" aria-label="Menu del aprendiz">
-        <a class="apprentice-brand" href="<?= htmlspecialchars(app_url('aprendiz/index.php'), ENT_QUOTES, 'UTF-8') ?>">
-            <span>
-                <strong>SICA</strong>
-                <small>Registro de asistencia</small>
-            </span>
-        </a>
-
-        <a class="apprentice-person" href="<?= htmlspecialchars(app_url('aprendiz/perfil.php'), ENT_QUOTES, 'UTF-8') ?>" aria-label="Ver perfil del aprendiz">
-            <div class="apprentice-person-avatar">
-                <?php if ($fotoPerfil !== ''): ?>
-                    <img src="<?= htmlspecialchars(app_url($fotoPerfil), ENT_QUOTES, 'UTF-8') ?>" alt="">
-                <?php else: ?>
-                    <?= htmlspecialchars($iniciales, ENT_QUOTES, 'UTF-8') ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <strong><?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?></strong>
-                <small><?= htmlspecialchars((string)($usuario['correo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
-            </div>
-        </a>
-
-        <nav class="apprentice-nav">
-            <a class="active" href="#dashboard">
-                <span aria-hidden="true">IN</span>
-                Dashboard
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">EV</span>
-                Eventos
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">PR</span>
-                Pre-registro
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/certificados.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">CE</span>
-                Certificados
-            </a>
-        </nav>
-    </aside>
+    <?php apprentice_sidebar('dashboard', $nombreCompleto, $iniciales, $fotoPerfil, (string)($usuario['correo'] ?? '')); ?>
 
     <section class="apprentice-main" id="dashboard">
         <header class="apprentice-topbar">
             <div>
                 <p class="eyebrow">Panel personal</p>
                 <h1>Hola, <?= htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') ?></h1>
-                <span>Consulta eventos, pre-registrate y descarga tus certificados.</span>
+                <span>Consulta eventos, pre-regístrate y descarga tus certificados.</span>
             </div>
 
             <a class="top-logout" href="<?= htmlspecialchars(app_url('login/logout.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span aria-hidden="true">SL</span>
-                Cerrar sesion
+                Cerrar sesión
             </a>
         </header>
 
@@ -146,7 +131,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
             <div class="focus-copy">
                 <p class="eyebrow">Acceso al auditorio</p>
                 <h2>Tu proximo evento ya tiene ruta de ingreso</h2>
-                <p>Pre-registrate desde SICA, llega al auditorio y confirma tu asistencia escaneando el codigo del evento.</p>
+                <p>Pre-regístrate desde SICA, llega al auditorio y confirma tu asistencia escaneando el código del evento.</p>
                 <div class="focus-actions">
                     <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>" class="primary-action">Ver eventos</a>
                 </div>
@@ -165,30 +150,30 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
         </section>
 
         <section class="metric-grid" aria-label="Indicadores del aprendiz">
-            <article class="metric-card blue">
+            <a class="metric-card blue" href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span>Eventos disponibles</span>
                 <strong><?= htmlspecialchars((string)$eventosDisponibles, ENT_QUOTES, 'UTF-8') ?></strong>
                 <small>Abiertos para pre-registro</small>
                 <em>Explorar</em>
-            </article>
-            <article class="metric-card green">
+            </a>
+            <a class="metric-card green" href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span>Asistencias confirmadas</span>
                 <strong><?= htmlspecialchars((string)$asistenciasConfirmadas, ENT_QUOTES, 'UTF-8') ?></strong>
                 <small>Confirmadas en el auditorio</small>
                 <em>Historial</em>
-            </article>
-            <article class="metric-card violet">
+            </a>
+            <a class="metric-card violet" href="<?= htmlspecialchars(app_url('aprendiz/certificados.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span>Certificados</span>
                 <strong><?= htmlspecialchars((string)$certificadosListos, ENT_QUOTES, 'UTF-8') ?></strong>
                 <small><?= htmlspecialchars($certificadosListos === 1 ? 'Listo para descargar' : 'Listos para descargar', ENT_QUOTES, 'UTF-8') ?></small>
                 <em>Descargar</em>
-            </article>
-            <article class="metric-card amber">
+            </a>
+            <a class="metric-card amber" href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span>Pre-registros</span>
                 <strong><?= htmlspecialchars((string)$preregistrosPendientes, ENT_QUOTES, 'UTF-8') ?></strong>
                 <small><?= htmlspecialchars($preregistrosPendientes === 1 ? 'Evento pendiente por asistir' : 'Eventos pendientes por asistir', ENT_QUOTES, 'UTF-8') ?></small>
                 <em>Ver cupo</em>
-            </article>
+            </a>
         </section>
 
         <section class="events-panel dashboard-events" aria-label="Eventos para el aprendiz">
@@ -205,7 +190,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                 <?php if (!$eventosDestacados): ?>
                     <article class="event-empty">
                         <strong>No hay eventos abiertos en este momento.</strong>
-                        <span>Cuando se apruebe un evento para auditorio, lo veras aqui.</span>
+                        <span>Cuando se apruebe un evento para auditorio, lo verás aquí.</span>
                     </article>
                 <?php endif; ?>
 
@@ -218,7 +203,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                     <article class="event-card <?= htmlspecialchars($estadoClase, ENT_QUOTES, 'UTF-8') ?>">
                         <div class="event-date">
                             <strong><?= htmlspecialchars($fechaEvento->format('d'), ENT_QUOTES, 'UTF-8') ?></strong>
-                            <span><?= htmlspecialchars($fechaEvento->format('M'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <span><?= htmlspecialchars(apprentice_month($fechaEvento), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                         <div class="event-body">
                             <div class="event-title-row">
@@ -237,9 +222,9 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                         </div>
                         <div class="event-action">
                             <?php if ($estaRegistrado): ?>
-                                <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">Ver detalle</a>
+                                <a href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php?evento=' . (string)$evento['id_evento']), ENT_QUOTES, 'UTF-8') ?>">Ver cupo</a>
                             <?php else: ?>
-                                <a href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">Pre-registrarme</a>
+                                <a href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php?evento=' . (string)$evento['id_evento']), ENT_QUOTES, 'UTF-8') ?>">Pre-registrarme</a>
                             <?php endif; ?>
                         </div>
                     </article>
@@ -252,25 +237,19 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                 <div class="panel-heading">
                     <div>
                         <p class="eyebrow">Asistencia</p>
-                        <h2>Ingresos confirmados por mes</h2>
+                        <h2>Asistencias confirmadas</h2>
                     </div>
                     <span class="status-pill">Confirmado</span>
                 </div>
                 <div class="spark-chart" aria-hidden="true">
-                    <span style="height: 42%"></span>
-                    <span style="height: 64%"></span>
-                    <span style="height: 58%"></span>
-                    <span style="height: 72%"></span>
-                    <span style="height: 69%"></span>
-                    <span style="height: 86%"></span>
-                    <span style="height: 76%"></span>
-                    <span style="height: 92%"></span>
-                    <span style="height: 84%"></span>
-                    <span style="height: 95%"></span>
+                    <?php foreach ($attendanceBars as $bar): ?>
+                        <?php $height = 18 + (int)round(((int)$bar['value'] / $maxAsistenciasMes) * 74); ?>
+                        <span style="height: <?= htmlspecialchars((string)$height, ENT_QUOTES, 'UTF-8') ?>%" title="<?= htmlspecialchars($bar['label'] . ': ' . (string)$bar['value'], ENT_QUOTES, 'UTF-8') ?>"></span>
+                    <?php endforeach; ?>
                 </div>
                 <div class="chart-footer">
-                    <span>Semana 1</span>
-                    <span>Semana 5</span>
+                    <span><?= htmlspecialchars($attendanceBars[0]['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <span><?= htmlspecialchars($attendanceBars[count($attendanceBars) - 1]['label'], ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
             </article>
 
@@ -288,14 +267,14 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                             <div>
                                 <strong>Sin eventos cercanos</strong>
                                 <em>Auditorio pendiente</em>
-                                <small>Cuando haya eventos activos apareceran aqui.</small>
+                                <small>Cuando haya eventos activos aparecerán aquí.</small>
                             </div>
                         </li>
                     <?php endif; ?>
                     <?php foreach ($eventosCercanos as $evento): ?>
                         <?php $fechaAgenda = new DateTime((string)$evento['fecha_evento']); ?>
                         <li>
-                            <span class="agenda-date"><?= htmlspecialchars($fechaAgenda->format('d M'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <span class="agenda-date"><?= htmlspecialchars(apprentice_short_date($fechaAgenda), ENT_QUOTES, 'UTF-8') ?></span>
                             <div>
                                 <strong><?= htmlspecialchars((string)$evento['nombre_evento'], ENT_QUOTES, 'UTF-8') ?></strong>
                                 <em><?= htmlspecialchars((string)$evento['nombre_auditorio'], ENT_QUOTES, 'UTF-8') ?></em>
@@ -323,8 +302,8 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                     <div class="smart-step">
                         <span>2</span>
                         <div>
-                        <strong>Escanea el codigo del evento al ingresar</strong>
-                        <small>El codigo lo genera el responsable del evento.</small>
+                        <strong>Escanea el código del evento al ingresar</strong>
+                        <small>El código lo genera el responsable del evento.</small>
                         </div>
                     </div>
                     <div class="smart-step">
@@ -348,7 +327,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                     <div class="certificate-preview muted">
                         <div>
                             <strong>No hay certificados listos</strong>
-                            <small>Cuando se confirme tu asistencia, apareceran aqui.</small>
+                            <small>Cuando se confirme tu asistencia, aparecerán aquí.</small>
                         </div>
                         <a href="<?= htmlspecialchars(app_url('aprendiz/certificados.php'), ENT_QUOTES, 'UTF-8') ?>">Ver</a>
                     </div>

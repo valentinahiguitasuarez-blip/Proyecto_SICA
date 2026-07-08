@@ -454,6 +454,8 @@ body {
     row-gap: 8px;
     align-items: start;
     padding: 18px;
+    text-decoration: none;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
 .metric-card::before {
@@ -516,6 +518,14 @@ body {
     font-size: 12px;
     font-style: normal;
     font-weight: 900;
+}
+
+.metric-card:hover,
+.metric-card:focus {
+    color: inherit;
+    border-color: rgba(3, 1, 210, 0.28);
+    box-shadow: 0 22px 42px rgba(17, 24, 39, 0.1);
+    transform: translateY(-2px);
 }
 
 .metric-card.blue {
@@ -819,6 +829,19 @@ body {
 .event-type {
     color: var(--event-accent);
     background: var(--event-soft);
+}
+
+.event-state {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: var(--event-accent);
+    background: var(--event-soft);
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
 }
 
 .registered-pill {
@@ -1660,7 +1683,7 @@ body {
 .spark-chart {
     height: 220px;
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     align-items: end;
     gap: 10px;
     padding: 12px;
@@ -2154,7 +2177,7 @@ body {
     }
 
     .apprentice-nav {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
     .metric-grid,

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([4]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/aprendiz_helpers.php';
 
 $pageTitle = 'Eventos del Aprendiz - SICA';
 $pageStyles = ['css/aprendiz.css'];
@@ -72,47 +73,7 @@ try {
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
 <main class="apprentice-dashboard">
-    <aside class="apprentice-sidebar" aria-label="Menu del aprendiz">
-        <a class="apprentice-brand" href="<?= htmlspecialchars(app_url('aprendiz/index.php'), ENT_QUOTES, 'UTF-8') ?>">
-            <span>
-                <strong>SICA</strong>
-                <small>Registro de asistencia</small>
-            </span>
-        </a>
-
-        <a class="apprentice-person" href="<?= htmlspecialchars(app_url('aprendiz/perfil.php'), ENT_QUOTES, 'UTF-8') ?>" aria-label="Ver perfil del aprendiz">
-            <div class="apprentice-person-avatar">
-                <?php if ($fotoPerfil !== ''): ?>
-                    <img src="<?= htmlspecialchars(app_url($fotoPerfil), ENT_QUOTES, 'UTF-8') ?>" alt="">
-                <?php else: ?>
-                    <?= htmlspecialchars($iniciales, ENT_QUOTES, 'UTF-8') ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <strong><?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?></strong>
-                <small><?= htmlspecialchars((string)($usuario['correo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
-            </div>
-        </a>
-
-        <nav class="apprentice-nav">
-            <a href="<?= htmlspecialchars(app_url('aprendiz/index.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">IN</span>
-                Dashboard
-            </a>
-            <a class="active" href="<?= htmlspecialchars(app_url('aprendiz/eventos.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">EV</span>
-                Eventos
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/preregistro.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">PR</span>
-                Pre-registro
-            </a>
-            <a href="<?= htmlspecialchars(app_url('aprendiz/certificados.php'), ENT_QUOTES, 'UTF-8') ?>">
-                <span aria-hidden="true">CE</span>
-                Certificados
-            </a>
-        </nav>
-    </aside>
+    <?php apprentice_sidebar('eventos', $nombreCompleto, $iniciales, $fotoPerfil, (string)($usuario['correo'] ?? '')); ?>
 
     <section class="apprentice-main">
         <header class="apprentice-topbar">
@@ -124,7 +85,7 @@ try {
 
             <a class="top-logout" href="<?= htmlspecialchars(app_url('login/logout.php'), ENT_QUOTES, 'UTF-8') ?>">
                 <span aria-hidden="true">SL</span>
-                Cerrar sesion
+                Cerrar sesión
             </a>
         </header>
 
@@ -182,7 +143,7 @@ try {
                 <div>
                     <p class="eyebrow">Eventos</p>
                     <h2>Auditorios programados</h2>
-                    <span>El responsable del evento genera el codigo de ingreso; tu solo haces el pre-registro.</span>
+                    <span>El responsable del evento genera el código de ingreso; tú solo haces el pre-registro.</span>
                 </div>
             </div>
 
@@ -196,7 +157,7 @@ try {
                 <?php if (!$eventosAprendiz): ?>
                     <article class="event-empty">
                         <strong>No hay eventos disponibles.</strong>
-                        <span>Cuando coordinacion programe eventos, apareceran aqui.</span>
+                        <span>Cuando coordinación programe eventos, aparecerán aquí.</span>
                     </article>
                 <?php endif; ?>
 
@@ -214,7 +175,7 @@ try {
                     <article class="event-card <?= htmlspecialchars($estadoClase, ENT_QUOTES, 'UTF-8') ?>">
                         <div class="event-date">
                             <strong><?= htmlspecialchars($fechaEvento->format('d'), ENT_QUOTES, 'UTF-8') ?></strong>
-                            <span><?= htmlspecialchars($fechaEvento->format('M'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <span><?= htmlspecialchars(apprentice_month($fechaEvento), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                         <div class="event-body">
                             <div class="event-title-row">

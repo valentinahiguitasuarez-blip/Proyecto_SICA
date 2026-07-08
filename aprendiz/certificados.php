@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([4]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/aprendiz_helpers.php';
 
 $pageTitle = 'Certificados del Aprendiz - SICA';
 $pageStyles = ['css/aprendiz.css'];
@@ -33,10 +34,10 @@ function cert_asistencia_texto(?string $asistencia): string
     }
 
     if (stripos($valor, 'No') !== false) {
-        return 'No asistio';
+        return 'No asistió';
     }
 
-    return 'Asistio';
+    return 'Asistió';
 }
 
 try {
@@ -84,58 +85,18 @@ try {
 $listos = array_values(array_filter($certificados, static fn(array $item): bool => !empty($item['ruta_certificado'])));
 $pendientesEmision = array_values(array_filter(
     $certificados,
-    static fn(array $item): bool => empty($item['ruta_certificado']) && cert_asistencia_texto((string)$item['asistencia']) === 'Asistio'
+    static fn(array $item): bool => empty($item['ruta_certificado']) && cert_asistencia_texto((string)$item['asistencia']) === 'Asistió'
 ));
 $pendientesAsistencia = array_values(array_filter(
     $certificados,
-    static fn(array $item): bool => empty($item['ruta_certificado']) && cert_asistencia_texto((string)$item['asistencia']) !== 'Asistio'
+    static fn(array $item): bool => empty($item['ruta_certificado']) && cert_asistencia_texto((string)$item['asistencia']) !== 'Asistió'
 ));
 $ultimoCertificado = $listos[0] ?? null;
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
 <main class="apprentice-dashboard">
-    <aside class="apprentice-sidebar" aria-label="Menu del aprendiz">
-        <a class="apprentice-brand" href="<?= cert_e(app_url('aprendiz/index.php')) ?>">
-            <span>
-                <strong>SICA</strong>
-                <small>Registro de asistencia</small>
-            </span>
-        </a>
-
-        <a class="apprentice-person" href="<?= cert_e(app_url('aprendiz/perfil.php')) ?>" aria-label="Ver perfil del aprendiz">
-            <div class="apprentice-person-avatar">
-                <?php if ($fotoPerfil !== ''): ?>
-                    <img src="<?= cert_e(app_url($fotoPerfil)) ?>" alt="">
-                <?php else: ?>
-                    <?= cert_e($iniciales) ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <strong><?= cert_e($nombreCompleto) ?></strong>
-                <small><?= cert_e((string)($usuario['correo'] ?? '')) ?></small>
-            </div>
-        </a>
-
-        <nav class="apprentice-nav">
-            <a href="<?= cert_e(app_url('aprendiz/index.php')) ?>">
-                <span aria-hidden="true">IN</span>
-                Dashboard
-            </a>
-            <a href="<?= cert_e(app_url('aprendiz/eventos.php')) ?>">
-                <span aria-hidden="true">EV</span>
-                Eventos
-            </a>
-            <a href="<?= cert_e(app_url('aprendiz/preregistro.php')) ?>">
-                <span aria-hidden="true">PR</span>
-                Pre-registro
-            </a>
-            <a class="active" href="<?= cert_e(app_url('aprendiz/certificados.php')) ?>">
-                <span aria-hidden="true">CE</span>
-                Certificados
-            </a>
-        </nav>
-    </aside>
+    <?php apprentice_sidebar('certificados', $nombreCompleto, $iniciales, $fotoPerfil, (string)($usuario['correo'] ?? '')); ?>
 
     <section class="apprentice-main">
         <header class="apprentice-topbar">
@@ -147,15 +108,15 @@ $ultimoCertificado = $listos[0] ?? null;
 
             <a class="top-logout" href="<?= cert_e(app_url('login/logout.php')) ?>">
                 <span aria-hidden="true">SL</span>
-                Cerrar sesion
+                Cerrar sesión
             </a>
         </header>
 
         <section class="certificate-hero" aria-label="Resumen de certificados">
             <div>
-                <p class="eyebrow">Boveda SICA</p>
+                <p class="eyebrow">Bóveda SICA</p>
                 <h2><?= cert_e((string)count($listos)) ?> certificados listos</h2>
-                <span>Tu historial queda organizado por evento, auditorio y fecha de emision.</span>
+                <span>Tu historial queda organizado por evento, auditorio y fecha de emisión.</span>
             </div>
             <div class="certificate-orbit" aria-hidden="true">
                 <span>CE</span>
@@ -169,7 +130,7 @@ $ultimoCertificado = $listos[0] ?? null;
                 <small>Disponibles para descargar</small>
             </article>
             <article>
-                <span>En emision</span>
+                <span>En emisión</span>
                 <strong><?= cert_e((string)count($pendientesEmision)) ?></strong>
                 <small>Asistencia confirmada</small>
             </article>
@@ -196,7 +157,7 @@ $ultimoCertificado = $listos[0] ?? null;
                 <div>
                     <p class="eyebrow">Historial</p>
                     <h2>Eventos y certificados</h2>
-                    <span>Cuando el instructor confirme la asistencia y el sistema emita el certificado, aparecera el boton de descarga.</span>
+                    <span>Cuando el instructor confirme la asistencia y el sistema emita el certificado, aparecerá el botón de descarga.</span>
                 </div>
             </div>
 
@@ -212,9 +173,9 @@ $ultimoCertificado = $listos[0] ?? null;
                         $fechaEvento = new DateTime((string)$item['fecha_evento']);
                         $asistencia = cert_asistencia_texto((string)$item['asistencia']);
                         $tieneCertificado = !empty($item['ruta_certificado']);
-                        $estadoClase = $tieneCertificado ? 'ready' : ($asistencia === 'Asistio' ? 'issuing' : 'waiting');
-                        $estadoTexto = $tieneCertificado ? 'Listo para descargar' : ($asistencia === 'Asistio' ? 'En emision' : 'Pendiente de asistencia');
-                        $estadoDetalle = $asistencia === 'Asistio'
+                        $estadoClase = $tieneCertificado ? 'ready' : ($asistencia === 'Asistió' ? 'issuing' : 'waiting');
+                        $estadoTexto = $tieneCertificado ? 'Listo para descargar' : ($asistencia === 'Asistió' ? 'En emisión' : 'Pendiente de asistencia');
+                        $estadoDetalle = $asistencia === 'Asistió'
                             ? 'Tu asistencia ya fue registrada. Estamos preparando tu certificado.'
                             : 'Asiste al evento y confirma tu ingreso en el auditorio.';
                         $accionTexto = $tieneCertificado ? 'Descargar certificado' : 'Ver pre-registro';
@@ -225,7 +186,7 @@ $ultimoCertificado = $listos[0] ?? null;
                         <article class="certificate-card <?= cert_e($estadoClase) ?>">
                             <div class="certificate-date">
                                 <strong><?= cert_e($fechaEvento->format('d')) ?></strong>
-                                <span><?= cert_e(mb_strtoupper($fechaEvento->format('M'), 'UTF-8')) ?></span>
+                                <span><?= cert_e(apprentice_month($fechaEvento)) ?></span>
                             </div>
                             <div>
                                 <div class="event-title-row">

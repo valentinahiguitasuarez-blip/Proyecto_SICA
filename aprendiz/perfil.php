@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([4]);
 require_once __DIR__ . '/../config/conexion.php';
+require_once __DIR__ . '/../includes/aprendiz_helpers.php';
 
 $pageTitle = 'Perfil del Aprendiz - SICA';
 $pageStyles = ['css/aprendiz.css'];
@@ -58,7 +59,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $documentoActual = (string)$idDocumento;
 
     if (!hash_equals((string)$_SESSION['csrf_perfil'], $csrf)) {
-        $_SESSION['profile_message'] = 'La sesion expiro. Intenta de nuevo.';
+        $_SESSION['profile_message'] = 'La sesión expiró. Intenta de nuevo.';
         $_SESSION['profile_message_type'] = 'danger';
     } elseif (!preg_match('/^\d{1,20}$/', $documentoActual)) {
         $_SESSION['profile_message'] = 'El documento debe tener solo numeros y maximo 20 digitos.';
@@ -214,13 +215,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $_SESSION['profile_message_type'] = 'success';
             } catch (PDOException $exception) {
                 $_SESSION['profile_message'] = $exception->getCode() === '23000'
-                    ? 'Ese correo ya esta registrado por otro usuario.'
+                    ? 'Ese correo ya está registrado por otro usuario.'
                     : 'No fue posible guardar el perfil.';
                 $_SESSION['profile_message_type'] = 'danger';
                 error_log('SICA perfil: error actualizando usuario: ' . $exception->getMessage());
             } catch (Throwable $exception) {
                 $_SESSION['profile_message'] = $exception->getMessage() === 'correo_duplicado'
-                    ? 'Ese correo ya esta registrado por otro usuario.'
+                    ? 'Ese correo ya está registrado por otro usuario.'
                     : 'No fue posible guardar el perfil.';
                 $_SESSION['profile_message_type'] = 'danger';
                 error_log('SICA perfil: ' . $exception->getMessage());
@@ -269,48 +270,19 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
 <main class="apprentice-dashboard">
-    <aside class="apprentice-sidebar" aria-label="Menu del aprendiz">
-        <a class="apprentice-brand" href="<?= e(app_url('aprendiz/index.php')) ?>">
-            <span>
-                <strong>SICA</strong>
-                <small>Registro de asistencia</small>
-            </span>
-        </a>
-
-        <a class="apprentice-person" href="<?= e(app_url('aprendiz/perfil.php')) ?>" aria-label="Ver perfil del aprendiz">
-            <div class="apprentice-person-avatar">
-                <?php if ($fotoPerfil !== ''): ?>
-                    <img src="<?= e(app_url($fotoPerfil)) ?>" alt="">
-                <?php else: ?>
-                    <?= e($iniciales) ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <strong><?= e($nombreCompleto) ?></strong>
-                <small><?= e((string)$perfil['correo']) ?></small>
-            </div>
-        </a>
-
-        <nav class="apprentice-nav">
-            <a href="<?= e(app_url('aprendiz/index.php')) ?>"><span aria-hidden="true">IN</span>Dashboard</a>
-            <a href="<?= e(app_url('aprendiz/eventos.php')) ?>"><span aria-hidden="true">EV</span>Eventos</a>
-            <a href="<?= e(app_url('aprendiz/preregistro.php')) ?>"><span aria-hidden="true">PR</span>Pre-registro</a>
-            <a href="<?= e(app_url('aprendiz/certificados.php')) ?>"><span aria-hidden="true">CE</span>Certificados</a>
-            <a class="active" href="<?= e(app_url('aprendiz/perfil.php')) ?>"><span aria-hidden="true">PE</span>Perfil</a>
-        </nav>
-    </aside>
+    <?php apprentice_sidebar('perfil', $nombreCompleto, $iniciales, $fotoPerfil, (string)$perfil['correo']); ?>
 
     <section class="apprentice-main">
         <header class="apprentice-topbar">
             <div>
                 <p class="eyebrow">Perfil del aprendiz</p>
                 <h1>Mis datos personales</h1>
-                <span>Actualiza tu informacion para pre-registros, certificados y notificaciones.</span>
+                <span>Actualiza tu información para pre-registros, certificados y notificaciones.</span>
             </div>
 
-            <a class="top-logout" href="<?= e(app_url('aprendiz/index.php')) ?>">
-                <span aria-hidden="true">IN</span>
-                Dashboard
+            <a class="top-logout" href="<?= e(app_url('login/logout.php')) ?>">
+                <span aria-hidden="true">SL</span>
+                Cerrar sesión
             </a>
         </header>
 

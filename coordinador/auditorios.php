@@ -7,19 +7,11 @@ require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../includes/coordinador_panel.php';
 
 $pageTitle = 'Auditorios - Coordinador SICA';
-$pageStyles = ['css/admin.css'];
-
-function coord_auditorio_dotacion_label(mixed $value): string
-{
-    if ($value === null || $value === '') {
-        return 'Por registrar';
-    }
-
-    return (int)$value === 1 ? 'Sí' : 'No';
-}
+$pageStyles = ['css/instructor.css'];
 
 $auditorios = [];
 $stats = ['total' => 0, 'activos' => 0, 'capacidadTotal' => 0];
+
 try {
     $auditorios = coord_rows(
         $pdo,
@@ -37,6 +29,7 @@ try {
                   aes.nombre_estado
          ORDER BY a.nombre_auditorio ASC'
     );
+
     $stats['total'] = count($auditorios);
     foreach ($auditorios as $auditorio) {
         if ((string)$auditorio['estado'] === 'Activo') {
@@ -51,74 +44,74 @@ try {
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 <?php coord_layout_start('auditorios'); ?>
 
-        <header class="admin-topbar">
-            <div>
-                <p class="admin-eyebrow">Espacios</p>
-                <h1>Auditorios disponibles</h1>
-                <span>Consulta capacidad y ocupacion antes de aprobar una solicitud. Solo el administrador puede crear o editar espacios.</span>
-            </div>
-            <div class="admin-top-actions">
-                <a href="<?= coord_h(app_url('coordinador/calendario.php')) ?>">Calendario <strong>CA</strong></a>
-                <a href="<?= coord_h(app_url('coordinador/index.php')) ?>">Solicitudes <strong>SR</strong></a>
-            </div>
-        </header>
+<header class="instructor-topbar">
+    <div>
+        <p class="eyebrow">Espacios</p>
+        <h1>Auditorios disponibles</h1>
+        <span>Consulta capacidad y dotación antes de aprobar una solicitud. Solo el administrador puede crear o editar espacios.</span>
+    </div>
+    <div class="topbar-actions">
+        <a class="top-action" href="<?= coord_h(app_url('coordinador/calendario.php')) ?>">Calendario</a>
+        <a class="top-action" href="<?= coord_h(app_url('coordinador/solicitudes.php')) ?>">Solicitudes</a>
+    </div>
+</header>
 
-        <section class="admin-metrics coord-metrics" aria-label="Resumen de auditorios">
-            <article class="admin-metric">
-                <span>Total auditorios</span>
-                <strong><?= coord_h($stats['total']) ?></strong>
-                <small>Espacios registrados</small>
-            </article>
-            <article class="admin-metric">
-                <span>Activos</span>
-                <strong><?= coord_h($stats['activos']) ?></strong>
-                <small>Disponibles para reservar</small>
-            </article>
-            <article class="admin-metric">
-                <span>Capacidad total</span>
-                <strong><?= coord_h($stats['capacidadTotal']) ?></strong>
-                <small>Personas en todos los espacios</small>
-            </article>
-        </section>
+<section class="metric-grid" aria-label="Resumen de auditorios">
+    <article class="metric-tile blue"><span>Total auditorios</span><strong><?= coord_h($stats['total']) ?></strong><small>Espacios registrados</small><em>Directorio</em></article>
+    <article class="metric-tile green"><span>Activos</span><strong><?= coord_h($stats['activos']) ?></strong><small>Disponibles para reservar</small><em>Estado</em></article>
+    <article class="metric-tile navy"><span>Capacidad total</span><strong><?= coord_h($stats['capacidadTotal']) ?></strong><small>Personas en todos los espacios</small><em>Cupos</em></article>
+</section>
 
-        <section class="admin-panel coord-auditoriums-panel">
-            <div class="admin-panel-head">
-                <div>
-                    <p class="admin-eyebrow">Directorio</p>
-                    <h2>Espacios registrados</h2>
-                    <span class="admin-panel-note">Consulta la capacidad y movimiento reciente de cada espacio antes de tomar decisiones.</span>
+<section class="panel">
+    <div class="panel-head">
+        <div>
+            <p class="eyebrow">Directorio</p>
+            <h2>Espacios registrados</h2>
+            <span class="panel-subtitle">Misma ficha de dotación que ve el instructor. Los campos sin dato aparecen como Por registrar.</span>
+        </div>
+    </div>
+
+    <div class="coord-auditorium-directory">
+        <?php if (!$auditorios): ?>
+            <div class="empty-state">No hay auditorios registrados. El administrador aún no ha creado espacios en el sistema.</div>
+        <?php endif; ?>
+
+        <?php foreach ($auditorios as $auditorio): ?>
+            <article class="coord-auditorium-card <?= (string)$auditorio['estado'] === 'Activo' ? 'ok' : 'off' ?>">
+                <div class="coord-auditorium-card-head">
+                    <div>
+                        <p class="eyebrow">Auditorio</p>
+                        <h3><?= coord_h($auditorio['nombre_auditorio']) ?></h3>
+                        <span class="panel-subtitle">Bloque <?= coord_h($auditorio['bloque']) ?></span>
+                    </div>
+                    <span class="status-pill <?= (string)$auditorio['estado'] === 'Activo' ? 'ok' : 'muted' ?>"><?= coord_h($auditorio['estado']) ?></span>
                 </div>
-            </div>
 
-            <div class="admin-auditorios-list">
-                <?php if (!$auditorios): ?>
-                    <article class="admin-empty-state">
-                        <strong>No hay auditorios registrados.</strong>
-                        <span>El administrador aun no ha creado espacios en el sistema.</span>
-                    </article>
-                <?php endif; ?>
+                <article class="auditorium-feature-card" aria-label="Dotación de <?= coord_h($auditorio['nombre_auditorio']) ?>">
+                    <div>
+                        <p class="eyebrow">Características del auditorio</p>
+                        <span>Información disponible para decidir antes de aprobar una solicitud.</span>
+                    </div>
+                    <div class="auditorium-feature-grid">
+                        <span><strong><?= coord_h($auditorio['bloque']) ?></strong><small class="feature-label">Bloque</small></span>
+                        <span><strong><?= coord_h($auditorio['capacidad']) ?></strong><small class="feature-label">Cupos máximos</small></span>
+                        <span><strong class="<?= coord_h(coord_dotacion_value_class($auditorio['cantidad_computadores'] ?? null)) ?>"><?= coord_h(coord_computadores_label($auditorio['cantidad_computadores'] ?? null)) ?></strong><small class="feature-label">Computadores</small></span>
+                        <span><strong class="<?= coord_h(coord_dotacion_value_class($auditorio['tiene_aire_acondicionado'] ?? null)) ?>"><?= coord_h(coord_dotacion_label($auditorio['tiene_aire_acondicionado'] ?? null)) ?></strong><small class="feature-label">Aire acondicionado</small></span>
+                        <span><strong class="<?= coord_h(coord_dotacion_value_class($auditorio['tiene_ventilador'] ?? null)) ?>"><?= coord_h(coord_dotacion_label($auditorio['tiene_ventilador'] ?? null)) ?></strong><small class="feature-label">Ventilador</small></span>
+                        <span><strong class="<?= coord_h(coord_dotacion_value_class($auditorio['tiene_tablero'] ?? null)) ?>"><?= coord_h(coord_dotacion_label($auditorio['tiene_tablero'] ?? null)) ?></strong><small class="feature-label">Tablero / pizarra</small></span>
+                        <span><strong class="<?= coord_h(coord_dotacion_value_class($auditorio['tiene_televisor'] ?? null)) ?>"><?= coord_h(coord_dotacion_label($auditorio['tiene_televisor'] ?? null)) ?></strong><small class="feature-label">Televisor</small></span>
+                        <span><strong><?= coord_h((int)$auditorio['pendientes']) ?></strong><small class="feature-label">Solicitudes pendientes</small></span>
+                        <span><strong><?= coord_h((int)$auditorio['proximos']) ?></strong><small class="feature-label">Próximas reservas</small></span>
+                    </div>
+                </article>
 
-                <?php foreach ($auditorios as $auditorio): ?>
-                    <article class="admin-auditorio-card <?= (string)$auditorio['estado'] === 'Activo' ? 'ok' : 'off' ?>">
-                        <div class="coord-auditorio-icon" aria-hidden="true">AU</div>
-                        <div>
-                            <h3><?= coord_h($auditorio['nombre_auditorio']) ?></h3>
-                            <span>Bloque <?= coord_h($auditorio['bloque']) ?></span>
-                        </div>
-                        <div class="admin-auditorio-meta">
-                            <span>Capacidad <strong><?= coord_h($auditorio['capacidad']) ?></strong></span>
-                            <span>Computadores <strong><?= coord_h($auditorio['cantidad_computadores'] ?? 'Por registrar') ?></strong></span>
-                            <span>Aire <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_aire_acondicionado'] ?? null)) ?></strong></span>
-                            <span>Ventilador <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_ventilador'] ?? null)) ?></strong></span>
-                            <span>Tablero <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_tablero'] ?? null)) ?></strong></span>
-                            <span>Televisor <strong><?= coord_h(coord_auditorio_dotacion_label($auditorio['tiene_televisor'] ?? null)) ?></strong></span>
-                            <span>Pendientes <strong><?= coord_h((int)$auditorio['pendientes']) ?></strong></span>
-                            <span>Proximas activas <strong><?= coord_h((int)$auditorio['proximos']) ?></strong></span>
-                        </div>
-                        <em><?= coord_h($auditorio['estado']) ?></em>
-                    </article>
-                <?php endforeach; ?>
-            </div>
-        </section>
+                <div class="hero-actions">
+                    <a class="primary-btn" href="<?= coord_h(app_url('coordinador/calendario.php?auditorio=' . (int)$auditorio['id_auditorio'])) ?>">Ver calendario</a>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+</section>
+
 <?php coord_layout_end(); ?>
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

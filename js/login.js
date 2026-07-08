@@ -162,6 +162,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? submitter
                 : formElement;
 
+            if (submitter && submitter.name === 'accion' && submitter.value === 'cancelar') {
+                const observacionField = formElement.querySelector('textarea[name="observacion"]');
+                if (!observacionField || observacionField.value.trim() === '') {
+                    event.preventDefault();
+                    if (observacionField) {
+                        observacionField.focus();
+                    }
+                    return;
+                }
+            }
+
+            if (submitter && submitter.name === 'accion' && submitter.value === 'enviar_coordinador') {
+                const coordinatorField = formElement.querySelector('select[name="id_coordinador"]');
+                if (coordinatorField && (!coordinatorField.value || coordinatorField.value === '0')) {
+                    event.preventDefault();
+                    coordinatorField.focus();
+                    return;
+                }
+            }
+
             if (!source.dataset.confirmTitle && !source.dataset.confirmMessage) {
                 return;
             }
@@ -382,4 +402,41 @@ document.addEventListener('DOMContentLoaded', function () {
             passwordToggle.setAttribute('aria-label', isPassword ? 'Ocultar contrase\u00f1a' : 'Mostrar contrase\u00f1a');
         });
     }
+
+    document.querySelectorAll('textarea[data-char-counter]').forEach(function (textarea) {
+        var max = parseInt(textarea.getAttribute('maxlength') || '220', 10);
+        var counter = textarea.parentElement && textarea.parentElement.querySelector('.char-counter');
+        if (!counter) {
+            return;
+        }
+        function updateCounter() {
+            var len = textarea.value.length;
+            var remaining = max - len;
+            counter.textContent = remaining + ' caracter' + (remaining === 1 ? '' : 'es') + ' disponible' + (remaining === 1 ? '' : 's');
+            counter.style.color = remaining < 30 ? 'var(--ins-amber, #d98b09)' : '';
+            if (remaining < 10) {
+                counter.style.color = 'var(--ins-red, #dc3545)';
+            }
+        }
+        textarea.addEventListener('input', updateCounter);
+        updateCounter();
+    });
+
+    document.querySelectorAll('input[pattern]').forEach(function (input) {
+        if (input.readOnly) {
+            return;
+        }
+        input.addEventListener('invalid', function () {
+            if (input.validity.patternMismatch) {
+                input.setCustomValidity(input.getAttribute('title') || 'Formato inválido.');
+            } else if (input.validity.tooShort) {
+                input.setCustomValidity('Mínimo ' + input.getAttribute('minlength') + ' caracteres.');
+            } else {
+                input.setCustomValidity('');
+            }
+        });
+        input.addEventListener('input', function () {
+            input.setCustomValidity('');
+        });
+    });
 });

@@ -123,6 +123,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 if ((string)$evento['nombre_estado'] !== 'Pendiente') {
                     throw new RuntimeException('Solo puedes enviar a coordinacion solicitudes pendientes.');
                 }
+                if ($idCoordinador <= 0 && !empty($evento['id_coordinador'])) {
+                    $idCoordinador = (int)$evento['id_coordinador'];
+                }
                 if ($idCoordinador <= 0) {
                     throw new RuntimeException('Selecciona el coordinador que revisara la solicitud.');
                 }
@@ -135,10 +138,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                        AND LOWER(r.nombre_rol) LIKE '%coordinador%'
                      LIMIT 1"
                 );
-                $coordStmt->execute([':id' => $idCoordinador]);
+                $coordStmt->execute([':id' => (string)$idCoordinador]);
                 $coordinador = $coordStmt->fetch();
-                if (!$coordinador || !filter_var((string)$coordinador['correo'], FILTER_VALIDATE_EMAIL)) {
-                    throw new RuntimeException('El coordinador seleccionado no tiene un correo valido.');
+                if (!$coordinador) {
+                    throw new RuntimeException('El coordinador seleccionado no existe o no tiene rol valido.');
+                }
+
+                $update = $pdo->prepare(
+                    'UPDATE evento
+                     SET id_coordinador = :coordinador
+                     WHERE id_evento = :id_evento'
+                );
+                $update->execute([
+                    ':coordinador' => (string)$idCoordinador,
+                    ':id_evento' => $idEvento,
+                ]);
+
+                $verifyStmt = $pdo->prepare(
+                    'SELECT id_coordinador FROM evento WHERE id_evento = :id_evento LIMIT 1'
+                );
+                $verifyStmt->execute([':id_evento' => $idEvento]);
+                $assignedCoordinator = (int)$verifyStmt->fetchColumn();
+                if ($assignedCoordinator !== $idCoordinador) {
+                    throw new RuntimeException('No fue posible asignar la solicitud al coordinador.');
                 }
 
                 $coordName = trim((string)$coordinador['nombre'] . ' ' . (string)$coordinador['apellido']);
@@ -155,21 +177,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     . "Descripcion: {$evento['descripcion']}\n";
                 $body .= "\nIngresa a SICA como coordinador para aprobar o cancelar la solicitud.\n\nEquipo SICA";
 
-                if (!sica_send_mail((string)$coordinador['correo'], 'Solicitud de reserva de auditorio - SICA', $body)) {
-                    throw new RuntimeException('No se pudo enviar el correo al coordinador. Revisa la configuracion SMTP.');
+                $correoCoordinador = trim((string)$coordinador['correo']);
+                if ($correoCoordinador === '' || !filter_var($correoCoordinador, FILTER_VALIDATE_EMAIL)) {
+                    $_SESSION['admin_requests_message'] = 'Solicitud asignada al coordinador en SICA. No se envio correo porque no tiene un correo valido.';
+                    $_SESSION['admin_requests_message_type'] = 'danger';
+                } elseif (!sica_send_mail($correoCoordinador, 'Solicitud de reserva de auditorio - SICA', $body)) {
+                    $_SESSION['admin_requests_message'] = 'Solicitud asignada al coordinador en SICA, pero no se pudo enviar el correo. Revisa la configuracion SMTP.';
+                    $_SESSION['admin_requests_message_type'] = 'danger';
+                } else {
+                    $_SESSION['admin_requests_message'] = 'Solicitud enviada al coordinador correctamente.';
+                    $_SESSION['admin_requests_message_type'] = 'success';
                 }
-
-                $update = $pdo->prepare(
-                    'UPDATE evento
-                     SET id_coordinador = :coordinador
-                     WHERE id_evento = :id_evento'
-                );
-                $update->execute([
-                    ':coordinador' => $idCoordinador,
-                    ':id_evento' => $idEvento,
-                ]);
-
-                $_SESSION['admin_requests_message'] = 'Solicitud enviada al coordinador correctamente.';
             } else {
                 if (!in_array((string)$evento['nombre_estado'], ['Activo', 'Cancelado', 'Finalizado'], true)
                     || empty($evento['fecha_aprobacion'])) {
@@ -198,8 +216,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 }
 
                 $_SESSION['admin_requests_message'] = 'Respuesta enviada al instructor correctamente.';
+                $_SESSION['admin_requests_message_type'] = 'success';
             }
-            $_SESSION['admin_requests_message_type'] = 'success';
         } catch (Throwable $exception) {
             $_SESSION['admin_requests_message'] = $exception->getMessage() !== ''
                 ? $exception->getMessage()
@@ -252,6 +270,7 @@ $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
 $solicitudes = [];
 $counts = ['Pendiente' => 0, 'Activo' => 0, 'Cancelado' => 0, 'Finalizado' => 0];
 
+$queryError = '';
 try {
     foreach (admin_s_rows(
         $pdo,
@@ -290,6 +309,7 @@ try {
         $params
     );
 } catch (Throwable $exception) {
+    $queryError = $exception->getMessage();
     error_log('SICA admin solicitudes: ' . $exception->getMessage());
 }
 
@@ -402,10 +422,22 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
             </form>
 
             <div class="admin-reservation-list">
-                <?php if (!$solicitudes): ?>
+                <?php if ($queryError !== ''): ?>
+                    <article class="admin-empty-state">
+                        <strong>Error al cargar las solicitudes.</strong>
+                        <span><?= admin_s_h($queryError) ?></span>
+                        <small>Filtros activos: q=<?= admin_s_h($search) ?> | estado=<?= admin_s_h($estadoFiltro) ?> | auditorio=<?= admin_s_h((string)$auditorioFiltro) ?></small>
+                        <a href="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">Limpiar filtros</a>
+                    </article>
+                <?php elseif (!$solicitudes): ?>
                     <article class="admin-empty-state">
                         <strong>No hay solicitudes para mostrar.</strong>
-                        <span>Cuando los instructores separen auditorios, apareceran aqui.</span>
+                        <?php if ($search !== '' || $estadoFiltro !== '' || $auditorioFiltro > 0): ?>
+                            <span>Ningun resultado con los filtros actuales.</span>
+                            <a href="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">Limpiar filtros y ver todo</a>
+                        <?php else: ?>
+                            <span>Cuando los instructores separen auditorios, apareceran aqui.</span>
+                        <?php endif; ?>
                     </article>
                 <?php endif; ?>
 
@@ -502,7 +534,7 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                         <?php if ($estado === 'Pendiente' && !$tieneDecision): ?>
                                             <label>
                                                 <span>Coordinador</span>
-                                                <select name="id_coordinador" <?= !$coordinadores ? 'disabled' : '' ?>>
+                                                <select name="id_coordinador" required <?= !$coordinadores ? 'disabled' : '' ?>>
                                                     <option value="0">Selecciona coordinador</option>
                                                     <?php foreach ($coordinadores as $coordinador): ?>
                                                         <option value="<?= admin_s_h($coordinador['id_documento']) ?>" <?= (int)$solicitud['coord_documento'] === (int)$coordinador['id_documento'] ? 'selected' : '' ?>>

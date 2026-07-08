@@ -8,32 +8,10 @@ require_once __DIR__ . '/../includes/coordinador_panel.php';
 
 $usuario = coord_user();
 $coordinadorId = (int)($usuario['id_documento'] ?? 0);
-
-$estadoFiltro = trim((string)($_GET['estado'] ?? ''));
-$busqueda = trim((string)($_GET['q'] ?? ''));
-$fechaDesde = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['desde'] ?? '')) ? (string)$_GET['desde'] : '';
-$fechaHasta = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['hasta'] ?? '')) ? (string)$_GET['hasta'] : '';
-
-$where = ['e.id_coordinador = :coordinador', "es.nombre_estado IN ('Activo', 'Cancelado', 'Finalizado')"];
-$params = [':coordinador' => $coordinadorId];
-
-if ($estadoFiltro !== '' && in_array($estadoFiltro, ['Activo', 'Cancelado', 'Finalizado'], true)) {
-    $where[] = 'es.nombre_estado = :estado';
-    $params[':estado'] = $estadoFiltro;
-}
-if ($busqueda !== '') {
-    $where[] = '(e.nombre_evento LIKE :busqueda OR e.codigo_evento LIKE :busqueda OR u.nombre LIKE :busqueda OR u.apellido LIKE :busqueda)';
-    $params[':busqueda'] = '%' . $busqueda . '%';
-}
-if ($fechaDesde !== '') {
-    $where[] = 'DATE(e.fecha_aprobacion) >= :desde';
-    $params[':desde'] = $fechaDesde;
-}
-if ($fechaHasta !== '') {
-    $where[] = 'DATE(e.fecha_aprobacion) <= :hasta';
-    $params[':hasta'] = $fechaHasta;
-}
-$whereSql = 'WHERE ' . implode(' AND ', $where);
+$filters = coord_historial_filters($_GET, $coordinadorId);
+$whereSql = $filters['whereSql'];
+$params = $filters['params'];
+$exportLimit = 5000;
 
 $decisiones = coord_rows(
     $pdo,
@@ -45,15 +23,21 @@ $decisiones = coord_rows(
      INNER JOIN estado es ON es.id_estado = e.id_estado
      LEFT JOIN usuario u ON u.id_documento = e.id_solicitante
      ' . $whereSql . '
-     ORDER BY e.fecha_aprobacion DESC',
+     ORDER BY COALESCE(e.fecha_aprobacion, e.fecha_evento) DESC, e.id_evento DESC
+     LIMIT ' . (int)$exportLimit,
     $params
 );
+
+$truncated = count($decisiones) >= $exportLimit;
 
 header('Content-Type: text/csv; charset=UTF-8');
 header('Content-Disposition: attachment; filename="historial-coordinacion-sica-' . date('Y-m-d') . '.csv"');
 $out = fopen('php://output', 'w');
 fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
-fputcsv($out, ['Codigo', 'Evento', 'Estado', 'Auditorio', 'Bloque', 'Fecha evento', 'Hora inicio', 'Hora fin', 'Instructor', 'Correo instructor', 'Observacion', 'Fecha decision']);
+if ($truncated) {
+    fputcsv($out, ['Aviso: exportación limitada a ' . $exportLimit . ' registros. Ajusta los filtros para obtener un archivo más específico.']);
+}
+fputcsv($out, ['Código', 'Evento', 'Estado', 'Auditorio', 'Bloque', 'Fecha evento', 'Horario', 'Instructor', 'Correo instructor', 'Observación', 'Fecha decisión']);
 foreach ($decisiones as $d) {
     fputcsv($out, [
         $d['codigo_evento'],
@@ -62,8 +46,7 @@ foreach ($decisiones as $d) {
         $d['nombre_auditorio'],
         $d['bloque'],
         $d['fecha_evento'],
-        substr((string)$d['hora_inicio'], 0, 5),
-        substr((string)$d['hora_fin'], 0, 5),
+        coord_hora12((string)$d['hora_inicio']) . ' - ' . coord_hora12((string)$d['hora_fin']),
         trim((string)$d['nombre'] . ' ' . (string)$d['apellido']),
         $d['correo'],
         $d['observacion'],

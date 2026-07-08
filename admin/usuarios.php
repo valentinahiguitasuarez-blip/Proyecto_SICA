@@ -320,81 +320,6 @@ try {
             </div>
         <?php endif; ?>
 
-        <section class="admin-panel admin-create-user-panel" id="crear-usuario">
-            <div class="admin-panel-head">
-                <div>
-                    <p class="admin-eyebrow">Nueva cuenta</p>
-                    <h2>Crear usuario</h2>
-                </div>
-            </div>
-
-            <form class="admin-create-user-form" method="post" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
-                <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
-                <input type="hidden" name="accion" value="crear">
-
-                <label>
-                    <span>Documento</span>
-                    <input type="number" name="nuevo_documento" min="1" required placeholder="Ej. 1234567890">
-                </label>
-                <label>
-                    <span>Nombre</span>
-                    <input type="text" name="nuevo_nombre" maxlength="50" required placeholder="Nombre">
-                </label>
-                <label>
-                    <span>Apellido</span>
-                    <input type="text" name="nuevo_apellido" maxlength="50" required placeholder="Apellido">
-                </label>
-                <label>
-                    <span>Correo</span>
-                    <input type="email" name="nuevo_correo" maxlength="60" required placeholder="correo@sena.edu.co">
-                </label>
-                <label>
-                    <span>Telefono</span>
-                    <input type="text" name="nuevo_telefono" maxlength="15" placeholder="Opcional">
-                </label>
-                <label>
-                    <span>Contrasena temporal</span>
-                    <input type="text" name="nuevo_contrasena" minlength="6" maxlength="72" required placeholder="Ej. Aprendiz123#">
-                </label>
-                <label>
-                    <span>Rol</span>
-                    <select name="nuevo_id_rol" required>
-                        <?php foreach ($roles as $role): ?>
-                            <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$role['id_rol'] === $defaultRoleId ? 'selected' : '' ?>>
-                                <?= admin_h($role['nombre_rol']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
-                <label>
-                    <span>Estado</span>
-                    <select name="nuevo_id_estado" required>
-                        <?php foreach ($estados as $estado): ?>
-                            <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$estado['id_estado'] === $defaultStateId ? 'selected' : '' ?>>
-                                <?= admin_h($estado['nombre_estado']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
-                <label class="admin-create-user-wide">
-                    <span>Ficha</span>
-                    <select name="nuevo_id_ficha">
-                        <option value="">Sin ficha</option>
-                        <?php foreach ($fichas as $ficha): ?>
-                            <option value="<?= admin_h($ficha['id_ficha']) ?>">
-                                <?= admin_h($ficha['id_ficha']) ?> - <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
-
-                <div class="admin-create-user-submit">
-                    <small>La persona ingresara con este correo y la contrasena temporal.</small>
-                    <button type="submit">Crear usuario</button>
-                </div>
-            </form>
-        </section>
-
         <section class="admin-metrics users-metrics" aria-label="Resumen de usuarios">
             <article class="admin-metric">
                 <span>Total usuarios</span>
@@ -424,6 +349,7 @@ try {
                     <p class="admin-eyebrow">Directorio</p>
                     <h2>Usuarios registrados</h2>
                 </div>
+                <button type="button" class="admin-create-user-open" data-open-create-user>Crear usuario</button>
             </div>
 
             <form class="admin-user-filters" method="get" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
@@ -537,5 +463,115 @@ try {
         </section>
     </section>
 </main>
+
+<dialog class="admin-create-user-dialog" id="createUserDialog" aria-labelledby="createUserDialogTitle">
+    <form class="admin-create-user-form" method="post" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
+        <div class="admin-create-user-head">
+            <div>
+                <p class="admin-eyebrow">Nueva cuenta</p>
+                <h2 id="createUserDialogTitle">Crear usuario</h2>
+            </div>
+            <button type="button" class="admin-create-user-close" data-close-create-user aria-label="Cerrar">&times;</button>
+        </div>
+
+        <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
+        <input type="hidden" name="accion" value="crear">
+
+        <div class="admin-create-user-grid">
+            <label>
+                <span>Documento</span>
+                <input type="number" name="nuevo_documento" min="1" required placeholder="Ej. 1234567890">
+            </label>
+            <label>
+                <span>Nombre</span>
+                <input type="text" name="nuevo_nombre" maxlength="50" required placeholder="Nombre">
+            </label>
+            <label>
+                <span>Apellido</span>
+                <input type="text" name="nuevo_apellido" maxlength="50" required placeholder="Apellido">
+            </label>
+            <label>
+                <span>Correo</span>
+                <input type="email" name="nuevo_correo" maxlength="60" required placeholder="correo@sena.edu.co">
+            </label>
+            <label>
+                <span>Telefono</span>
+                <input type="text" name="nuevo_telefono" maxlength="15" placeholder="Opcional">
+            </label>
+            <label>
+                <span>Contrasena temporal</span>
+                <input type="text" name="nuevo_contrasena" minlength="6" maxlength="72" required placeholder="Ej. Aprendiz123#">
+            </label>
+            <label>
+                <span>Rol</span>
+                <select name="nuevo_id_rol" required>
+                    <?php foreach ($roles as $role): ?>
+                        <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$role['id_rol'] === $defaultRoleId ? 'selected' : '' ?>>
+                            <?= admin_h($role['nombre_rol']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label>
+                <span>Estado</span>
+                <select name="nuevo_id_estado" required>
+                    <?php foreach ($estados as $estado): ?>
+                        <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$estado['id_estado'] === $defaultStateId ? 'selected' : '' ?>>
+                            <?= admin_h($estado['nombre_estado']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="admin-create-user-wide">
+                <span>Ficha</span>
+                <select name="nuevo_id_ficha">
+                    <option value="">Sin ficha</option>
+                    <?php foreach ($fichas as $ficha): ?>
+                        <option value="<?= admin_h($ficha['id_ficha']) ?>">
+                            <?= admin_h($ficha['id_ficha']) ?> - <?= admin_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . admin_h($ficha['nombre_jornada']) : '' ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+        </div>
+
+        <div class="admin-create-user-submit">
+            <small>La persona ingresara con este correo y la contrasena temporal.</small>
+            <button type="submit">Crear usuario</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const dialog = document.getElementById('createUserDialog');
+    const openButton = document.querySelector('[data-open-create-user]');
+    const closeButton = document.querySelector('[data-close-create-user]');
+
+    if (!dialog || !openButton) {
+        return;
+    }
+
+    openButton.addEventListener('click', function () {
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute('open', 'open');
+        }
+    });
+
+    if (closeButton) {
+        closeButton.addEventListener('click', function () {
+            dialog.close();
+        });
+    }
+
+    dialog.addEventListener('click', function (event) {
+        if (event.target === dialog) {
+            dialog.close();
+        }
+    });
+});
+</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

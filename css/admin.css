@@ -984,18 +984,85 @@ body {
     padding: 22px;
 }
 
-.admin-create-user-panel {
-    margin-bottom: 18px;
+.admin-create-user-open,
+.admin-create-user-submit button {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    box-shadow: 0 10px 20px rgba(22, 93, 255, 0.14);
+    font-weight: 900;
+}
+
+.admin-create-user-open {
+    white-space: nowrap;
+}
+
+.admin-create-user-dialog {
+    width: min(960px, calc(100vw - 32px));
+    max-height: calc(100vh - 44px);
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    color: var(--admin-ink);
+    background: #ffffff;
+    box-shadow: 0 28px 70px rgba(14, 26, 47, 0.28);
+}
+
+.admin-create-user-dialog::backdrop {
+    background: rgba(9, 22, 42, 0.42);
+    backdrop-filter: blur(3px);
 }
 
 .admin-create-user-form {
+    display: grid;
+    gap: 16px;
+    padding: 22px;
+}
+
+.admin-create-user-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-create-user-head h2 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.admin-create-user-close {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    color: var(--admin-muted);
+    background: #f8fbff;
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.admin-create-user-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     padding: 14px;
     border-radius: 8px;
     background:
-        linear-gradient(135deg, rgba(22, 93, 255, 0.07), rgba(18, 166, 120, 0.05)),
+        linear-gradient(135deg, rgba(22, 93, 255, 0.06), rgba(18, 166, 120, 0.04)),
         #f8fbff;
 }
 
@@ -1029,32 +1096,17 @@ body {
 }
 
 .admin-create-user-submit {
-    grid-column: span 2;
     display: flex;
-    align-items: end;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
 .admin-create-user-submit small {
-    max-width: 320px;
+    max-width: 380px;
     color: var(--admin-muted);
     font-weight: 800;
     line-height: 1.35;
-}
-
-.admin-create-user-submit button {
-    min-height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
-    border: 0;
-    border-radius: 8px;
-    color: #ffffff;
-    background: var(--admin-blue);
-    box-shadow: 0 10px 20px rgba(22, 93, 255, 0.14);
-    font-weight: 900;
 }
 
 .admin-user-filters {
@@ -2942,7 +2994,7 @@ body {
     }
 
     .admin-user-filters,
-    .admin-create-user-form,
+    .admin-create-user-grid,
     .admin-user-card,
     .admin-reservation-card,
     .admin-mail-filters,
@@ -3000,6 +3052,7 @@ body {
     .admin-today-strip,
     .admin-global-search,
     .admin-today-mini,
+    .admin-create-user-grid,
     .admin-home-summary,
     .admin-task-item,
     .admin-day-list > div,

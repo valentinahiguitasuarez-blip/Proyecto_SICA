@@ -345,6 +345,7 @@ $seccionesSolicitud = [
         'descripcion' => 'Eventos cerrados en el sistema.',
     ],
 ];
+$estadoActivo = isset($seccionesSolicitud[$estadoFiltro]) ? $estadoFiltro : 'Pendiente';
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -479,13 +480,37 @@ $seccionesSolicitud = [
                     </article>
                 </div>
             <?php else: ?>
+                <div class="admin-request-tabs" role="tablist" aria-label="Filtrar solicitudes por estado">
+                    <?php foreach ($seccionesSolicitud as $estadoSeccion => $seccion): ?>
+                        <?php $tabActive = $estadoSeccion === $estadoActivo; ?>
+                        <button
+                            type="button"
+                            class="<?= $tabActive ? 'active' : '' ?>"
+                            role="tab"
+                            aria-selected="<?= $tabActive ? 'true' : 'false' ?>"
+                            aria-controls="request-panel-<?= admin_s_h($estadoSeccion) ?>"
+                            data-request-tab="<?= admin_s_h($estadoSeccion) ?>"
+                        >
+                            <span><?= admin_s_h($seccion['titulo']) ?></span>
+                            <strong><?= admin_s_h((string)count($solicitudesPorEstado[$estadoSeccion] ?? [])) ?></strong>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+
                 <div class="admin-request-sections">
                     <?php foreach ($seccionesSolicitud as $estadoSeccion => $seccion): ?>
                     <?php
                     $itemsSeccion = $solicitudesPorEstado[$estadoSeccion] ?? [];
                     $sectionClass = admin_s_status_class($estadoSeccion);
+                    $panelActive = $estadoSeccion === $estadoActivo;
                     ?>
-                    <section class="admin-request-section <?= admin_s_h($sectionClass) ?>" aria-label="<?= admin_s_h($seccion['titulo']) ?>">
+                    <section
+                        id="request-panel-<?= admin_s_h($estadoSeccion) ?>"
+                        class="admin-request-section <?= admin_s_h($sectionClass) ?> <?= $panelActive ? 'active' : '' ?>"
+                        role="tabpanel"
+                        data-request-panel="<?= admin_s_h($estadoSeccion) ?>"
+                        <?= $panelActive ? '' : 'hidden' ?>
+                    >
                         <header class="admin-request-section-head">
                             <div>
                                 <p class="admin-eyebrow"><?= admin_s_h($estadoSeccion) ?></p>
@@ -647,9 +672,27 @@ $seccionesSolicitud = [
 <script>
 document.addEventListener('click', function (event) {
     const closeButton = event.target.closest('[data-close-review]');
-    if (!closeButton) return;
-    const review = closeButton.closest('.admin-reservation-review');
-    if (review) review.open = false;
+    if (closeButton) {
+        const review = closeButton.closest('.admin-reservation-review');
+        if (review) review.open = false;
+        return;
+    }
+
+    const tab = event.target.closest('[data-request-tab]');
+    if (!tab) return;
+
+    const target = tab.getAttribute('data-request-tab');
+    document.querySelectorAll('[data-request-tab]').forEach((button) => {
+        const active = button === tab;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('[data-request-panel]').forEach((panel) => {
+        const active = panel.getAttribute('data-request-panel') === target;
+        panel.hidden = !active;
+        panel.classList.toggle('active', active);
+    });
 });
 </script>
 

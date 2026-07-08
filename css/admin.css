@@ -1577,6 +1577,71 @@ body {
     gap: 10px;
 }
 
+.admin-request-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 8px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: #f8fbff;
+}
+
+.admin-request-tabs button {
+    min-height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--admin-muted);
+    background: transparent;
+    font-weight: 900;
+    text-align: left;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.admin-request-tabs button:hover,
+.admin-request-tabs button:focus {
+    color: var(--admin-blue);
+    background: #ffffff;
+    border-color: rgba(22, 93, 255, 0.18);
+}
+
+.admin-request-tabs button.active {
+    color: var(--admin-blue);
+    background: #ffffff;
+    border-color: rgba(22, 93, 255, 0.26);
+    box-shadow: 0 12px 24px rgba(22, 93, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.admin-request-tabs span,
+.admin-request-tabs strong {
+    display: block;
+}
+
+.admin-request-tabs span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-request-tabs strong {
+    min-width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    line-height: 1;
+}
+
 .admin-request-sections {
     display: grid;
     gap: 18px;
@@ -3682,6 +3747,10 @@ body {
         flex-direction: column;
     }
 
+    .admin-request-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .admin-mail-guide ol {
         grid-template-columns: 1fr;
     }
@@ -3698,6 +3767,7 @@ body {
 
     .admin-metrics,
     .quick-actions nav,
+    .admin-request-tabs,
     .admin-today-strip,
     .admin-global-search,
     .admin-today-mini,

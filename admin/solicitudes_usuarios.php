@@ -181,7 +181,6 @@ try {
             <a href="<?= admin_access_h(app_url('admin/usuarios.php')) ?>"><span class="nav-symbol nav-symbol-users" aria-hidden="true"></span>Usuarios</a>
             <a class="active" href="<?= admin_access_h(app_url('admin/solicitudes_usuarios.php')) ?>"><span class="nav-symbol nav-symbol-access" aria-hidden="true"></span>Solicitudes de Acceso</a>
             <a href="<?= admin_access_h(app_url('admin/solicitudes.php')) ?>"><span class="nav-symbol nav-symbol-reservations" aria-hidden="true"></span>Solicitudes de Reserva</a>
-            <a href="<?= admin_access_h(app_url('admin/correos.php')) ?>"><span class="nav-symbol nav-symbol-mail" aria-hidden="true"></span>Correos y Notificaciones</a>
         </nav>
     </aside>
 

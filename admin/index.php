@@ -201,7 +201,6 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
             <a class="active" href="<?= h(app_url('admin/index.php')) ?>"><span class="nav-symbol nav-symbol-dashboard" aria-hidden="true"></span>Panel de Control</a>
             <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span class="nav-symbol nav-symbol-users" aria-hidden="true"></span>Usuarios</a>
             <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span class="nav-symbol nav-symbol-reservations" aria-hidden="true"></span>Solicitudes de Reserva</a>
-            <a href="<?= h(app_url('admin/correos.php')) ?>"><span class="nav-symbol nav-symbol-mail" aria-hidden="true"></span>Correos y Notificaciones</a>
             <a href="<?= h(app_url('admin/auditorios.php')) ?>"><span class="nav-symbol nav-symbol-auditoriums" aria-hidden="true"></span>Auditorios</a>
             <a href="<?= h(app_url('admin/reportes.php')) ?>"><span class="nav-symbol nav-symbol-reports" aria-hidden="true"></span>Reportes</a>
         </nav>
@@ -285,8 +284,8 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                     <nav aria-label="Acciones rapidas del administrador">
                         <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span class="module-symbol module-symbol-reservations" aria-hidden="true"></span>Solicitudes</a>
                         <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span class="module-symbol module-symbol-users" aria-hidden="true"></span>Usuarios</a>
-                        <a href="<?= h(app_url('admin/correos.php')) ?>"><span class="module-symbol module-symbol-mail" aria-hidden="true"></span>Correos</a>
                         <a href="<?= h(app_url('admin/auditorios.php')) ?>"><span class="module-symbol module-symbol-auditoriums" aria-hidden="true"></span>Auditorios</a>
+                        <a href="<?= h(app_url('admin/reportes.php')) ?>"><span class="module-symbol module-symbol-reports" aria-hidden="true"></span>Reportes</a>
                     </nav>
                 </section>
 

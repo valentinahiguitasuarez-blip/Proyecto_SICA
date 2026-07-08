@@ -52,7 +52,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $csrf = (string)($_POST['csrf_perfil'] ?? '');
     $nombrePost = profile_normalize_spaces((string)($_POST['nombre'] ?? ''));
     $apellidoPost = profile_normalize_spaces((string)($_POST['apellido'] ?? ''));
-    $correoPost = strtolower(trim((string)($_POST['correo'] ?? '')));
+    $correoPost = mb_strtolower(trim((string)($_POST['correo'] ?? '')), 'UTF-8');
     $telefonoPost = trim((string)($_POST['telefono'] ?? ''));
     $fichaPost = (int)($_POST['id_ficha'] ?? 0);
     $documentoActual = (string)$idDocumento;
@@ -60,8 +60,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!hash_equals((string)$_SESSION['csrf_perfil'], $csrf)) {
         $_SESSION['profile_message'] = 'La sesion expiro. Intenta de nuevo.';
         $_SESSION['profile_message_type'] = 'danger';
-    } elseif (!preg_match('/^\d{1,10}$/', $documentoActual)) {
-        $_SESSION['profile_message'] = 'El documento debe tener solo numeros y maximo 10 digitos.';
+    } elseif (!preg_match('/^\d{1,20}$/', $documentoActual)) {
+        $_SESSION['profile_message'] = 'El documento debe tener solo numeros y maximo 20 digitos.';
         $_SESSION['profile_message_type'] = 'danger';
     } elseif (!profile_name_is_valid($nombrePost, 50)) {
         $_SESSION['profile_message'] = 'El nombre debe tener entre 2 y 50 letras. No uses numeros ni simbolos.';
@@ -166,7 +166,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $sinCambios = $fotoPerfil === null
                     && $nombrePost === (string)($currentProfile['nombre'] ?? '')
                     && $apellidoPost === (string)($currentProfile['apellido'] ?? '')
-                    && $correoPost === strtolower((string)($currentProfile['correo'] ?? ''))
+                    && $correoPost === mb_strtolower((string)($currentProfile['correo'] ?? ''), 'UTF-8')
                     && $telefonoPost === (string)($currentProfile['telefono'] ?? '')
                     && $fichaPost === (int)($currentProfile['id_ficha'] ?? 0);
 
@@ -295,6 +295,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
             <a href="<?= e(app_url('aprendiz/index.php')) ?>"><span aria-hidden="true">IN</span>Dashboard</a>
             <a href="<?= e(app_url('aprendiz/eventos.php')) ?>"><span aria-hidden="true">EV</span>Eventos</a>
             <a href="<?= e(app_url('aprendiz/preregistro.php')) ?>"><span aria-hidden="true">PR</span>Pre-registro</a>
+            <a href="<?= e(app_url('aprendiz/certificados.php')) ?>"><span aria-hidden="true">CE</span>Certificados</a>
             <a class="active" href="<?= e(app_url('aprendiz/perfil.php')) ?>"><span aria-hidden="true">PE</span>Perfil</a>
         </nav>
     </aside>
@@ -374,12 +375,12 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
 
                 <label>
                     <span>Nombre</span>
-                    <input type="text" name="nombre" value="<?= e($perfil['nombre']) ?>" required minlength="2" maxlength="50" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]{2,50}" autocomplete="given-name">
+                    <input type="text" name="nombre" value="<?= e($perfil['nombre']) ?>" required minlength="2" maxlength="50" autocomplete="given-name">
                     <small class="profile-field-error" data-error-for="nombre"></small>
                 </label>
                 <label>
                     <span>Apellido</span>
-                    <input type="text" name="apellido" value="<?= e($perfil['apellido']) ?>" required minlength="2" maxlength="60" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]{2,60}" autocomplete="family-name">
+                    <input type="text" name="apellido" value="<?= e($perfil['apellido']) ?>" required minlength="2" maxlength="60" autocomplete="family-name">
                     <small class="profile-field-error" data-error-for="apellido"></small>
                 </label>
                 <label>
@@ -395,8 +396,8 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
                 </label>
                 <label>
                     <span>Documento</span>
-                    <input type="text" value="<?= e($perfil['id_documento']) ?>" maxlength="10" pattern="\d{1,10}" inputmode="numeric" readonly>
-                    <small>Solo numeros. Maximo 10 digitos.</small>
+                    <input type="text" value="<?= e($perfil['id_documento']) ?>" maxlength="20" pattern="\d{1,20}" inputmode="numeric" readonly>
+                    <small>Solo numeros. Maximo 20 digitos.</small>
                 </label>
                 <label class="profile-wide-field">
                     <span>Ficha, programa y jornada</span>
@@ -463,7 +464,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
         foto_perfil: 'La foto debe ser JPG, PNG o WebP y pesar maximo 2 MB.'
     };
 
-    const namePattern = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]+$/;
+    const namePattern = /^[\p{L}\s'-]+$/u;
     const setError = (name, message = '') => {
         const target = form.querySelector(`[data-error-for="${name}"]`);
         const field = fields[name];

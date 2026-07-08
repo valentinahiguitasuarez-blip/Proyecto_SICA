@@ -84,10 +84,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $accion = (string)($_POST['accion'] ?? '');
 
     if (!hash_equals((string)$_SESSION['csrf_admin_mail'], $csrf)) {
-        $_SESSION['admin_mail_message'] = 'La sesion expiro. Intenta de nuevo.';
+        $_SESSION['admin_mail_message'] = 'La sesión expiró. Intenta de nuevo.';
         $_SESSION['admin_mail_message_type'] = 'danger';
     } elseif ($idEvento <= 0 || !in_array($accion, ['reenviar_coordinador', 'notificar_instructor'], true)) {
-        $_SESSION['admin_mail_message'] = 'Selecciona una notificacion valida.';
+        $_SESSION['admin_mail_message'] = 'Selecciona una notificación válida.';
         $_SESSION['admin_mail_message_type'] = 'danger';
     } else {
         try {
@@ -109,26 +109,26 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $evento = $stmt->fetch();
 
             if (!$evento) {
-                throw new RuntimeException('No se encontro la solicitud.');
+                throw new RuntimeException('No se encontró la solicitud.');
             }
 
             if ($accion === 'reenviar_coordinador') {
                 if (empty($evento['coord_correo']) || !filter_var((string)$evento['coord_correo'], FILTER_VALIDATE_EMAIL)) {
-                    throw new RuntimeException('La solicitud no tiene coordinador con correo valido.');
+                    throw new RuntimeException('La solicitud no tiene coordinador con correo válido.');
                 }
                 $payload = admin_c_mail_payload($evento, 'coordinador', $adminName);
             } else {
                 if (empty($evento['fecha_aprobacion'])) {
-                    throw new RuntimeException('Aun no hay decision de coordinacion para enviar al instructor.');
+                    throw new RuntimeException('Aún no hay decisión de coordinación para enviar al instructor.');
                 }
                 if (empty($evento['instructor_correo']) || !filter_var((string)$evento['instructor_correo'], FILTER_VALIDATE_EMAIL)) {
-                    throw new RuntimeException('El instructor no tiene correo valido registrado.');
+                    throw new RuntimeException('El instructor no tiene correo válido registrado.');
                 }
                 $payload = admin_c_mail_payload($evento, 'instructor', $adminName);
             }
 
             if (!sica_send_mail($payload['to'], $payload['subject'], $payload['body'])) {
-                throw new RuntimeException('No se pudo enviar el correo. Revisa la configuracion SMTP.');
+                throw new RuntimeException('No se pudo enviar el correo. Revisa la configuración SMTP.');
             }
 
             $_SESSION['admin_mail_message'] = 'Correo enviado correctamente.';
@@ -244,7 +244,7 @@ try {
             <div>
                 <strong><?= admin_c_h($adminName) ?></strong>
                 <small><?= admin_c_h($adminMail) ?></small>
-                <span>En linea</span>
+                <span>En línea</span>
             </div>
         </section>
 
@@ -263,11 +263,11 @@ try {
             <div>
                 <p class="admin-eyebrow">Comunicaciones</p>
                 <h1>Correos y notificaciones</h1>
-                <span>Gestiona la ruta completa: solicitud del instructor, envio a coordinacion y respuesta final.</span>
+                <span>Controla qué solicitudes deben enviarse a coordinación y cuáles ya pueden notificarse al instructor.</span>
             </div>
             <div class="admin-top-actions">
                 <a href="<?= admin_c_h(app_url('admin/solicitudes.php')) ?>">Reservas <strong>SR</strong></a>
-                <a class="admin-logout" href="<?= admin_c_h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
+                <a class="admin-logout" href="<?= admin_c_h(app_url('login/logout.php')) ?>">Cerrar sesión</a>
             </div>
         </header>
 
@@ -277,40 +277,54 @@ try {
             </div>
         <?php endif; ?>
 
+        <section class="admin-mail-guide" aria-label="Funcion del panel de correos">
+            <div>
+                <p class="admin-eyebrow">¿Para qué sirve?</p>
+                <h2>Esta bandeja controla la comunicación de cada reserva</h2>
+                <span>Primero asignas coordinador en Solicitudes, luego puedes reenviarle la solicitud y finalmente notificas al instructor cuando exista una decisión.</span>
+            </div>
+            <ol>
+                <li><strong>1</strong><span>Asignar coordinador</span></li>
+                <li><strong>2</strong><span>Esperar decisión</span></li>
+                <li><strong>3</strong><span>Notificar instructor</span></li>
+            </ol>
+        </section>
+
         <section class="admin-metrics reservation-metrics" aria-label="Resumen de correos">
-            <article class="admin-metric">
+            <a class="admin-metric" href="<?= admin_c_h(app_url('admin/correos.php?estado=Pendiente')) ?>">
                 <span>Por enviar</span>
                 <strong><?= admin_c_h($stats['sin_enviar']) ?></strong>
-                <small>Pendientes de coordinador</small>
-            </article>
-            <article class="admin-metric">
-                <span>En coordinacion</span>
+                <small>Sin coordinador asignado</small>
+            </a>
+            <a class="admin-metric" href="<?= admin_c_h(app_url('admin/correos.php?estado=Pendiente')) ?>">
+                <span>En coordinación</span>
                 <strong><?= admin_c_h($stats['pendientes']) ?></strong>
-                <small>Esperando decision</small>
-            </article>
-            <article class="admin-metric">
-                <span>Por notificar</span>
+                <small>Esperando decisión</small>
+            </a>
+            <a class="admin-metric" href="<?= admin_c_h(app_url('admin/correos.php?estado=Activo')) ?>">
+                <span>Listas para notificar</span>
                 <strong><?= admin_c_h($stats['decisiones']) ?></strong>
                 <small>Con respuesta final</small>
-            </article>
-            <article class="admin-metric">
+            </a>
+            <a class="admin-metric" href="<?= admin_c_h(app_url('admin/correos.php?estado=Cancelado')) ?>">
                 <span>Canceladas</span>
                 <strong><?= admin_c_h($stats['cancelados']) ?></strong>
                 <small>Respuestas negativas</small>
-            </article>
+            </a>
         </section>
 
         <section class="admin-panel reservations-panel">
             <div class="admin-panel-head">
                 <div>
-                    <p class="admin-eyebrow">Bandeja SICA</p>
-                    <h2>Ruta de correos</h2>
+                    <p class="admin-eyebrow">Bandeja de trabajo</p>
+                    <h2>Solicitudes y siguiente acción</h2>
+                    <span class="admin-panel-note">Revisa cada fila de izquierda a derecha: estado actual, datos del evento y acción disponible.</span>
                 </div>
             </div>
 
             <form class="admin-user-filters admin-mail-filters" method="get" action="<?= admin_c_h(app_url('admin/correos.php')) ?>">
                 <label>
-                    <span>Busqueda rapida</span>
+                    <span>Búsqueda rápida</span>
                     <input type="search" name="q" value="<?= admin_c_h($busqueda) ?>" placeholder="Evento, instructor, coordinador o correo">
                 </label>
                 <label>
@@ -332,7 +346,7 @@ try {
                 <?php if (!$notificaciones): ?>
                     <article class="admin-empty-state">
                         <strong>No hay correos para mostrar.</strong>
-                        <span>Cuando una solicitud se envie a coordinacion, aparecera aqui.</span>
+                        <span>Cuando una solicitud necesite coordinación o respuesta final, aparecerá aquí.</span>
                     </article>
                 <?php endif; ?>
 
@@ -346,29 +360,18 @@ try {
                     $coordinador = trim((string)$notificacion['coord_nombre'] . ' ' . (string)$notificacion['coord_apellido']);
                     $fecha = new DateTime((string)$notificacion['fecha_evento']);
                     $cardClass = $sinEnviar ? 'draft' : ($decidida ? 'ready' : 'waiting');
+                    $stageTitle = $sinEnviar ? 'Falta coordinador' : ($decidida ? 'Decisión lista' : 'En revisión');
+                    $stageHelp = $sinEnviar
+                        ? 'Asigna un coordinador desde Solicitudes para poder iniciar la revisión.'
+                        : ($decidida ? 'Ya puedes enviar la respuesta final al instructor.' : 'La solicitud ya está en coordinación; espera la decisión o reenvía el correo si hace falta.');
                     ?>
                     <article class="admin-mail-card <?= admin_c_h($cardClass) ?>">
-                        <div class="admin-mail-flow complete">
-                            <span>1</span>
-                            <div>
-                                <strong>Solicitud recibida</strong>
-                                <small><?= admin_c_h($instructor !== '' ? $instructor : 'Instructor') ?> - <?= admin_c_h($notificacion['instructor_correo'] ?? 'Sin correo') ?></small>
-                            </div>
+                        <div class="admin-mail-status">
+                            <span><?= admin_c_h($stageTitle) ?></span>
+                            <strong><?= admin_c_h($estado) ?></strong>
+                            <small><?= admin_c_h($stageHelp) ?></small>
                         </div>
-                        <div class="admin-mail-flow <?= $tieneCoordinador ? 'complete' : '' ?>">
-                            <span>2</span>
-                            <div>
-                                <strong><?= $tieneCoordinador ? 'Enviada a coordinacion' : 'Falta enviar a coordinacion' ?></strong>
-                                <small><?= $tieneCoordinador ? admin_c_h(($coordinador !== '' ? $coordinador : 'Coordinador') . ' - ' . (string)$notificacion['coord_correo']) : 'Asigna coordinador desde solicitudes' ?></small>
-                            </div>
-                        </div>
-                        <div class="admin-mail-flow <?= $decidida ? 'complete' : '' ?>">
-                            <span>3</span>
-                            <div>
-                                <strong><?= $decidida ? 'Decision lista' : 'Esperando decision' ?></strong>
-                                <small><?= admin_c_h($estado) ?><?= $decidida ? ' - ' . admin_c_h((string)$notificacion['fecha_aprobacion']) : '' ?></small>
-                            </div>
-                        </div>
+
                         <div class="admin-mail-content">
                             <p class="admin-eyebrow">Evento</p>
                             <h3><?= admin_c_h($notificacion['nombre_evento']) ?></h3>
@@ -379,27 +382,44 @@ try {
                                 <span><?= admin_c_h($notificacion['instructor_correo'] ?? 'Sin correo') ?></span>
                             </div>
                         </div>
+
+                        <div class="admin-mail-people">
+                            <div>
+                                <span>Instructor</span>
+                                <strong><?= admin_c_h($instructor !== '' ? $instructor : 'Sin nombre') ?></strong>
+                                <small><?= admin_c_h($notificacion['instructor_correo'] ?? 'Sin correo') ?></small>
+                            </div>
+                            <div>
+                                <span>Coordinador</span>
+                                <strong><?= admin_c_h($coordinador !== '' ? $coordinador : 'Sin asignar') ?></strong>
+                                <small><?= admin_c_h($notificacion['coord_correo'] ?? 'Pendiente') ?></small>
+                            </div>
+                        </div>
+
                         <?php if ($sinEnviar): ?>
                             <div class="admin-mail-actions">
+                                <strong>Siguiente paso</strong>
                                 <a href="<?= admin_c_h(app_url('admin/solicitudes.php?q=' . urlencode((string)$notificacion['nombre_evento']))) ?>">Asignar coordinador</a>
-                                <small>Primero se envia a coordinacion.</small>
+                                <small>Primero asigna coordinador; después podrás enviar o reenviar la solicitud.</small>
                             </div>
                         <?php else: ?>
                             <form class="admin-mail-actions" method="post" action="<?= admin_c_h(app_url('admin/correos.php')) ?>">
+                                <strong>Siguiente paso</strong>
                                 <input type="hidden" name="csrf_admin_mail" value="<?= admin_c_h($_SESSION['csrf_admin_mail']) ?>">
                                 <input type="hidden" name="id_evento" value="<?= admin_c_h($notificacion['id_evento']) ?>">
                                 <button type="submit" name="accion" value="reenviar_coordinador"
-                                        data-confirm-kicker="Correo de coordinacion"
+                                        data-confirm-kicker="Correo de coordinación"
                                         data-confirm-title="Reenviar a coordinador"
-                                        data-confirm-message="Se enviara nuevamente la solicitud al coordinador asignado."
-                                        data-confirm-text="Si, reenviar">Reenviar a coordinador</button>
+                                        data-confirm-message="Se enviará nuevamente la solicitud al coordinador asignado."
+                                        data-confirm-text="Sí, reenviar">Reenviar a coordinador</button>
                                 <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>
                                         data-confirm-kicker="Correo al instructor"
                                         data-confirm-title="Notificar instructor"
-                                        data-confirm-message="El instructor recibira la decision final de la reserva por correo."
-                                        data-confirm-text="Si, notificar">
+                                        data-confirm-message="El instructor recibirá la decisión final de la reserva por correo."
+                                        data-confirm-text="Sí, notificar">
                                     Notificar instructor
                                 </button>
+                                <small><?= $decidida ? 'La respuesta final ya está lista para enviar.' : 'El botón de notificar se activa cuando coordinación decida.' ?></small>
                             </form>
                         <?php endif; ?>
                     </article>

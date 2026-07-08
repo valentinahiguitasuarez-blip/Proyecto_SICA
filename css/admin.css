@@ -398,6 +398,17 @@ body {
     background:
         linear-gradient(135deg, var(--metric-soft), rgba(255, 255, 255, 0.96) 58%),
         #ffffff;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.admin-metric:hover,
+.admin-metric:focus {
+    color: inherit;
+    border-color: color-mix(in srgb, var(--metric-accent), transparent 58%);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, 0.1);
+    transform: translateY(-2px);
 }
 
 .admin-metric:nth-child(1) {
@@ -2196,6 +2207,75 @@ body {
     grid-template-columns: minmax(260px, 1fr) minmax(180px, 0.35fr) auto auto;
 }
 
+.admin-mail-guide {
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.75fr);
+    gap: 18px;
+    align-items: center;
+    padding: 22px 24px;
+    border: 1px solid rgba(22, 93, 255, 0.18);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.08), rgba(18, 166, 120, 0.08)),
+        #ffffff;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.admin-mail-guide h2 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 900;
+}
+
+.admin-mail-guide span {
+    display: block;
+    margin-top: 8px;
+    color: var(--admin-muted);
+    font-weight: 750;
+}
+
+.admin-mail-guide ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-mail-guide li {
+    min-height: 92px;
+    display: grid;
+    align-content: center;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.admin-mail-guide li strong {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-size: 14px;
+}
+
+.admin-mail-guide li span {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 900;
+}
+
 .admin-mail-board {
     display: grid;
     gap: 12px;
@@ -2205,15 +2285,16 @@ body {
     --mail-accent: var(--admin-blue);
     --mail-soft: rgba(22, 93, 255, 0.08);
     display: grid;
-    grid-template-columns: minmax(170px, 0.55fr) minmax(170px, 0.55fr) minmax(170px, 0.55fr) minmax(0, 1.1fr) 220px;
-    gap: 12px;
+    grid-template-columns: minmax(180px, 0.44fr) minmax(0, 1fr) minmax(220px, 0.58fr) minmax(230px, 0.5fr);
+    gap: 14px;
     align-items: stretch;
-    padding: 14px;
+    padding: 16px;
     border: 1px solid color-mix(in srgb, var(--mail-accent), transparent 76%);
     border-radius: 8px;
     background:
-        linear-gradient(90deg, var(--mail-soft), #ffffff 42%),
+        linear-gradient(90deg, var(--mail-soft), #ffffff 34%),
         #ffffff;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
 }
 
 .admin-mail-card.draft {
@@ -2231,52 +2312,63 @@ body {
     --mail-soft: rgba(217, 139, 9, 0.12);
 }
 
-.admin-mail-flow {
-    display: flex;
-    gap: 10px;
-    padding: 12px;
+.admin-mail-status,
+.admin-mail-people,
+.admin-mail-actions {
+    min-width: 0;
+    padding: 14px;
     border-radius: 8px;
-    background: #ffffff;
     border: 1px solid var(--admin-line);
+    background: #ffffff;
 }
 
-.admin-mail-flow span {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
+.admin-mail-status {
     display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: var(--mail-accent);
+    align-content: center;
+    border-color: color-mix(in srgb, var(--mail-accent), transparent 72%);
     background: var(--mail-soft);
+}
+
+.admin-mail-status span {
+    width: max-content;
+    max-width: 100%;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: var(--mail-accent);
+    background: #ffffff;
+    font-size: 12px;
     font-weight: 900;
+    text-transform: uppercase;
 }
 
-.admin-mail-flow.complete span {
-    color: #ffffff;
-    background: var(--admin-green);
-}
-
-.admin-mail-flow strong,
-.admin-mail-flow small {
+.admin-mail-status strong,
+.admin-mail-status small {
     display: block;
 }
 
-.admin-mail-flow strong {
+.admin-mail-status strong {
+    margin-top: 12px;
     color: var(--admin-ink);
-    font-size: 14px;
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 900;
 }
 
-.admin-mail-flow small {
-    margin-top: 4px;
+.admin-mail-status small {
+    margin-top: 10px;
     color: var(--admin-muted);
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 750;
     overflow-wrap: anywhere;
 }
 
 .admin-mail-content {
     min-width: 0;
-    padding: 12px;
+    padding: 8px 4px;
 }
 
 .admin-mail-content h3 {
@@ -2291,13 +2383,55 @@ body {
     color: var(--admin-muted);
 }
 
+.admin-mail-people {
+    display: grid;
+    gap: 10px;
+    background: #f8fbff;
+}
+
+.admin-mail-people div {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.admin-mail-people span,
+.admin-mail-people strong,
+.admin-mail-people small {
+    display: block;
+}
+
+.admin-mail-people span {
+    color: var(--admin-blue);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.admin-mail-people strong {
+    color: var(--admin-ink);
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.admin-mail-people small {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
 .admin-mail-actions {
     display: grid;
-    gap: 8px;
+    gap: 9px;
     align-content: center;
-    padding: 12px;
-    border-radius: 8px;
     background: #f8fbff;
+}
+
+.admin-mail-actions > strong {
+    color: var(--admin-ink);
+    font-size: 13px;
+    font-weight: 900;
 }
 
 .admin-mail-actions button,
@@ -2330,6 +2464,7 @@ body {
     color: var(--admin-muted);
     font-size: 12px;
     font-weight: 800;
+    line-height: 1.35;
 }
 
 .admin-auditorium-grid {
@@ -3393,6 +3528,7 @@ body {
     .admin-create-user-grid,
     .admin-user-card,
     .admin-reservation-card,
+    .admin-mail-guide,
     .admin-mail-filters,
     .admin-mail-card,
     .admin-auditorium-grid,
@@ -3420,6 +3556,10 @@ body {
     .admin-create-user-wide,
     .admin-create-user-submit {
         grid-column: span 1;
+    }
+
+    .admin-mail-guide ol {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -3453,6 +3593,10 @@ body {
 
     .admin-topbar span {
         color: var(--admin-muted);
+    }
+
+    .admin-mail-guide ol {
+        grid-template-columns: 1fr;
     }
 }
 

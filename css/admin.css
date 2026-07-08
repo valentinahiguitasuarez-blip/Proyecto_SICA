@@ -825,6 +825,7 @@ body {
 }
 
 .quick-actions a {
+    min-width: 0;
     min-height: 50px;
     display: flex;
     align-items: center;
@@ -837,6 +838,8 @@ body {
     font-weight: 900;
     text-decoration: none;
     text-align: center;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
     transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
@@ -2455,6 +2458,104 @@ body {
     font-weight: 900;
 }
 
+.admin-mail-guide-compact {
+    grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr);
+    padding: 18px;
+}
+
+.admin-mail-guide-compact h2 {
+    font-size: 22px;
+    line-height: 1.15;
+}
+
+.admin-mail-guide-compact > div > span {
+    max-width: 360px;
+    font-size: 13px;
+}
+
+.admin-mail-guide-compact li {
+    min-height: 74px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    align-content: center;
+}
+
+.mail-step-icon {
+    position: relative;
+    overflow: hidden;
+}
+
+.mail-step-icon::before,
+.mail-step-icon::after {
+    content: "";
+    position: absolute;
+    box-sizing: border-box;
+}
+
+.mail-step-assign::before {
+    width: 10px;
+    height: 10px;
+    top: 7px;
+    left: 12px;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.mail-step-assign::after {
+    width: 18px;
+    height: 9px;
+    left: 8px;
+    bottom: 7px;
+    border-radius: 10px 10px 4px 4px;
+    background: #ffffff;
+}
+
+.mail-step-send::before {
+    width: 18px;
+    height: 14px;
+    left: 8px;
+    top: 10px;
+    border: 2px solid #ffffff;
+    border-radius: 4px;
+}
+
+.mail-step-send::after {
+    width: 10px;
+    height: 10px;
+    left: 12px;
+    top: 8px;
+    border-right: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: rotate(45deg);
+}
+
+.mail-step-notify::before {
+    width: 18px;
+    height: 18px;
+    left: 8px;
+    top: 8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+}
+
+.mail-step-notify::after {
+    width: 8px;
+    height: 5px;
+    left: 13px;
+    top: 14px;
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: rotate(-45deg);
+}
+
+.admin-mail-metrics-hidden {
+    display: none;
+}
+
+.admin-mail-tabs {
+    margin-top: 14px;
+}
+
 .admin-mail-board {
     display: grid;
     gap: 12px;
@@ -2476,6 +2577,10 @@ body {
     box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
 }
 
+.admin-mail-card[hidden] {
+    display: none;
+}
+
 .admin-mail-card.draft {
     --mail-accent: var(--admin-blue);
     --mail-soft: rgba(22, 93, 255, 0.08);
@@ -2489,6 +2594,11 @@ body {
 .admin-mail-card.waiting {
     --mail-accent: var(--admin-amber);
     --mail-soft: rgba(217, 139, 9, 0.12);
+}
+
+.admin-mail-card.rejected {
+    --mail-accent: var(--admin-red);
+    --mail-soft: rgba(220, 53, 69, 0.09);
 }
 
 .admin-mail-status,
@@ -3566,7 +3676,9 @@ body {
     min-height: 46px;
     padding: 0 10px;
     color: var(--admin-ink);
-    font-size: 14px;
+    font-size: 13px;
+    text-align: left;
+    white-space: normal;
 }
 
 .admin-home-actions a span {
@@ -3968,7 +4080,7 @@ body {
 .admin-home-actions a {
     min-height: 58px;
     gap: 12px;
-    padding: 0 14px;
+    padding: 0 12px;
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 255, 0.98));
 }

@@ -227,6 +227,58 @@ try {
 } catch (Throwable $exception) {
     error_log('SICA admin correos listado: ' . $exception->getMessage());
 }
+
+$seccionesCorreo = [
+    'falta_coordinador' => [
+        'titulo' => 'Falta coordinador',
+        'descripcion' => 'Primero asigna quien revisa la reserva.',
+        'class' => 'pending',
+    ],
+    'en_coordinacion' => [
+        'titulo' => 'En coordinacion',
+        'descripcion' => 'Ya se puede enviar o reenviar al coordinador.',
+        'class' => 'waiting',
+    ],
+    'por_notificar' => [
+        'titulo' => 'Por notificar',
+        'descripcion' => 'La respuesta final se envia al instructor.',
+        'class' => 'ready',
+    ],
+    'canceladas' => [
+        'titulo' => 'Canceladas',
+        'descripcion' => 'Reservas con respuesta negativa o cierre.',
+        'class' => 'rejected',
+    ],
+];
+$correosPorSeccion = array_fill_keys(array_keys($seccionesCorreo), []);
+
+foreach ($notificaciones as $notificacion) {
+    $estadoCorreo = (string)$notificacion['estado'];
+    $decididaCorreo = !empty($notificacion['fecha_aprobacion']);
+    $tieneCoordinadorCorreo = !empty($notificacion['coord_correo']);
+    $seccionCorreo = 'en_coordinacion';
+
+    if (!$tieneCoordinadorCorreo && $estadoCorreo === 'Pendiente') {
+        $seccionCorreo = 'falta_coordinador';
+    } elseif ($estadoCorreo === 'Cancelado') {
+        $seccionCorreo = 'canceladas';
+    } elseif ($decididaCorreo) {
+        $seccionCorreo = 'por_notificar';
+    }
+
+    $correosPorSeccion[$seccionCorreo][] = $notificacion;
+}
+
+$panelCorreoActivo = (string)($_GET['panel'] ?? '');
+if (!isset($seccionesCorreo[$panelCorreoActivo])) {
+    $panelCorreoActivo = 'falta_coordinador';
+    foreach ($correosPorSeccion as $claveCorreo => $itemsCorreo) {
+        if ($itemsCorreo) {
+            $panelCorreoActivo = (string)$claveCorreo;
+            break;
+        }
+    }
+}
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -277,20 +329,20 @@ try {
             </div>
         <?php endif; ?>
 
-        <section class="admin-mail-guide" aria-label="Funcion del panel de correos">
+        <section class="admin-mail-guide admin-mail-guide-compact" aria-label="Ruta de envio de correos">
             <div>
-                <p class="admin-eyebrow">¿Para qué sirve?</p>
-                <h2>Esta bandeja controla la comunicación de cada reserva</h2>
-                <span>Primero asignas coordinador en Solicitudes, luego puedes reenviarle la solicitud y finalmente notificas al instructor cuando exista una decisión.</span>
+                <p class="admin-eyebrow">Ruta de envio</p>
+                <h2>Correos claros para cada paso</h2>
+                <span>Elige el panel y envia el correo correcto segun el estado de la reserva.</span>
             </div>
             <ol>
-                <li><strong>1</strong><span>Asignar coordinador</span></li>
-                <li><strong>2</strong><span>Esperar decisión</span></li>
-                <li><strong>3</strong><span>Notificar instructor</span></li>
+                <li><strong class="mail-step-icon mail-step-assign" aria-hidden="true"></strong><span>Asignar coordinador</span></li>
+                <li><strong class="mail-step-icon mail-step-send" aria-hidden="true"></strong><span>Enviar a coordinacion</span></li>
+                <li><strong class="mail-step-icon mail-step-notify" aria-hidden="true"></strong><span>Notificar instructor</span></li>
             </ol>
         </section>
 
-        <section class="admin-metrics reservation-metrics" aria-label="Resumen de correos">
+        <section class="admin-metrics reservation-metrics admin-mail-metrics-hidden" aria-label="Resumen de correos">
             <a class="admin-metric" href="<?= admin_c_h(app_url('admin/correos.php?estado=Pendiente')) ?>">
                 <span>Por enviar</span>
                 <strong><?= admin_c_h($stats['sin_enviar']) ?></strong>
@@ -342,6 +394,24 @@ try {
                 <a href="<?= admin_c_h(app_url('admin/correos.php')) ?>">Limpiar</a>
             </form>
 
+            <?php if ($notificaciones): ?>
+                <div class="admin-request-tabs admin-mail-tabs" role="tablist" aria-label="Filtrar correos por paso">
+                    <?php foreach ($seccionesCorreo as $claveSeccion => $seccionCorreo): ?>
+                        <?php $tabActivo = $claveSeccion === $panelCorreoActivo; ?>
+                        <button
+                            type="button"
+                            class="<?= $tabActivo ? 'active' : '' ?>"
+                            role="tab"
+                            aria-selected="<?= $tabActivo ? 'true' : 'false' ?>"
+                            data-mail-tab="<?= admin_c_h($claveSeccion) ?>"
+                        >
+                            <span><?= admin_c_h($seccionCorreo['titulo']) ?></span>
+                            <strong><?= admin_c_h((string)count($correosPorSeccion[$claveSeccion] ?? [])) ?></strong>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
             <div class="admin-mail-board">
                 <?php if (!$notificaciones): ?>
                     <article class="admin-empty-state">
@@ -359,13 +429,29 @@ try {
                     $instructor = trim((string)$notificacion['instructor_nombre'] . ' ' . (string)$notificacion['instructor_apellido']);
                     $coordinador = trim((string)$notificacion['coord_nombre'] . ' ' . (string)$notificacion['coord_apellido']);
                     $fecha = new DateTime((string)$notificacion['fecha_evento']);
+                    $cardSection = 'en_coordinacion';
+                    if ($sinEnviar) {
+                        $cardSection = 'falta_coordinador';
+                    } elseif ($estado === 'Cancelado') {
+                        $cardSection = 'canceladas';
+                    } elseif ($decidida) {
+                        $cardSection = 'por_notificar';
+                    }
                     $cardClass = $sinEnviar ? 'draft' : ($decidida ? 'ready' : 'waiting');
-                    $stageTitle = $sinEnviar ? 'Falta coordinador' : ($decidida ? 'Decisión lista' : 'En revisión');
+                    if ($estado === 'Cancelado') {
+                        $cardClass = 'rejected';
+                    }
+                    $stageTitle = (string)$seccionesCorreo[$cardSection]['titulo'];
                     $stageHelp = $sinEnviar
                         ? 'Asigna un coordinador desde Solicitudes para poder iniciar la revisión.'
                         : ($decidida ? 'Ya puedes enviar la respuesta final al instructor.' : 'La solicitud ya está en coordinación; espera la decisión o reenvía el correo si hace falta.');
                     ?>
-                    <article class="admin-mail-card <?= admin_c_h($cardClass) ?>">
+                    <article
+                        id="mail-panel-<?= admin_c_h($cardSection) ?>-<?= admin_c_h($notificacion['id_evento']) ?>"
+                        class="admin-mail-card <?= admin_c_h($cardClass) ?>"
+                        data-mail-panel="<?= admin_c_h($cardSection) ?>"
+                        <?= $cardSection === $panelCorreoActivo ? '' : 'hidden' ?>
+                    >
                         <div class="admin-mail-status">
                             <span><?= admin_c_h($stageTitle) ?></span>
                             <strong><?= admin_c_h($estado) ?></strong>
@@ -399,7 +485,7 @@ try {
                         <?php if ($sinEnviar): ?>
                             <div class="admin-mail-actions">
                                 <strong>Siguiente paso</strong>
-                                <a href="<?= admin_c_h(app_url('admin/solicitudes.php?q=' . urlencode((string)$notificacion['nombre_evento']))) ?>">Asignar coordinador</a>
+                                <a href="<?= admin_c_h(app_url('admin/solicitudes.php?q=' . urlencode((string)$notificacion['nombre_evento']))) ?>">Ir a asignar coordinador</a>
                                 <small>Primero asigna coordinador; después podrás enviar o reenviar la solicitud.</small>
                             </div>
                         <?php else: ?>
@@ -409,15 +495,15 @@ try {
                                 <input type="hidden" name="id_evento" value="<?= admin_c_h($notificacion['id_evento']) ?>">
                                 <button type="submit" name="accion" value="reenviar_coordinador"
                                         data-confirm-kicker="Correo de coordinación"
-                                        data-confirm-title="Reenviar a coordinador"
-                                        data-confirm-message="Se enviará nuevamente la solicitud al coordinador asignado."
-                                        data-confirm-text="Sí, reenviar">Reenviar a coordinador</button>
+                                        data-confirm-title="Enviar al coordinador"
+                                        data-confirm-message="Se enviará la solicitud al coordinador asignado."
+                                        data-confirm-text="Sí, enviar">Enviar al coordinador</button>
                                 <button type="submit" name="accion" value="notificar_instructor" <?= !$decidida ? 'disabled' : '' ?>
                                         data-confirm-kicker="Correo al instructor"
-                                        data-confirm-title="Notificar instructor"
+                                        data-confirm-title="Enviar respuesta al instructor"
                                         data-confirm-message="El instructor recibirá la decisión final de la reserva por correo."
                                         data-confirm-text="Sí, notificar">
-                                    Notificar instructor
+                                    Enviar al instructor
                                 </button>
                                 <small><?= $decidida ? 'La respuesta final ya está lista para enviar.' : 'El botón de notificar se activa cuando coordinación decida.' ?></small>
                             </form>
@@ -428,5 +514,23 @@ try {
         </section>
     </section>
 </main>
+
+<script>
+document.addEventListener('click', function (event) {
+    const tab = event.target.closest('[data-mail-tab]');
+    if (!tab) return;
+
+    const target = tab.getAttribute('data-mail-tab');
+    document.querySelectorAll('[data-mail-tab]').forEach((button) => {
+        const active = button === tab;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('[data-mail-panel]').forEach((panel) => {
+        panel.hidden = panel.getAttribute('data-mail-panel') !== target;
+    });
+});
+</script>
 
 <?php include_once __DIR__ . '/../includes/footer.php'; ?>

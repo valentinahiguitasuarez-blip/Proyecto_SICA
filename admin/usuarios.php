@@ -39,6 +39,7 @@ if (empty($_SESSION['csrf_admin_users'])) {
 $roles = [];
 $estados = [];
 $fichas = [];
+$hasDocumentTypeColumn = false;
 $message = $_SESSION['admin_users_message'] ?? '';
 $messageType = $_SESSION['admin_users_message_type'] ?? 'success';
 unset($_SESSION['admin_users_message'], $_SESSION['admin_users_message_type']);
@@ -46,6 +47,7 @@ unset($_SESSION['admin_users_message'], $_SESSION['admin_users_message_type']);
 try {
     $roles = admin_rows($pdo, 'SELECT id_rol, nombre_rol FROM rol ORDER BY id_rol ASC');
     $estados = admin_rows($pdo, 'SELECT id_estado, nombre_estado FROM estado ORDER BY id_estado ASC');
+    $hasDocumentTypeColumn = count(admin_rows($pdo, "SHOW COLUMNS FROM usuario LIKE 'tipo_documento'")) > 0;
     $fichas = admin_rows(
         $pdo,
         'SELECT f.id_ficha, p.nombre_programa, j.nombre_jornada
@@ -86,7 +88,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $_SESSION['admin_users_message'] = 'La sesion expiro. Intenta de nuevo.';
         $_SESSION['admin_users_message_type'] = 'danger';
     } elseif ($action === 'crear') {
-        $newDocument = (int)($_POST['nuevo_documento'] ?? 0);
+        $documentType = (string)($_POST['nuevo_tipo_documento'] ?? 'CC');
+        $newDocumentRaw = trim((string)($_POST['nuevo_documento'] ?? ''));
+        $newDocument = ctype_digit($newDocumentRaw) ? (int)$newDocumentRaw : 0;
         $newName = trim((string)($_POST['nuevo_nombre'] ?? ''));
         $newLastName = trim((string)($_POST['nuevo_apellido'] ?? ''));
         $newMail = mb_strtolower(trim((string)($_POST['nuevo_correo'] ?? '')), 'UTF-8');
@@ -97,8 +101,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $newFichaRaw = trim((string)($_POST['nuevo_id_ficha'] ?? ''));
         $newFicha = $newFichaRaw === '' ? null : (int)$newFichaRaw;
 
-        if ($newDocument <= 0) {
-            $_SESSION['admin_users_message'] = 'El documento debe ser un numero valido.';
+        if (!in_array($documentType, ['CC', 'TI', 'CE', 'PEP'], true)) {
+            $_SESSION['admin_users_message'] = 'Selecciona un tipo de documento valido.';
+            $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif ($newDocument <= 0 || strlen($newDocumentRaw) > 20) {
+            $_SESSION['admin_users_message'] = 'El documento debe tener solo numeros y maximo 20 digitos.';
             $_SESSION['admin_users_message_type'] = 'danger';
         } elseif ($newName === '' || $newLastName === '' || strlen($newName) > 50 || strlen($newLastName) > 50) {
             $_SESSION['admin_users_message'] = 'Escribe nombre y apellido de maximo 50 caracteres.';
@@ -120,13 +127,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $_SESSION['admin_users_message_type'] = 'danger';
         } else {
             try {
-                $insert = $pdo->prepare(
-                    'INSERT INTO usuario
-                        (id_documento, nombre, apellido, correo, contrasena, telefono, fecha_registro, id_rol, id_ficha, id_estado)
-                     VALUES
-                        (:id_documento, :nombre, :apellido, :correo, :contrasena, :telefono, CURDATE(), :id_rol, :id_ficha, :id_estado)'
-                );
-                $insert->execute([
+                $columns = 'id_documento, nombre, apellido, correo, contrasena, telefono, fecha_registro, id_rol, id_ficha, id_estado';
+                $values = ':id_documento, :nombre, :apellido, :correo, :contrasena, :telefono, CURDATE(), :id_rol, :id_ficha, :id_estado';
+                $insertParams = [
                     ':id_documento' => $newDocument,
                     ':nombre' => $newName,
                     ':apellido' => $newLastName,
@@ -136,7 +139,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     ':id_rol' => $newRole,
                     ':id_ficha' => $newFicha,
                     ':id_estado' => $newState,
-                ]);
+                ];
+
+                if ($hasDocumentTypeColumn) {
+                    $columns .= ', tipo_documento';
+                    $values .= ', :tipo_documento';
+                    $insertParams[':tipo_documento'] = $documentType;
+                }
+
+                $insert = $pdo->prepare(
+                    'INSERT INTO usuario (' . $columns . ')
+                     VALUES (' . $values . ')'
+                );
+                $insert->execute($insertParams);
 
                 $_SESSION['admin_users_message'] = 'Usuario creado correctamente. Puede ingresar con el correo y la contrasena temporal.';
                 $_SESSION['admin_users_message_type'] = 'success';
@@ -245,9 +260,11 @@ try {
          WHERE LOWER(r.nombre_rol) LIKE '%instructor%'"
     );
 
+    $documentTypeSelect = $hasDocumentTypeColumn ? 'u.tipo_documento,' : "'CC' AS tipo_documento,";
+
     $users = admin_rows(
         $pdo,
-        'SELECT u.id_documento, u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
+        'SELECT u.id_documento, ' . $documentTypeSelect . ' u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
                 u.id_rol, u.id_estado, u.id_ficha, r.nombre_rol, es.nombre_estado,
                 p.nombre_programa, j.nombre_jornada,
                 COUNT(pr.id_preregistro) AS preregistros,
@@ -260,7 +277,7 @@ try {
          LEFT JOIN jornada j ON j.id_jornada = p.id_jornada
          LEFT JOIN preregistro pr ON pr.id_documento = u.id_documento' .
             $whereSql .
-        ' GROUP BY u.id_documento, u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
+        ' GROUP BY u.id_documento, ' . ($hasDocumentTypeColumn ? 'u.tipo_documento, ' : '') . 'u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
                  u.id_rol, u.id_estado, u.id_ficha, r.nombre_rol, es.nombre_estado,
                  p.nombre_programa, j.nombre_jornada
           ORDER BY u.fecha_registro DESC, u.nombre ASC
@@ -413,7 +430,7 @@ try {
                             </div>
 
                             <div class="admin-user-details">
-                                <span>Documento <strong><?= admin_h($item['id_documento']) ?></strong></span>
+                                <span><?= admin_h($item['tipo_documento'] ?? 'CC') ?> <strong><?= admin_h($item['id_documento']) ?></strong></span>
                                 <span>Ficha <strong><?= admin_h($item['id_ficha'] ?? 'Sin ficha') ?></strong></span>
                                 <span>Pre-registros <strong><?= admin_h((int)$item['preregistros']) ?></strong></span>
                                 <span>Asistencias <strong><?= admin_h((int)$item['asistencias']) ?></strong></span>
@@ -482,8 +499,17 @@ try {
 
         <div class="admin-create-user-grid">
             <label>
+                <span>Tipo documento</span>
+                <select name="nuevo_tipo_documento" required>
+                    <option value="CC">Cedula de ciudadania</option>
+                    <option value="TI">Tarjeta de identidad</option>
+                    <option value="CE">Cedula de extranjeria</option>
+                    <option value="PEP">PEP</option>
+                </select>
+            </label>
+            <label>
                 <span>Documento</span>
-                <input type="number" name="nuevo_documento" min="1" required placeholder="Ej. 1234567890">
+                <input type="text" name="nuevo_documento" inputmode="numeric" pattern="\d{1,20}" maxlength="20" required placeholder="Ej. 1234567890">
             </label>
             <label>
                 <span>Nombre</span>
@@ -495,7 +521,7 @@ try {
             </label>
             <label>
                 <span>Correo</span>
-                <input type="email" name="nuevo_correo" maxlength="60" required placeholder="correo@sena.edu.co">
+                <input type="email" name="nuevo_correo" maxlength="60" required placeholder="correo personal">
             </label>
             <label>
                 <span>Telefono</span>

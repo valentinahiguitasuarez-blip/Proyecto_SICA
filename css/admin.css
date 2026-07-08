@@ -1004,7 +1004,7 @@ body {
 }
 
 .admin-create-user-dialog {
-    width: min(960px, calc(100vw - 32px));
+    width: min(1040px, calc(100vw - 32px));
     max-height: calc(100vh - 44px);
     padding: 0;
     border: 0;
@@ -1057,7 +1057,7 @@ body {
 
 .admin-create-user-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 12px;
     padding: 14px;
     border-radius: 8px;

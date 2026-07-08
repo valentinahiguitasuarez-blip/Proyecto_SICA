@@ -88,6 +88,10 @@ foreach ($roles as $role) {
 }
 $defaultRoleId = $apprenticeRoleId ?? ($roleIds[0] ?? 0);
 $defaultStateId = $activeStateId ?? ($stateIds[0] ?? 0);
+$roleNamesById = [];
+foreach ($roles as $role) {
+    $roleNamesById[(int)$role['id_rol']] = (string)$role['nombre_rol'];
+}
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $csrf = (string)($_POST['csrf_admin_users'] ?? '');
@@ -109,6 +113,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $newState = (int)($_POST['nuevo_id_estado'] ?? 0);
         $newFichaRaw = trim((string)($_POST['nuevo_id_ficha'] ?? ''));
         $newFicha = $newFichaRaw === '' ? null : (int)$newFichaRaw;
+        $newRoleName = mb_strtolower($roleNamesById[$newRole] ?? '', 'UTF-8');
+        if (!str_contains($newRoleName, 'aprendiz')) {
+            $newFicha = null;
+        }
 
         if (!in_array($documentType, ['CC', 'TI', 'CE', 'PEP'], true)) {
             $_SESSION['admin_users_message'] = 'Selecciona un tipo de documento valido.';
@@ -187,6 +195,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $editFicha = $editFichaRaw === '' ? null : (int)$editFichaRaw;
         $newRole = (int)($_POST['id_rol'] ?? 0);
         $newState = (int)($_POST['id_estado'] ?? 0);
+        $editRoleName = mb_strtolower($roleNamesById[$newRole] ?? '', 'UTF-8');
+        if (!str_contains($editRoleName, 'aprendiz')) {
+            $editFicha = null;
+        }
 
         if ($targetDocument <= 0 || !in_array($newRole, $roleIds, true) || !in_array($newState, $accountStateIds, true)) {
             $_SESSION['admin_users_message'] = 'Selecciona un usuario, rol y estado validos.';
@@ -472,6 +484,7 @@ try {
                     $initials = mb_strtoupper(mb_substr((string)$item['nombre'], 0, 1, 'UTF-8') . mb_substr((string)$item['apellido'], 0, 1, 'UTF-8'), 'UTF-8');
                     $initials = $initials !== '' ? $initials : 'US';
                     $isCurrentAdmin = (int)$item['id_documento'] === $adminDocument;
+                    $isApprenticeUser = str_contains(mb_strtolower((string)$item['nombre_rol'], 'UTF-8'), 'aprendiz');
                     ?>
                     <article class="admin-user-card">
                         <div class="admin-user-avatar"><?= admin_h($initials) ?></div>
@@ -489,17 +502,21 @@ try {
 
                             <div class="admin-user-details">
                                 <span><?= admin_h($item['tipo_documento'] ?? 'CC') ?> <strong><?= admin_h($item['id_documento']) ?></strong></span>
-                                <span>Ficha <strong><?= admin_h($item['id_ficha'] ?? 'Sin ficha') ?></strong></span>
-                                <span>Pre-registros <strong><?= admin_h((int)$item['preregistros']) ?></strong></span>
-                                <span>Asistencias <strong><?= admin_h((int)$item['asistencias']) ?></strong></span>
+                                <?php if ($isApprenticeUser): ?>
+                                    <span>Ficha <strong><?= admin_h($item['id_ficha'] ?? 'Sin ficha') ?></strong></span>
+                                    <span>Pre-registros <strong><?= admin_h((int)$item['preregistros']) ?></strong></span>
+                                    <span>Asistencias <strong><?= admin_h((int)$item['asistencias']) ?></strong></span>
+                                <?php endif; ?>
                             </div>
 
-                            <p>
-                                <?= admin_h($item['nombre_programa'] ?? 'Programa no asignado') ?>
-                                <?php if (!empty($item['nombre_jornada'])): ?>
-                                    · <?= admin_h($item['nombre_jornada']) ?>
-                                <?php endif; ?>
-                            </p>
+                            <?php if ($isApprenticeUser): ?>
+                                <p>
+                                    <?= admin_h($item['nombre_programa'] ?? 'Programa no asignado') ?>
+                                    <?php if (!empty($item['nombre_jornada'])): ?>
+                                        &middot; <?= admin_h($item['nombre_jornada']) ?>
+                                    <?php endif; ?>
+                                </p>
+                            <?php endif; ?>
                         </div>
 
                         <details class="admin-user-edit">
@@ -508,6 +525,10 @@ try {
                                 <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
                                 <input type="hidden" name="accion" value="actualizar">
                                 <input type="hidden" name="id_documento" value="<?= admin_h($item['id_documento']) ?>">
+                                <div class="admin-user-actions-title">
+                                    <strong>Datos personales</strong>
+                                    <small>Actualiza informacion de contacto e identificacion.</small>
+                                </div>
                                 <label>
                                     <span>Nombre</span>
                                     <input type="text" name="nombre" value="<?= admin_h($item['nombre']) ?>" maxlength="50" required <?= $isCurrentAdmin ? 'disabled' : '' ?>>
@@ -534,21 +555,25 @@ try {
                                         <?php endforeach; ?>
                                     </select>
                                 </label>
-                                <label class="admin-user-actions-wide">
-                                    <span>Ficha</span>
-                                    <div class="admin-ficha-field">
-                                        <input type="text" name="id_ficha" value="<?= admin_h($item['id_ficha'] ?? '') ?>" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por ficha o programa" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
-                                    </div>
-                                </label>
+                                <div class="admin-user-actions-title admin-user-access-title">
+                                    <strong>Acceso</strong>
+                                    <small>Define rol, estado y ficha solo para aprendices.</small>
+                                </div>
                                 <label>
                                     <span>Rol</span>
-                                    <select name="id_rol" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                    <select name="id_rol" data-role-select <?= $isCurrentAdmin ? 'disabled' : '' ?>>
                                         <?php foreach ($roles as $role): ?>
                                             <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$item['id_rol'] === (int)$role['id_rol'] ? 'selected' : '' ?>>
                                                 <?= admin_h($role['nombre_rol']) ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
+                                </label>
+                                <label class="admin-user-actions-wide" data-ficha-field>
+                                    <span>Ficha</span>
+                                    <div class="admin-ficha-field">
+                                        <input type="text" name="id_ficha" value="<?= admin_h($item['id_ficha'] ?? '') ?>" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por ficha o programa" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                    </div>
                                 </label>
                                 <label>
                                     <span>Estado</span>
@@ -623,7 +648,7 @@ try {
             </label>
             <label>
                 <span>Rol</span>
-                <select name="nuevo_id_rol" required>
+                <select name="nuevo_id_rol" required data-role-select>
                     <?php foreach ($roles as $role): ?>
                         <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$role['id_rol'] === $defaultRoleId ? 'selected' : '' ?>>
                             <?= admin_h($role['nombre_rol']) ?>
@@ -641,7 +666,7 @@ try {
                     <?php endforeach; ?>
                 </select>
             </label>
-            <label class="admin-create-user-wide">
+            <label class="admin-create-user-wide" data-ficha-field>
                 <span>Ficha</span>
                 <div class="admin-ficha-field">
                     <input type="text" name="nuevo_id_ficha" list="fichasUsuario" inputmode="numeric" placeholder="Buscar por numero de ficha o programa">
@@ -670,29 +695,55 @@ document.addEventListener('DOMContentLoaded', function () {
     const openButton = document.querySelector('[data-open-create-user]');
     const closeButton = document.querySelector('[data-close-create-user]');
 
-    if (!dialog || !openButton) {
-        return;
-    }
-
-    openButton.addEventListener('click', function () {
-        if (typeof dialog.showModal === 'function') {
-            dialog.showModal();
-        } else {
-            dialog.setAttribute('open', 'open');
+    const updateFichaVisibility = function (select) {
+        const form = select.closest('form');
+        if (!form) {
+            return;
         }
+
+        const fichaField = form.querySelector('[data-ficha-field]');
+        if (!fichaField) {
+            return;
+        }
+
+        const selectedText = select.options[select.selectedIndex] ? select.options[select.selectedIndex].textContent.toLowerCase() : '';
+        const isApprentice = selectedText.includes('aprendiz');
+        const fichaInput = fichaField.querySelector('input');
+
+        fichaField.hidden = !isApprentice;
+        if (!isApprentice && fichaInput) {
+            fichaInput.value = '';
+        }
+    };
+
+    document.querySelectorAll('[data-role-select]').forEach(function (select) {
+        updateFichaVisibility(select);
+        select.addEventListener('change', function () {
+            updateFichaVisibility(select);
+        });
     });
 
-    if (closeButton) {
-        closeButton.addEventListener('click', function () {
-            dialog.close();
+    if (dialog && openButton) {
+        openButton.addEventListener('click', function () {
+            if (typeof dialog.showModal === 'function') {
+                dialog.showModal();
+            } else {
+                dialog.setAttribute('open', 'open');
+            }
+        });
+
+        if (closeButton) {
+            closeButton.addEventListener('click', function () {
+                dialog.close();
+            });
+        }
+
+        dialog.addEventListener('click', function (event) {
+            if (event.target === dialog) {
+                dialog.close();
+            }
         });
     }
-
-    dialog.addEventListener('click', function (event) {
-        if (event.target === dialog) {
-            dialog.close();
-        }
-    });
 });
 </script>
 

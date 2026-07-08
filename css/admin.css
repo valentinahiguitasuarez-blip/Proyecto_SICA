@@ -1384,11 +1384,42 @@ body {
     display: grid;
     grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
     align-items: end;
-    gap: 9px;
-    padding: 12px;
+    gap: 12px;
+    padding: 14px;
     border: 1px solid #e2ebf4;
     border-radius: 8px;
     background: #f8fbff;
+}
+
+.admin-user-actions-title {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e4edf5;
+}
+
+.admin-user-access-title {
+    margin-top: 4px;
+}
+
+.admin-user-actions-title strong,
+.admin-user-actions-title small {
+    display: block;
+}
+
+.admin-user-actions-title strong {
+    color: var(--admin-ink);
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.admin-user-actions-title small {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 650;
 }
 
 .admin-user-actions-wide {

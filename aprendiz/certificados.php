@@ -99,7 +99,7 @@ $ultimoCertificado = $listos[0] ?? null;
         <a class="apprentice-brand" href="<?= cert_e(app_url('aprendiz/index.php')) ?>">
             <span>
                 <strong>SICA</strong>
-                <small>Aprendiz</small>
+                <small>Registro de asistencia</small>
             </span>
         </a>
 

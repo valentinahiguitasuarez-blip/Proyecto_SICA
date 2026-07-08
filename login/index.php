@@ -142,7 +142,7 @@ if (empty($_SESSION['csrf_login'])) {
                 </button>
             </form>
 
-            <p class="login-register">&iquest;No tienes una cuenta? <a href="#">Comun&iacute;cate con el administrador</a></p>
+            <p class="login-register">&iquest;No tienes una cuenta? <a href="<?= htmlspecialchars(app_url('login/solicitar_acceso.php'), ENT_QUOTES, 'UTF-8') ?>">Solicitar acceso</a></p>
         </div>
     </section>
 </main>

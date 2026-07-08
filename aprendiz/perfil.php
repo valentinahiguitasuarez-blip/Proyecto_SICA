@@ -273,7 +273,7 @@ $fotoPerfil = !empty($perfil['foto_perfil']) ? (string)$perfil['foto_perfil'] : 
         <a class="apprentice-brand" href="<?= e(app_url('aprendiz/index.php')) ?>">
             <span>
                 <strong>SICA</strong>
-                <small>Aprendiz</small>
+                <small>Registro de asistencia</small>
             </span>
         </a>
 

@@ -90,7 +90,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
         <a class="apprentice-brand" href="<?= htmlspecialchars(app_url('aprendiz/index.php'), ENT_QUOTES, 'UTF-8') ?>">
             <span>
                 <strong>SICA</strong>
-                <small>Aprendiz</small>
+                <small>Registro de asistencia</small>
             </span>
         </a>
 

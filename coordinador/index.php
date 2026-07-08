@@ -259,7 +259,7 @@ $capacidadTotal = array_sum(array_map(static fn(array $auditorio): int => (int)$
         <nav class="admin-nav">
             <a class="active" href="<?= coord_h(app_url('coordinador/index.php')) ?>"><span>PC</span>Panel Coordinador</a>
             <details class="coord-nav-group" open>
-                <summary><span>SA</span>Solicitudes de Auditorio</summary>
+                <summary><span>SA</span><strong>Solicitudes de Auditorio</strong></summary>
                 <a href="#solicitudes"><span></span>Todas las solicitudes</a>
                 <a href="#pendientes"><span></span>Pendientes por aprobar</a>
                 <a href="#aprobados"><span></span>Aprobadas</a>

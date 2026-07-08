@@ -427,36 +427,39 @@ try {
                             </p>
                         </div>
 
-                        <form class="admin-user-actions" method="post" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
-                            <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
-                            <input type="hidden" name="accion" value="actualizar">
-                            <input type="hidden" name="id_documento" value="<?= admin_h($item['id_documento']) ?>">
-                            <label>
-                                <span>Rol</span>
-                                <select name="id_rol" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
-                                    <?php foreach ($roles as $role): ?>
-                                        <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$item['id_rol'] === (int)$role['id_rol'] ? 'selected' : '' ?>>
-                                            <?= admin_h($role['nombre_rol']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                            <label>
-                                <span>Estado</span>
-                                <select name="id_estado" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
-                                    <?php foreach ($estados as $estado): ?>
-                                        <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$item['id_estado'] === (int)$estado['id_estado'] ? 'selected' : '' ?>>
-                                            <?= admin_h($estado['nombre_estado']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                            <?php if ($isCurrentAdmin): ?>
-                                <small>Tu cuenta se protege para no perder acceso.</small>
-                            <?php else: ?>
-                                <button type="submit">Guardar</button>
-                            <?php endif; ?>
-                        </form>
+                        <details class="admin-user-edit">
+                            <summary><?= $isCurrentAdmin ? 'Protegido' : 'Editar' ?></summary>
+                            <form class="admin-user-actions" method="post" action="<?= admin_h(app_url('admin/usuarios.php')) ?>">
+                                <input type="hidden" name="csrf_admin_users" value="<?= admin_h($_SESSION['csrf_admin_users']) ?>">
+                                <input type="hidden" name="accion" value="actualizar">
+                                <input type="hidden" name="id_documento" value="<?= admin_h($item['id_documento']) ?>">
+                                <label>
+                                    <span>Rol</span>
+                                    <select name="id_rol" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                        <?php foreach ($roles as $role): ?>
+                                            <option value="<?= admin_h($role['id_rol']) ?>" <?= (int)$item['id_rol'] === (int)$role['id_rol'] ? 'selected' : '' ?>>
+                                                <?= admin_h($role['nombre_rol']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                                <label>
+                                    <span>Estado</span>
+                                    <select name="id_estado" <?= $isCurrentAdmin ? 'disabled' : '' ?>>
+                                        <?php foreach ($estados as $estado): ?>
+                                            <option value="<?= admin_h($estado['id_estado']) ?>" <?= (int)$item['id_estado'] === (int)$estado['id_estado'] ? 'selected' : '' ?>>
+                                                <?= admin_h($estado['nombre_estado']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </label>
+                                <?php if ($isCurrentAdmin): ?>
+                                    <small>Tu cuenta se protege para no perder acceso.</small>
+                                <?php else: ?>
+                                    <button type="submit">Guardar cambios</button>
+                                <?php endif; ?>
+                            </form>
+                        </details>
                     </article>
                 <?php endforeach; ?>
             </div>

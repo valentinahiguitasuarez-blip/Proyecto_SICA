@@ -2625,23 +2625,28 @@ body {
 
 .admin-top-actions .admin-logout,
 .admin-logout {
-    min-height: 65px;
-    gap: 18px;
-    padding: 0 24px;
+    min-height: 56px;
+    gap: 14px;
+    padding: 0 22px;
     border-radius: 8px;
     font-size: 18px;
-    background: #165dff;
+    background: linear-gradient(135deg, #1017e8, #2367ff);
     box-shadow: 0 12px 24px rgba(22, 93, 255, 0.18);
 }
 
 .admin-top-actions .admin-logout::before,
 .admin-logout::before {
-    content: "";
-    width: 12px;
-    height: 12px;
-    flex: 0 0 12px;
-    border-radius: 50%;
-    background: #ffffff;
+    content: "SL";
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--admin-blue);
+    background: rgba(255, 255, 255, 0.94);
+    font-size: 14px;
+    font-weight: 900;
 }
 
 .admin-home-summary {

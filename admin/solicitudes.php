@@ -161,7 +161,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
                 $update = $pdo->prepare(
                     'UPDATE evento
-                     SET id_coordinador = :coordinador,
+                     SET id_coordinador = :coordinador
                      WHERE id_evento = :id_evento'
                 );
                 $update->execute([
@@ -511,8 +511,6 @@ $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 =>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </label>
-                                        <?php else: ?>
-                                            <input type="hidden" name="observacion" value="<?= admin_s_h($solicitud['observacion'] ?? '') ?>">
                                         <?php endif; ?>
                                         <div>
                                             <?php if ($estado === 'Pendiente'): ?>

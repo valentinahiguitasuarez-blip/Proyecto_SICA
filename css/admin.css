@@ -1568,6 +1568,76 @@ body {
     padding: 16px;
 }
 
+.admin-request-guide {
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.72fr);
+    gap: 18px;
+    align-items: center;
+    padding: 22px 24px;
+    border: 1px solid rgba(22, 93, 255, 0.18);
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.08), rgba(18, 166, 120, 0.08)),
+        #ffffff;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.admin-request-guide h2 {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 900;
+}
+
+.admin-request-guide span {
+    display: block;
+    margin-top: 8px;
+    color: var(--admin-muted);
+    font-weight: 750;
+    line-height: 1.45;
+}
+
+.admin-request-guide ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-request-guide li {
+    min-height: 92px;
+    display: grid;
+    align-content: center;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--admin-line);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.admin-request-guide li strong {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    color: #ffffff;
+    background: var(--admin-blue);
+    font-size: 14px;
+}
+
+.admin-request-guide li span {
+    margin: 0;
+    color: var(--admin-ink);
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 900;
+}
+
 .reservations-panel {
     padding: 20px;
 }
@@ -3675,6 +3745,7 @@ body {
     .admin-create-user-grid,
     .admin-user-card,
     .admin-reservation-card,
+    .admin-request-guide,
     .admin-mail-guide,
     .admin-mail-filters,
     .admin-mail-card,
@@ -3751,6 +3822,10 @@ body {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .admin-request-guide ol {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .admin-mail-guide ol {
         grid-template-columns: 1fr;
     }
@@ -3768,6 +3843,7 @@ body {
     .admin-metrics,
     .quick-actions nav,
     .admin-request-tabs,
+    .admin-request-guide ol,
     .admin-today-strip,
     .admin-global-search,
     .admin-today-mini,

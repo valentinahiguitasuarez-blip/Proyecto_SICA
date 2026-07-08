@@ -396,27 +396,17 @@ $estadoActivo = isset($seccionesSolicitud[$estadoFiltro]) ? $estadoFiltro : 'Pen
             </div>
         <?php endif; ?>
 
-        <section class="admin-metrics reservation-metrics" aria-label="Resumen de solicitudes">
-            <article class="admin-metric">
-                <span>Pendientes</span>
-                <strong><?= admin_s_h($counts['Pendiente'] ?? 0) ?></strong>
-                <small>Esperando revision</small>
-            </article>
-            <article class="admin-metric">
-                <span>Aprobadas</span>
-                <strong><?= admin_s_h($counts['Activo'] ?? 0) ?></strong>
-                <small>Reservas activas</small>
-            </article>
-            <article class="admin-metric">
-                <span>Finalizadas</span>
-                <strong><?= admin_s_h($counts['Finalizado'] ?? 0) ?></strong>
-                <small>Eventos cerrados</small>
-            </article>
-            <article class="admin-metric">
-                <span>Canceladas</span>
-                <strong><?= admin_s_h($counts['Cancelado'] ?? 0) ?></strong>
-                <small>No autorizadas</small>
-            </article>
+        <section class="admin-request-guide" aria-label="Ruta de gestion de solicitudes">
+            <div>
+                <p class="admin-eyebrow">Flujo de trabajo</p>
+                <h2>Gestiona cada reserva desde un solo lugar</h2>
+                <span>Usa las pestañas de abajo para ver solo el estado que necesitas revisar. Desde cada solicitud puedes asignar coordinador, reenviar la revisión o notificar la respuesta final.</span>
+            </div>
+            <ol>
+                <li><strong>1</strong><span>Revisa pendientes</span></li>
+                <li><strong>2</strong><span>Asigna coordinación</span></li>
+                <li><strong>3</strong><span>Notifica respuesta</span></li>
+            </ol>
         </section>
 
         <section class="admin-panel reservations-panel">

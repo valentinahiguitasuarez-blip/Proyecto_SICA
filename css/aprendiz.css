@@ -66,32 +66,42 @@ body {
 }
 
 .apprentice-person {
-    display: flex;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     min-width: 0;
     margin: 2px 0 8px;
-    padding: 14px;
+    padding: 12px;
     border: 1px solid rgba(143, 177, 255, 0.22);
     border-radius: 8px;
     color: #ffffff;
+    text-decoration: none;
     background:
         linear-gradient(135deg, rgba(37, 99, 255, 0.14), rgba(25, 185, 120, 0.10)),
         rgba(255, 255, 255, 0.055);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.apprentice-person:hover,
+.apprentice-person:focus {
+    color: #ffffff;
+    border-color: rgba(143, 177, 255, 0.42);
+    background-color: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
 }
 
 .apprentice-person-avatar {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     display: grid;
     place-items: center;
-    flex: 0 0 60px;
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 12px;
     color: #ffffff;
     background: linear-gradient(135deg, #2563ff, #2ec4b6);
-    box-shadow: 0 14px 26px rgba(37, 99, 255, 0.22);
+    box-shadow: 0 10px 20px rgba(37, 99, 255, 0.18);
     font-weight: 900;
 }
 
@@ -107,22 +117,22 @@ body {
     display: block;
 }
 
-.apprentice-person div {
+.apprentice-person > div:not(.apprentice-person-avatar) {
     min-width: 0;
     display: grid;
-    gap: 4px;
+    gap: 3px;
 }
 
 .apprentice-person strong {
     color: #ffffff;
-    font-size: 20px;
-    line-height: 1.2;
+    font-size: 15px;
+    line-height: 1.16;
 }
 
 .apprentice-person small {
-    max-width: 190px;
+    max-width: 100%;
     color: #c6d6ee;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -131,15 +141,16 @@ body {
 
 .apprentice-person::after {
     content: "En linea";
-    grid-column: 2;
     width: max-content;
-    margin-top: 1px;
-    padding: 4px 9px;
+    max-width: 58px;
+    padding: 5px 8px;
     border-radius: 999px;
     color: #8af0c8;
     background: rgba(18, 166, 120, 0.14);
-    font-size: 11px;
+    font-size: 10px;
+    line-height: 1.1;
     font-weight: 900;
+    text-align: center;
 }
 
 .apprentice-nav {
@@ -177,166 +188,12 @@ body {
     box-shadow: 0 14px 30px rgba(3, 1, 210, 0.28);
 }
 
-.learner-id-card {
-    margin-top: 18px;
-    padding: 16px;
-    border: 1px solid rgba(143, 177, 255, 0.18);
-    border-radius: 8px;
-    background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04)),
-        rgba(255, 255, 255, 0.07);
-    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.16);
-}
-
-.sidebar-label {
-    display: block;
-    margin-bottom: 8px;
-    color: #8fb1ff;
-    font-size: 12px;
-    font-weight: 900;
-    text-transform: uppercase;
-}
-
-.learner-photo-card {
-    position: relative;
-    min-height: 154px;
-    margin: 12px 0;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 8px;
-    background:
-        linear-gradient(120deg, rgba(143, 177, 255, 0.2), rgba(25, 185, 120, 0.16)),
-        rgba(255, 255, 255, 0.06);
-}
-
-.learner-photo-card::before {
-    content: "";
-    position: absolute;
-    inset: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 8px;
-}
-
-.learner-photo {
-    position: relative;
-    z-index: 1;
-    width: 92px;
-    height: 104px;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 8px;
-    background:
-        radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.28) 0 18%, transparent 19%),
-        linear-gradient(180deg, #8fb1ff 0 48%, #263854 49% 100%);
-    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
-}
-
-.learner-photo span {
-    margin-top: 40px;
-    color: #ffffff;
-    font-size: 30px;
-    font-weight: 900;
-}
-
-.learner-photo img,
 .profile-avatar img,
 .profile-photo-preview img {
     width: 100%;
     height: 100%;
     display: block;
     object-fit: cover;
-}
-
-.learner-scan {
-    position: absolute;
-    left: 18px;
-    right: 18px;
-    top: 42%;
-    z-index: 2;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.88), transparent);
-    animation: idScan 3.6s ease-in-out infinite;
-}
-
-.learner-id-copy strong,
-.learner-id-copy small {
-    display: block;
-}
-
-.learner-id-copy strong {
-    color: #ffffff;
-    font-size: 19px;
-    line-height: 1.2;
-}
-
-.learner-id-copy small {
-    margin-top: 5px;
-    color: #b8c4d8;
-    font-weight: 800;
-}
-
-.learner-id-data {
-    display: grid;
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.learner-id-data div {
-    padding: 10px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.learner-id-data span,
-.learner-id-data strong {
-    display: block;
-}
-
-.learner-id-data span {
-    color: #9ca9bd;
-    font-size: 11px;
-    font-weight: 900;
-    text-transform: uppercase;
-}
-
-.learner-id-data strong {
-    margin-top: 3px;
-    color: #ffffff;
-    font-size: 14px;
-    line-height: 1.28;
-}
-
-.learner-profile-link {
-    min-height: 42px;
-    margin-top: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    color: #ffffff;
-    background: var(--ap-blue);
-    box-shadow: 0 14px 28px rgba(3, 1, 210, 0.24);
-    font-weight: 900;
-    text-decoration: none;
-}
-
-.learner-profile-link:hover,
-.learner-profile-link:focus {
-    color: #ffffff;
-    background: #211dff;
-}
-
-@keyframes idScan {
-    0%, 100% {
-        transform: translateY(-42px);
-        opacity: 0.42;
-    }
-    50% {
-        transform: translateY(42px);
-        opacity: 1;
-    }
 }
 
 .apprentice-main {

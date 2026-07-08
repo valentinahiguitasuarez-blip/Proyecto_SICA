@@ -121,7 +121,7 @@ try {
             END,
             e.fecha_evento ASC,
             e.hora_inicio ASC
-         LIMIT 6'
+         LIMIT 4'
     );
 
     $auditorios = rowsQuery(
@@ -213,7 +213,7 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
             <div>
                 <p class="admin-eyebrow">Panel administrativo</p>
                 <h1>Bienvenido, <?= h($adminName) ?></h1>
-                <span>Gestiona usuarios, reservas de auditorios y correos de confirmacion.</span>
+                <span>Revisa lo pendiente y entra rapido a cada modulo.</span>
             </div>
             <div class="admin-top-actions">
                 <div class="admin-notification-center" aria-label="Centro de notificaciones">
@@ -225,44 +225,15 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
             </div>
         </header>
 
-        <section class="admin-home-summary" aria-label="Resumen del panel">
-            <article>
-                <span>Solicitudes pendientes</span>
-                <strong><?= h($reservas['Pendiente']) ?></strong>
-                <small>Revisar y asignar coordinador</small>
-            </article>
-            <article>
-                <span>Correos por gestionar</span>
-                <strong><?= h($stats['correos_pendientes'] ?? 0) ?></strong>
-                <small>Confirmaciones y avisos</small>
-            </article>
-            <article>
-                <span>Eventos aprobados</span>
-                <strong><?= h($stats['eventos']) ?></strong>
-                <small>Reservas activas o finalizadas</small>
-            </article>
-            <article>
-                <span>Auditorios activos</span>
-                <strong><?= h($stats['auditorios']) ?></strong>
-                <small>Espacios disponibles</small>
-            </article>
-        </section>
-
         <section class="admin-home-grid">
             <article class="admin-panel admin-work-queue admin-home-primary">
                 <div class="admin-panel-head">
                     <div>
-                        <p class="admin-eyebrow">Prioridad</p>
-                        <h2>Lo que necesita accion</h2>
+                        <p class="admin-eyebrow">Pendientes</p>
+                        <h2>Por atender</h2>
                     </div>
-                    <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Abrir solicitudes</a>
+                    <a href="<?= h(app_url('admin/solicitudes.php')) ?>">Ver todos</a>
                 </div>
-
-                <form class="admin-global-search admin-home-search" action="<?= h(app_url('admin/solicitudes.php')) ?>" method="get" role="search">
-                    <span aria-hidden="true">BU</span>
-                    <input type="search" name="q" placeholder="Buscar evento, codigo, instructor o correo">
-                    <button type="submit">Buscar</button>
-                </form>
 
                 <div class="admin-task-list">
                     <?php if (!$bandejaTrabajo): ?>
@@ -296,6 +267,7 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                             <span><?= h($prioridad) ?></span>
                             <div>
                                 <strong><?= h($item['nombre_evento']) ?></strong>
+                                <small class="admin-task-meta-clean"><?= h($item['nombre_auditorio']) ?> - <?= h($estadoTrabajo) ?></small>
                                 <small><?= h($item['nombre_auditorio']) ?> · <?= h($estadoTrabajo) ?></small>
                             </div>
                             <em><?= h($accionTrabajo) ?></em>
@@ -308,14 +280,13 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                 <section class="quick-actions admin-home-actions">
                     <div>
                         <span class="admin-eyebrow">Accesos</span>
-                        <h2>Trabajar rapido</h2>
+                        <h2>Modulos</h2>
                     </div>
                     <nav aria-label="Acciones rapidas del administrador">
                         <a href="<?= h(app_url('admin/solicitudes.php')) ?>"><span>SR</span>Solicitudes</a>
                         <a href="<?= h(app_url('admin/usuarios.php')) ?>"><span>US</span>Usuarios</a>
                         <a href="<?= h(app_url('admin/correos.php')) ?>"><span>CN</span>Correos</a>
                         <a href="<?= h(app_url('admin/auditorios.php')) ?>"><span>AU</span>Auditorios</a>
-                        <a href="<?= h(app_url('admin/reportes.php')) ?>"><span>RP</span>Reportes</a>
                     </nav>
                 </section>
 
@@ -338,6 +309,7 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                             <div>
                                 <time><?= h(substr((string)$eventoHoy['hora_inicio'], 0, 5)) ?></time>
                                 <strong><?= h($eventoHoy['nombre_evento']) ?></strong>
+                                <span class="admin-day-meta-clean"><?= h($eventoHoy['nombre_auditorio']) ?> - <?= h($eventoHoy['estado']) ?></span>
                                 <span><?= h($eventoHoy['nombre_auditorio']) ?> · <?= h($eventoHoy['estado']) ?></span>
                             </div>
                         <?php endforeach; ?>

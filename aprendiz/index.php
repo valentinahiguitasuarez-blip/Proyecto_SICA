@@ -94,7 +94,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
             </span>
         </a>
 
-        <section class="apprentice-person" aria-label="Aprendiz activo">
+        <a class="apprentice-person" href="<?= htmlspecialchars(app_url('aprendiz/perfil.php'), ENT_QUOTES, 'UTF-8') ?>" aria-label="Ver perfil del aprendiz">
             <div class="apprentice-person-avatar">
                 <?php if ($fotoPerfil !== ''): ?>
                     <img src="<?= htmlspecialchars(app_url($fotoPerfil), ENT_QUOTES, 'UTF-8') ?>" alt="">
@@ -106,7 +106,7 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                 <strong><?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?></strong>
                 <small><?= htmlspecialchars((string)($usuario['correo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></small>
             </div>
-        </section>
+        </a>
 
         <nav class="apprentice-nav">
             <a class="active" href="#dashboard">
@@ -126,36 +126,6 @@ $eventosCercanos = array_slice($eventosDestacados, 0, 3);
                 Certificados
             </a>
         </nav>
-
-        <section class="learner-id-card" aria-label="Credencial del aprendiz">
-            <span class="sidebar-label">Credencial del aprendiz</span>
-            <div class="learner-photo-card">
-                <div class="learner-photo" aria-hidden="true">
-                    <?php if ($fotoPerfil !== ''): ?>
-                        <img src="<?= htmlspecialchars(app_url($fotoPerfil), ENT_QUOTES, 'UTF-8') ?>" alt="">
-                    <?php else: ?>
-                        <span><?= htmlspecialchars($iniciales, ENT_QUOTES, 'UTF-8') ?></span>
-                    <?php endif; ?>
-                </div>
-                <div class="learner-scan" aria-hidden="true"></div>
-            </div>
-            <div class="learner-id-copy">
-                <strong><?= htmlspecialchars($nombreCompleto, ENT_QUOTES, 'UTF-8') ?></strong>
-                <small>Aprendiz activo</small>
-            </div>
-            <div class="learner-id-data">
-                <div>
-                    <span>Ficha</span>
-                    <strong><?= htmlspecialchars($fichaAprendiz, ENT_QUOTES, 'UTF-8') ?></strong>
-                </div>
-                <div>
-                    <span>Programa</span>
-                    <strong><?= htmlspecialchars($programaAprendiz, ENT_QUOTES, 'UTF-8') ?></strong>
-                </div>
-            </div>
-            <a class="learner-profile-link" href="<?= htmlspecialchars(app_url('aprendiz/perfil.php'), ENT_QUOTES, 'UTF-8') ?>">Ver perfil</a>
-        </section>
-
     </aside>
 
     <section class="apprentice-main" id="dashboard">

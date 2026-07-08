@@ -103,7 +103,7 @@ $ultimoCertificado = $listos[0] ?? null;
             </span>
         </a>
 
-        <section class="apprentice-person" aria-label="Aprendiz activo">
+        <a class="apprentice-person" href="<?= cert_e(app_url('aprendiz/perfil.php')) ?>" aria-label="Ver perfil del aprendiz">
             <div class="apprentice-person-avatar">
                 <?php if ($fotoPerfil !== ''): ?>
                     <img src="<?= cert_e(app_url($fotoPerfil)) ?>" alt="">
@@ -115,7 +115,7 @@ $ultimoCertificado = $listos[0] ?? null;
                 <strong><?= cert_e($nombreCompleto) ?></strong>
                 <small><?= cert_e((string)($usuario['correo'] ?? '')) ?></small>
             </div>
-        </section>
+        </a>
 
         <nav class="apprentice-nav">
             <a href="<?= cert_e(app_url('aprendiz/index.php')) ?>">
@@ -135,35 +135,6 @@ $ultimoCertificado = $listos[0] ?? null;
                 Certificados
             </a>
         </nav>
-
-        <section class="learner-id-card" aria-label="Credencial del aprendiz">
-            <span class="sidebar-label">Credencial del aprendiz</span>
-            <div class="learner-photo-card">
-                <div class="learner-photo" aria-hidden="true">
-                    <?php if ($fotoPerfil !== ''): ?>
-                        <img src="<?= cert_e(app_url($fotoPerfil)) ?>" alt="">
-                    <?php else: ?>
-                        <span><?= cert_e($iniciales) ?></span>
-                    <?php endif; ?>
-                </div>
-                <div class="learner-scan" aria-hidden="true"></div>
-            </div>
-            <div class="learner-id-copy">
-                <strong><?= cert_e($nombreCompleto) ?></strong>
-                <small>Aprendiz activo</small>
-            </div>
-            <div class="learner-id-data">
-                <div>
-                    <span>Ficha</span>
-                    <strong><?= cert_e($fichaAprendiz) ?></strong>
-                </div>
-                <div>
-                    <span>Programa</span>
-                    <strong><?= cert_e($programaAprendiz) ?></strong>
-                </div>
-            </div>
-            <a class="learner-profile-link" href="<?= cert_e(app_url('aprendiz/perfil.php')) ?>">Ver perfil</a>
-        </section>
     </aside>
 
     <section class="apprentice-main">

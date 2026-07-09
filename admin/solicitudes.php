@@ -101,7 +101,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $idEvento = (int)($_POST['id_evento'] ?? 0);
     $accion = (string)($_POST['accion'] ?? '');
     $observacion = '';
-    $idCoordinador = (int)($_POST['id_coordinador'] ?? 0);
+    $idCoordinador = trim((string)($_POST['id_coordinador'] ?? ''));
 
     if (!hash_equals((string)$_SESSION['csrf_admin_requests'], $csrf)) {
         $_SESSION['admin_requests_message'] = 'La sesion expiro. Intenta de nuevo.';
@@ -135,10 +135,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 if ((string)$evento['nombre_estado'] !== 'Pendiente') {
                     throw new RuntimeException('Solo puedes enviar a coordinacion solicitudes pendientes.');
                 }
-                if ($idCoordinador <= 0 && !empty($evento['id_coordinador'])) {
-                    $idCoordinador = (int)$evento['id_coordinador'];
+                if (($idCoordinador === '' || $idCoordinador === '0') && !empty($evento['id_coordinador'])) {
+                    $idCoordinador = trim((string)$evento['id_coordinador']);
                 }
-                if ($idCoordinador <= 0) {
+                if ($idCoordinador === '' || $idCoordinador === '0') {
                     throw new RuntimeException('Selecciona el coordinador que revisara la solicitud.');
                 }
 
@@ -170,7 +170,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     'SELECT id_coordinador FROM evento WHERE id_evento = :id_evento LIMIT 1'
                 );
                 $verifyStmt->execute([':id_evento' => $idEvento]);
-                $assignedCoordinator = (int)$verifyStmt->fetchColumn();
+                $assignedCoordinator = trim((string)$verifyStmt->fetchColumn());
                 if ($assignedCoordinator !== $idCoordinador) {
                     throw new RuntimeException('No fue posible asignar la solicitud al coordinador.');
                 }
@@ -652,16 +652,16 @@ if ($seccionSolicitada !== '' && in_array($seccionSolicitada, $seccionesValidas,
                                         <span><?= $estado === 'Pendiente' ? 'Selecciona quien revisa' : 'Notificar respuesta' ?></span>
                                     </div>
 
-                                    <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>">
+                                    <form class="admin-reservation-actions" method="post" action="<?= admin_s_h(app_url('admin/solicitudes.php')) ?>" novalidate>
                                         <input type="hidden" name="csrf_admin_requests" value="<?= admin_s_h($_SESSION['csrf_admin_requests']) ?>">
                                         <input type="hidden" name="id_evento" value="<?= admin_s_h($solicitud['id_evento']) ?>">
                                         <?php if ($estado === 'Pendiente' && !$tieneDecision): ?>
                                             <label>
                                                 <span>Coordinador</span>
-                                                <select name="id_coordinador" required <?= !$coordinadores ? 'disabled' : '' ?>>
+                                                <select name="id_coordinador" <?= !$coordinadores ? 'disabled' : '' ?>>
                                                     <option value="0">Selecciona coordinador</option>
                                                     <?php foreach ($coordinadores as $coordinador): ?>
-                                                        <option value="<?= admin_s_h($coordinador['id_documento']) ?>" <?= (int)$solicitud['coord_documento'] === (int)$coordinador['id_documento'] ? 'selected' : '' ?>>
+                                                        <option value="<?= admin_s_h($coordinador['id_documento']) ?>" <?= trim((string)($solicitud['coord_documento'] ?? '')) === trim((string)$coordinador['id_documento']) ? 'selected' : '' ?>>
                                                             <?= admin_s_h(trim((string)$coordinador['nombre'] . ' ' . (string)$coordinador['apellido'])) ?>
                                                         </option>
                                                     <?php endforeach; ?>

@@ -200,6 +200,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (submitter && submitter.name === 'accion' && submitter.value === 'enviar_coordinador') {
                 const coordinatorField = formElement.querySelector('select[name="id_coordinador"]');
+                if (coordinatorField) {
+                    const detailsReview = coordinatorField.closest('details');
+                    if (detailsReview) {
+                        detailsReview.open = true;
+                    }
+                }
                 if (coordinatorField && (!coordinatorField.value || coordinatorField.value === '0')) {
                     event.preventDefault();
                     coordinatorField.focus();

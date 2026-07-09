@@ -24,11 +24,11 @@ $participantes = $evento ? (int)instructor_scalar($pdo, 'SELECT COUNT(*) FROM pr
 $qrPayload = $evento ? instructor_event_qr_payload($evento) : '';
 $qrImageUrl = $evento ? instructor_qr_image_url($qrPayload, 240) : '';
 
-// El QR actual abre el pre-registro; los ingresos reales se cuentan solo si ya existe marca de asistencia/hora.
+// El QR abre el registro de asistencia; los ingresos reales se cuentan con marca de asistencia u hora.
 $preTotal = 0;
 $ingresosRegistrados = 0;
 if ($evento) {
-    $stmt = $pdo->prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN asistencia = 'Asistio' OR hora IS NOT NULL THEN 1 ELSE 0 END) AS ingresos FROM preregistro WHERE id_evento = :id");
+    $stmt = $pdo->prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN asistencia IN ('Asistió', 'Asistio') OR hora IS NOT NULL THEN 1 ELSE 0 END) AS ingresos FROM preregistro WHERE id_evento = :id");
     $stmt->execute([':id' => (int)$evento['id_evento']]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     $preTotal = (int)($row['total'] ?? 0);
@@ -40,9 +40,9 @@ if ($evento) {
 
 <header class="instructor-topbar">
     <div>
-        <p class="eyebrow">Código / pre-registro</p>
+        <p class="eyebrow">Código / asistencia</p>
         <h1>Código del evento</h1>
-        <span>Comparte el QR cuando coordinación apruebe la solicitud. El código abre el pre-registro del aprendiz para este evento.</span>
+        <span>Comparte el QR en el auditorio. El aprendiz escribe su documento y el sistema marca su asistencia.</span>
     </div>
     <a class="top-action" href="<?= instructor_h(app_url('instructor/participantes.php')) ?>">Participantes</a>
 </header>
@@ -81,6 +81,10 @@ if ($evento) {
                 $hoy = new DateTime('today');
                 $isFutureOrToday = $fechaEvento >= $hoy;
                 $isPast = $fechaEvento < $hoy;
+                $eventStart = new DateTime((string)$evento['fecha_evento'] . ' ' . (string)$evento['hora_inicio']);
+                $eventEnd = new DateTime((string)$evento['fecha_evento'] . ' ' . (string)$evento['hora_fin']);
+                $now = new DateTime();
+                $qrWindowActive = $now >= $eventStart && $now <= $eventEnd;
             ?>
 
             <?php if ($estado === 'Pendiente'): ?>
@@ -89,9 +93,9 @@ if ($evento) {
                     <small>El QR de pre-registro se activará cuando coordinación apruebe el evento.</small>
                 </div>
 
-            <?php elseif ($estado === 'Activo' && $isFutureOrToday): ?>
+            <?php elseif ($estado === 'Activo' && $qrWindowActive): ?>
                 <div class="qr-card">
-                    <span class="qr-mode-pill">Pre-registro activo</span>
+                    <span class="qr-mode-pill">Asistencia por QR</span>
                     <img src="<?= instructor_h($qrImageUrl) ?>" alt="Código QR del evento <?= instructor_h($evento['nombre_evento']) ?>">
 
                     <div class="qr-validity">
@@ -102,7 +106,7 @@ if ($evento) {
                     <div class="qr-backup-code"><?= instructor_h($backupSpaced) ?></div>
 
                     <span class="panel-subtitle"><?= instructor_h($evento['nombre_evento']) ?></span>
-                    <small>Al escanearlo, el aprendiz ingresa al pre-registro de este evento. El control de asistencia se revisa desde participantes.</small>
+                    <small>Al escanearlo, se abre el formulario de asistencia. Solo debe escribir el documento para registrar el ingreso.</small>
 
                     <div class="attendance-summary">
                         <div class="attendance-stats">
@@ -117,6 +121,12 @@ if ($evento) {
                         <a class="primary-btn" href="<?= instructor_h(app_url('instructor/descargar_codigo.php?evento=' . (int)$evento['id_evento'])) ?>">Descargar QR</a>
                         <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/participantes.php?evento=' . (int)$evento['id_evento'])) ?>">Ver participantes</a>
                     </div>
+                </div>
+
+            <?php elseif ($estado === 'Activo' && $isFutureOrToday): ?>
+                <div class="qr-card locked">
+                    <span class="status-pill pending"><?= $now < $eventStart ? 'QR pendiente de activación' : 'Horario de QR finalizado' ?></span>
+                    <small>El QR de asistencia funciona el <?= instructor_h($fechaEvento->format('d/m/Y')) ?> entre <?= instructor_h(instructor_hora12((string)$evento['hora_inicio'])) ?> y <?= instructor_h(instructor_hora12((string)$evento['hora_fin'])) ?>.</small>
                 </div>
 
             <?php elseif (($estado === 'Activo' || $estado === 'Finalizado') && $isPast): ?>

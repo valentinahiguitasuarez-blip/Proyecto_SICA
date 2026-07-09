@@ -1,5 +1,13 @@
 <?php
 declare(strict_types=1);
+
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
+if (function_exists('opcache_invalidate')) {
+    opcache_invalidate(__FILE__, true);
+}
+
 require_once __DIR__ . '/../includes/auth.php';
 iniciarSesionSegura();
 requireRole([1]);
@@ -343,7 +351,10 @@ foreach ($solicitudes as $solicitud) {
         $seccionSolicitud = 'Nuevas';
     } elseif ($estadoSolicitud === 'Pendiente') {
         $seccionSolicitud = 'Coordinacion';
-    } elseif (in_array($estadoSolicitud, ['Activo', 'Cancelado'], true)) {
+    } elseif (
+        in_array($estadoSolicitud, ['Activo', 'Cancelado'], true)
+        && !empty($solicitud['fecha_aprobacion'])
+    ) {
         $seccionSolicitud = 'Respuesta';
     }
 
@@ -373,8 +384,12 @@ $mapaFiltroSeccion = [
     'Cancelado' => 'Respuesta',
     'Finalizado' => 'Cerradas',
 ];
+$seccionSolicitada = trim((string)($_GET['seccion'] ?? ''));
+$seccionesValidas = ['Nuevas', 'Coordinacion', 'Respuesta', 'Cerradas'];
 $estadoActivo = isset($mapaFiltroSeccion[$estadoFiltro]) ? $mapaFiltroSeccion[$estadoFiltro] : '';
-if ($estadoActivo === '') {
+if ($seccionSolicitada !== '' && in_array($seccionSolicitada, $seccionesValidas, true)) {
+    $estadoActivo = $seccionSolicitada;
+} elseif ($estadoActivo === '') {
     $estadoActivo = 'Nuevas';
     foreach ($seccionesSolicitud as $claveSeccion => $seccion) {
         if (!empty($solicitudesPorEstado[$claveSeccion])) {

@@ -2,5 +2,5 @@
 declare(strict_types=1);
 
 return [
-    'base_url' => 'http://192.168.10.106/Proyecto_Sica',
+    'base_url' => 'https://root-chancellor-stan-neck.trycloudflare.com/Proyecto_SICA',
 ];

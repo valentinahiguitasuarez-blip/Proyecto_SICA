@@ -381,15 +381,15 @@ if ($evento) {
             <?php
                 $totalRegs = count($participantes);
                 $ingresos = count(array_filter($participantes, function($p){
-                    return (string)$p['asistencia'] === 'Asistio' || !empty($p['hora']);
+                    return in_array((string)$p['asistencia'], ['Asistió', 'Asistio'], true) || !empty($p['hora']);
                 }));
                 $pendientes = max(0, $totalRegs - $ingresos);
 
                 $arrived = array_filter($participantes, function($p){
-                    return (string)$p['asistencia'] === 'Asistio' || !empty($p['hora']);
+                    return in_array((string)$p['asistencia'], ['Asistió', 'Asistio'], true) || !empty($p['hora']);
                 });
                 $notArrived = array_filter($participantes, function($p){
-                    return (string)$p['asistencia'] !== 'Asistio' && empty($p['hora']);
+                    return !in_array((string)$p['asistencia'], ['Asistió', 'Asistio'], true) && empty($p['hora']);
                 });
 
                 // sort arrived by hora DESC (most recent first)
@@ -439,7 +439,7 @@ if ($evento) {
                     <b><?= instructor_h($avatarText) ?></b>
                     <div>
                         <strong><?= instructor_h($full) ?></strong>
-                        <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?><?= !empty($participante['nombre_jornada']) ? ' · ' . instructor_h($participante['nombre_jornada']) : '' ?> · Ingreso <?= instructor_h(instructor_hora12((string)$participante['hora'])) ?></small>
+                        <small>Doc. <?= instructor_h($participante['id_documento']) ?> · <?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?><?= !empty($participante['nombre_jornada']) ? ' · ' . instructor_h($participante['nombre_jornada']) : '' ?> · Ingreso <?= instructor_h(instructor_hora12((string)$participante['hora'])) ?></small>
                     </div>
                     <span class="status-pill ok"><?= instructor_h($participante['asistencia']) ?></span>
                     <?php if ($eventoOperable && (string)$participante['asistencia'] === 'Pendiente' && empty($participante['hora'])): ?>
@@ -474,9 +474,9 @@ if ($evento) {
                         <b><?= instructor_h($avatarText) ?></b>
                         <div>
                             <strong><?= instructor_h($full) ?></strong>
-                            <small><?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?><?= !empty($participante['nombre_jornada']) ? ' · ' . instructor_h($participante['nombre_jornada']) : '' ?></small>
+                            <small>Doc. <?= instructor_h($participante['id_documento']) ?> · <?= instructor_h($participante['correo']) ?> · Ficha <?= instructor_h($participante['id_ficha'] ?? 'N/A') ?><?= !empty($participante['nombre_jornada']) ? ' · ' . instructor_h($participante['nombre_jornada']) : '' ?></small>
                         </div>
-                        <span class="status-pill <?= (string)$participante['asistencia'] === 'Pendiente' ? 'pending' : 'ok' ?>"><?= instructor_h($participante['asistencia']) ?></span>
+                        <span class="status-pill pending"><?= instructor_h($participante['asistencia']) ?></span>
                         <?php if ($eventoOperable): ?>
                             <form method="post"
                                   data-confirm-kicker="Participantes"

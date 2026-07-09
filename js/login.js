@@ -330,6 +330,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordPolicyRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,72}$/;
     const passwordPolicyMessage = 'La contraseña debe tener entre 6 y 72 caracteres, incluir una mayúscula, una minúscula, un número y un carácter especial.';
 
+    const requiresPasswordPolicy = function (field) {
+        if (!field) {
+            return false;
+        }
+
+        if (field.id === 'contrasena' && form && field.form === form) {
+            return false;
+        }
+
+        return Boolean(field.name && field.name.toLowerCase().includes('contrasena'));
+    };
+
     const setPasswordMessage = function (field) {
         if (!field) {
             return;
@@ -347,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (value.length > 72) {
             message = 'La contraseña no puede superar 72 caracteres.';
             field.setCustomValidity(message);
-        } else if (!passwordPolicyRegex.test(value)) {
+        } else if (requiresPasswordPolicy(field) && !passwordPolicyRegex.test(value)) {
             message = passwordPolicyMessage;
             field.setCustomValidity(message);
         }
@@ -366,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
             setEmailMessage();
         }
 
-        if (field === passwordInput || field.name && field.name.toLowerCase().includes('contrasena')) {
+        if (field === passwordInput || requiresPasswordPolicy(field)) {
             setPasswordMessage(field);
         }
 

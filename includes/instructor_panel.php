@@ -83,7 +83,7 @@ function instructor_layout_start(string $active): void
         'dashboard' => ['IN', 'Dashboard', 'instructor/index.php'],
         'disponibilidad' => ['DI', 'Disponibilidad', 'instructor/disponibilidad.php'],
         'solicitudes' => ['SO', 'Mis solicitudes', 'instructor/mis_solicitudes.php'],
-        'asistencia' => ['QR', 'Código / pre-registro', 'instructor/asistencia.php'],
+        'asistencia' => ['QR', 'Código / asistencia', 'instructor/asistencia.php'],
         'participantes' => ['PA', 'Participantes', 'instructor/participantes.php'],
         'perfil' => ['PE', 'Perfil', 'instructor/perfil.php'],
     ];
@@ -174,21 +174,21 @@ function instructor_event_query(): string
 
 function instructor_event_qr_payload(array $evento): string
 {
-    $path = 'aprendiz/preregistro.php?evento=' . (int)$evento['id_evento']
+    $path = 'aprendiz/registrar_asistencia.php?evento=' . (int)$evento['id_evento']
         . '&codigo=' . rawurlencode((string)$evento['codigo_evento']);
-    $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
-
-    if ($host !== '') {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        return $scheme . '://' . $host . app_url($path);
-    }
-
     $configPath = __DIR__ . '/../config/app.php';
     $config = is_file($configPath) ? require $configPath : [];
     $baseUrl = rtrim((string)($config['base_url'] ?? ''), '/');
 
     if ($baseUrl !== '') {
         return $baseUrl . '/' . ltrim($path, '/');
+    }
+
+    $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+
+    if ($host !== '') {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        return $scheme . '://' . $host . app_url($path);
     }
 
     return 'http://localhost' . app_url($path);

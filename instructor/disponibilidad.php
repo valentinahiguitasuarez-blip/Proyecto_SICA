@@ -9,7 +9,7 @@ require_once __DIR__ . '/../includes/instructor_panel.php';
 $pageTitle = 'Disponibilidad - Instructor SICA';
 $pageStyles = ['css/instructor.css'];
 $user = instructor_user();
-$idInstructor = (int)($user['id_documento'] ?? 0);
+$idInstructorDoc = trim((string)($user['id_documento'] ?? ''));
 $message = $_SESSION['instructor_message'] ?? '';
 $messageType = $_SESSION['instructor_message_type'] ?? 'success';
 $conflictDetails = $_SESSION['instructor_conflict'] ?? null;
@@ -106,7 +106,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
     if (!hash_equals((string)$_SESSION['csrf_instructor_request'], $csrf)) {
         $error = 'La sesión expiró. Recarga la página e intenta de nuevo.';
-    } elseif ($idInstructor <= 0) {
+    } elseif ($idInstructorDoc === '') {
         $error = 'No pudimos identificar tu usuario. Cierra sesión e intenta de nuevo.';
     } elseif ($auditorioExiste === 0) {
         $error = 'Selecciona un auditorio activo válido.';
@@ -197,11 +197,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         ':codigo' => $codigo,
         ':auditorio' => $idAuditorio,
         ':tipo' => $idTipo,
-        ':solicitante' => $idInstructor,
+        ':solicitante' => $idInstructorDoc,
         ':estado' => $estadoPendiente,
     ]);
 
-    $_SESSION['instructor_message'] = 'Solicitud enviada. Administración la revisará y recibirás la respuesta en SICA.';
+    $_SESSION['instructor_message'] = 'Solicitud enviada. El administrador la verá en Solicitudes de Reserva > Por asignar.';
     header('Location: ' . app_url('instructor/detalle_solicitud.php?id=' . (int)$pdo->lastInsertId()));
     exit;
 }

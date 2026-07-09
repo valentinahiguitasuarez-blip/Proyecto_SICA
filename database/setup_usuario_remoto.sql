@@ -1,0 +1,3 @@
+CREATE USER IF NOT EXISTS 'sica_equipo'@'%' IDENTIFIED BY 'SicaEquipo2026';
+GRANT ALL PRIVILEGES ON sica.* TO 'sica_equipo'@'%';
+FLUSH PRIVILEGES;

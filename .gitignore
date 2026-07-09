@@ -1,0 +1,4 @@
+config/database.local.php
+sica_equipo.sql
+respaldo_*.sql
+.tunnel/

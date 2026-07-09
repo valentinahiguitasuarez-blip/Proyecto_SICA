@@ -86,7 +86,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
                 $pdo->commit();
                 unset($_SESSION['csrf_reset']);
-                $_SESSION['login_error'] = 'Contrasena actualizada. Inicia sesion con tu nueva contrasena.';
+                $_SESSION['login_success'] = 'Contrasena actualizada. Inicia sesion con tu nueva contrasena.';
                 header('Location: ' . app_url('login/index.php'));
                 exit;
             } catch (Throwable $exception) {

@@ -55,8 +55,9 @@ if (!empty($_SESSION['rol'])) {
 }
 
 $error = $_SESSION['login_error'] ?? '';
+$success = $_SESSION['login_success'] ?? '';
 $oldCorreo = $_SESSION['login_old_correo'] ?? '';
-unset($_SESSION['login_error'], $_SESSION['login_old_correo']);
+unset($_SESSION['login_error'], $_SESSION['login_success'], $_SESSION['login_old_correo']);
 
 if (empty($_SESSION['csrf_login'])) {
     $_SESSION['csrf_login'] = bin2hex(random_bytes(32));
@@ -102,6 +103,11 @@ if (empty($_SESSION['csrf_login'])) {
             <?php if ($error): ?>
                 <div class="alert alert-danger shadow-sm" role="alert">
                     <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($success): ?>
+                <div class="alert alert-success shadow-sm" role="alert">
+                    <?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?>
                 </div>
             <?php endif; ?>
 

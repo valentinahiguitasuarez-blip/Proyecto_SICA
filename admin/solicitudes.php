@@ -44,6 +44,7 @@ function admin_s_status_class(string $estado): string
 {
     return match ($estado) {
         'Activo' => 'approved',
+        'Coordinacion' => 'pending',
         'Pendiente' => 'pending',
         'Cancelado' => 'rejected',
         'Finalizado' => 'finished',
@@ -316,12 +317,16 @@ try {
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
 $solicitudesPorEstado = [
     'Pendiente' => [],
+    'Coordinacion' => [],
     'Activo' => [],
     'Cancelado' => [],
     'Finalizado' => [],
 ];
 foreach ($solicitudes as $solicitud) {
     $estadoSolicitud = (string)$solicitud['estado'];
+    if ($estadoSolicitud === 'Pendiente' && !empty($solicitud['coord_documento'])) {
+        $estadoSolicitud = 'Coordinacion';
+    }
     if (!isset($solicitudesPorEstado[$estadoSolicitud])) {
         $solicitudesPorEstado[$estadoSolicitud] = [];
     }
@@ -331,6 +336,10 @@ $seccionesSolicitud = [
     'Pendiente' => [
         'titulo' => 'Pendientes',
         'descripcion' => 'Solicitudes por asignar o en espera de respuesta de coordinación.',
+    ],
+    'Coordinacion' => [
+        'titulo' => 'Coordinacion',
+        'descripcion' => 'Solicitudes enviadas al coordinador y en espera de respuesta.',
     ],
     'Activo' => [
         'titulo' => 'Aprobadas',
@@ -345,7 +354,16 @@ $seccionesSolicitud = [
         'descripcion' => 'Eventos cerrados en el sistema.',
     ],
 ];
-$estadoActivo = isset($seccionesSolicitud[$estadoFiltro]) ? $estadoFiltro : 'Pendiente';
+$estadoActivo = isset($seccionesSolicitud[$estadoFiltro]) ? $estadoFiltro : '';
+if ($estadoActivo === '') {
+    $estadoActivo = 'Pendiente';
+    foreach ($seccionesSolicitud as $claveSeccion => $seccion) {
+        if (!empty($solicitudesPorEstado[$claveSeccion])) {
+            $estadoActivo = (string)$claveSeccion;
+            break;
+        }
+    }
+}
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 

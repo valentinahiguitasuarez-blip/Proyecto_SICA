@@ -762,6 +762,100 @@ body[data-theme="dark"] .logout-cancel-btn {
     font-size: 14px;
 }
 
+.access-notice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(8px);
+}
+
+.access-notice {
+    width: min(460px, 100%);
+    padding: 28px;
+    border: 1px solid #cfe0f4;
+    border-radius: 14px;
+    text-align: center;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.96)),
+        #ffffff;
+    box-shadow: 0 28px 80px rgba(26, 43, 77, 0.25);
+}
+
+.access-notice-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 14px;
+    border-radius: 16px;
+    background: #e9f8f1;
+    border: 1px solid #b8ead4;
+}
+
+.access-notice-icon::before {
+    content: "";
+    width: 22px;
+    height: 12px;
+    border-left: 4px solid #0b9b67;
+    border-bottom: 4px solid #0b9b67;
+    transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.access-notice-danger .access-notice-icon {
+    background: #fff1f2;
+    border-color: #fecdd3;
+}
+
+.access-notice-danger .access-notice-icon::before {
+    width: 22px;
+    height: 22px;
+    border: 0;
+    background:
+        linear-gradient(45deg, transparent 44%, #dc2626 45% 55%, transparent 56%),
+        linear-gradient(-45deg, transparent 44%, #dc2626 45% 55%, transparent 56%);
+    transform: none;
+}
+
+.access-notice-kicker {
+    margin: 0 0 6px;
+    color: #66758f;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.access-notice h2 {
+    margin: 0;
+    color: #172033;
+    font-size: clamp(24px, 4vw, 30px);
+    line-height: 1.1;
+}
+
+.access-notice > p:not(.access-notice-kicker) {
+    margin: 14px 0 22px;
+    color: #5d6d87;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.55;
+}
+
+.access-notice button {
+    min-height: 46px;
+    min-width: 150px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 8px;
+    color: #ffffff;
+    background: var(--login-accent);
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 14px 28px rgba(37, 99, 255, 0.22);
+}
+
 @media (max-width: 760px) {
     .access-request-grid {
         grid-template-columns: 1fr;

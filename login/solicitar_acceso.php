@@ -150,10 +150,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 <p>Completa tus datos y el administrador revisara tu solicitud.</p>
             </header>
 
-            <?php if ($message !== ''): ?>
-                <div class="alert alert-<?= access_h($messageType) ?> shadow-sm" role="alert"><?= access_h($message) ?></div>
-            <?php endif; ?>
-
             <div class="access-request-steps" aria-label="Proceso de acceso">
                 <span><strong>1</strong> Envias tus datos</span>
                 <span><strong>2</strong> El admin aprueba</span>
@@ -188,6 +184,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     </section>
 </main>
 
+<?php if ($message !== ''): ?>
+    <div class="access-notice-overlay" role="dialog" aria-modal="true" aria-labelledby="accessNoticeTitle">
+        <section class="access-notice access-notice-<?= access_h($messageType) ?>">
+            <span class="access-notice-icon" aria-hidden="true"></span>
+            <p class="access-notice-kicker"><?= $messageType === 'success' ? 'Solicitud recibida' : 'Revisa tus datos' ?></p>
+            <h2 id="accessNoticeTitle"><?= $messageType === 'success' ? 'Solicitud enviada' : 'No se pudo enviar' ?></h2>
+            <p><?= access_h($message) ?></p>
+            <button type="button" data-access-notice-close>Entendido</button>
+        </section>
+    </div>
+<?php endif; ?>
+
 <datalist id="fichasSolicitud">
     <?php foreach ($fichas as $ficha): ?>
         <option value="<?= access_h($ficha['id_ficha']) ?>"><?= access_h($ficha['id_ficha']) ?> - <?= access_h($ficha['nombre_programa'] ?? 'Programa no asignado') ?><?= !empty($ficha['nombre_jornada']) ? ' / ' . access_h($ficha['nombre_jornada']) : '' ?></option>
@@ -211,6 +219,17 @@ document.addEventListener('DOMContentLoaded', function () {
         };
         update();
         select.addEventListener('change', update);
+    });
+});
+</script>
+
+<script>
+document.querySelectorAll('[data-access-notice-close]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const notice = button.closest('.access-notice-overlay');
+        if (notice) {
+            notice.remove();
+        }
     });
 });
 </script>

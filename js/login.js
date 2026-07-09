@@ -8,6 +8,27 @@ document.addEventListener('DOMContentLoaded', function () {
     const themeLight = document.querySelector('.theme-light');
     const themeDark = document.querySelector('.theme-dark');
 
+    const confirmIcons = {
+        logout: '<svg viewBox="0 0 24 24" width="28" height="28"><path d="M10.75 4.75a.75.75 0 0 1 .75-.75h6.75C19.22 4 20 4.78 20 5.75v12.5c0 .97-.78 1.75-1.75 1.75H11.5a.75.75 0 0 1 0-1.5h6.75a.25.25 0 0 0 .25-.25V5.75a.25.25 0 0 0-.25-.25H11.5a.75.75 0 0 1-.75-.75Zm-3.28 3.72a.75.75 0 0 1 1.06 1.06L6.81 11.25h7.44a.75.75 0 0 1 0 1.5H6.81l1.72 1.72a.75.75 0 1 1-1.06 1.06l-3-3a.75.75 0 0 1 0-1.06l3-3Z" fill="currentColor"/></svg>',
+        notification: '<svg viewBox="0 0 24 24" width="28" height="28"><path d="M5.75 6h12.5C19.22 6 20 6.78 20 7.75v8.5c0 .97-.78 1.75-1.75 1.75H5.75C4.78 18 4 17.22 4 16.25v-8.5C4 6.78 4.78 6 5.75 6Zm.1 1.5 5.42 4.16c.43.33 1.03.33 1.46 0l5.42-4.16H5.85Zm12.65 1.2-4.86 3.73a2.7 2.7 0 0 1-3.28 0L5.5 8.7v7.55c0 .14.11.25.25.25h12.5c.14 0 .25-.11.25-.25V8.7Z" fill="currentColor"/></svg>',
+        coordinator: '<svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 4.25a3.75 3.75 0 1 1 0 7.5 3.75 3.75 0 0 1 0-7.5Zm0 1.5a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5ZM5.75 19.5a.75.75 0 0 1-.75-.75c0-3.04 2.73-5.25 7-5.25s7 2.21 7 5.25a.75.75 0 0 1-.75.75H5.75Zm.84-1.5h10.82C17 16.24 14.99 15 12 15s-5 1.24-5.41 3Z" fill="currentColor"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" width="28" height="28"><path d="M12.87 4.72a1 1 0 0 0-1.74 0L3.7 17.73A1 1 0 0 0 4.57 19h14.86a1 1 0 0 0 .87-1.27L12.87 4.72ZM12 8.5a.75.75 0 0 1 .75.75v4a.75.75 0 0 1-1.5 0v-4A.75.75 0 0 1 12 8.5Zm0 7.75a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg>'
+    };
+
+    const getConfirmIcon = function (kicker, title, confirmText) {
+        const text = [kicker || '', title || '', confirmText || ''].join(' ').toLowerCase();
+        if (text.includes('salida') || text.includes('cerrar sesion') || text.includes('cerrar sesión')) {
+            return confirmIcons.logout;
+        }
+        if (text.includes('cancelar') || text.includes('eliminar') || text.includes('rechazar')) {
+            return confirmIcons.warning;
+        }
+        if (text.includes('coordinador') || text.includes('coordinacion') || text.includes('coordinación')) {
+            return confirmIcons.coordinator;
+        }
+        return confirmIcons.notification;
+    };
+
     const ensureLogoutModal = function () {
         if (document.getElementById('logoutConfirmModal')) {
             return document.getElementById('logoutConfirmModal');
@@ -43,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const modalTitle = modal.querySelector('#logoutConfirmTitle');
         const modalMessage = modal.querySelector('.logout-confirm-dialog > p:not(.logout-confirm-kicker)');
         const modalConfirm = modal.querySelector('#logoutConfirmButton');
+        const modalIcon = modal.querySelector('.logout-confirm-icon');
 
         if (modalKicker) {
             modalKicker.textContent = kicker || 'Confirmacion';
@@ -55,6 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (modalConfirm) {
             modalConfirm.textContent = confirmText || 'Confirmar';
+        }
+        if (modalIcon) {
+            modalIcon.innerHTML = getConfirmIcon(kicker, title, confirmText);
         }
 
         return modal;

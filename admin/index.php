@@ -68,8 +68,9 @@ try {
         "SELECT COUNT(*)
          FROM evento e
          INNER JOIN estado es ON es.id_estado = e.id_estado
-         WHERE (es.nombre_estado = 'Pendiente' AND e.id_coordinador IS NULL)
-            OR (e.id_coordinador IS NOT NULL AND e.fecha_aprobacion IS NOT NULL)"
+         WHERE es.nombre_estado IN ('Activo', 'Cancelado')
+           AND e.id_coordinador IS NOT NULL
+           AND e.fecha_aprobacion IS NOT NULL"
     );
     $stats['auditorios'] = scalarQuery(
         $pdo,
@@ -112,11 +113,17 @@ try {
          FROM evento e
          INNER JOIN auditorio a ON a.id_auditorio = e.id_auditorio
          INNER JOIN estado es ON es.id_estado = e.id_estado
+         WHERE es.nombre_estado = \'Pendiente\'
+            OR (
+                es.nombre_estado IN (\'Activo\', \'Cancelado\')
+                AND e.id_coordinador IS NOT NULL
+                AND e.fecha_aprobacion IS NOT NULL
+            )
          ORDER BY
             CASE
                 WHEN es.nombre_estado = \'Pendiente\' AND e.id_coordinador IS NULL THEN 1
                 WHEN es.nombre_estado = \'Pendiente\' THEN 2
-                WHEN e.fecha_aprobacion IS NOT NULL THEN 3
+                WHEN es.nombre_estado IN (\'Activo\', \'Cancelado\') AND e.fecha_aprobacion IS NOT NULL THEN 3
                 ELSE 4
             END,
             e.fecha_evento ASC,
@@ -244,21 +251,23 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                     <?php foreach ($bandejaTrabajo as $item): ?>
                         <?php
                             $estado = (string)$item['estado'];
-                            $prioridad = 'Baja';
+                            $prioridad = 'Respuesta';
                             $priorityClass = 'low';
-                            $estadoTrabajo = $estado;
+                            $estadoTrabajo = 'Por notificar';
                             $accionTrabajo = 'Revisar';
                             if ($estado === 'Pendiente' && empty($item['id_coordinador'])) {
-                                $prioridad = 'Alta';
+                                $prioridad = 'Nueva';
                                 $priorityClass = 'high';
-                                $estadoTrabajo = 'Falta coordinador';
+                                $estadoTrabajo = 'Por asignar';
                                 $accionTrabajo = 'Asignar';
                             } elseif ($estado === 'Pendiente') {
-                                $prioridad = 'Media';
+                                $prioridad = 'Revision';
                                 $priorityClass = 'medium';
-                                $estadoTrabajo = 'En coordinacion';
+                                $estadoTrabajo = 'En revision';
                             } elseif (!empty($item['fecha_aprobacion'])) {
-                                $estadoTrabajo = 'Listo para notificar';
+                                $prioridad = 'Respuesta';
+                                $priorityClass = 'low';
+                                $estadoTrabajo = 'Por notificar';
                                 $accionTrabajo = 'Notificar';
                             }
                         ?>

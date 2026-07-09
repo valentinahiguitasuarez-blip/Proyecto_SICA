@@ -439,10 +439,13 @@ if ($estadoActivo === '') {
                     <h2>Solicitudes registradas</h2>
                     <span class="admin-panel-note">Filtra por estado y trabaja solo el grupo que necesitas revisar.</span>
                 </div>
-                <div class="admin-request-quickflow" aria-label="Ruta de gestion">
-                    <span><strong>1</strong> Pendientes</span>
-                    <span><strong>2</strong> Coordinación</span>
-                    <span><strong>3</strong> Respuesta</span>
+                <div class="admin-request-quickflow admin-request-quickflow--live" aria-label="Resumen real del flujo">
+                    <?php foreach ($seccionesSolicitud as $estadoSeccion => $seccion): ?>
+                        <span>
+                            <strong><?= admin_s_h((string)count($solicitudesPorEstado[$estadoSeccion] ?? [])) ?></strong>
+                            <?= admin_s_h($seccion['titulo']) ?>
+                        </span>
+                    <?php endforeach; ?>
                 </div>
             </div>
 

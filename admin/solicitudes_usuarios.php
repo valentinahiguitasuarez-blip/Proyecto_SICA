@@ -34,11 +34,13 @@ function admin_access_temp_password(): string
 function admin_access_send_credentials(array $request, string $password): bool
 {
     $name = trim((string)$request['nombre'] . ' ' . (string)$request['apellido']);
+    $loginUrl = app_url('login/index.php');
     $body = "Hola {$name},\n\n"
         . "Tu cuenta SICA fue aprobada.\n\n"
         . "Correo de ingreso: {$request['correo']}\n"
         . "Contrasena temporal: {$password}\n\n"
-        . "Ingresa a SICA y cambia tu contrasena desde recuperacion si lo necesitas.\n\n"
+        . "Ingresa aqui: {$loginUrl}\n\n"
+        . "Si necesitas cambiarla despues, usa la opcion de recuperacion de contrasena.\n\n"
         . "Equipo SICA";
 
     return sica_send_mail((string)$request['correo'], 'Acceso aprobado - SICA', $body);
@@ -132,8 +134,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
                 $sent = admin_access_send_credentials($request, $password);
                 $_SESSION['admin_access_message'] = $sent
-                    ? 'Cuenta creada y correo enviado. Contrasena temporal: ' . $password
-                    : 'Cuenta creada, pero el correo no se pudo enviar. Contrasena temporal: ' . $password;
+                    ? 'Cuenta creada. Las credenciales fueron enviadas al correo del usuario.'
+                    : 'Cuenta creada, pero el correo no se pudo enviar. Contrasena temporal para entregar manualmente: ' . $password;
                 $_SESSION['admin_access_type'] = $sent ? 'success' : 'danger';
             }
         } catch (Throwable $exception) {

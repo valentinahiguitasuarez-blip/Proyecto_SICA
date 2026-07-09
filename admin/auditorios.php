@@ -51,7 +51,8 @@ function admin_a_equipment_value(array $source, string $key): ?int
 }
 
 $auditorios = [];
-$stats = ['activos' => 0, 'capacidad' => 0, 'eventos' => 0, 'ocupados' => 0];
+$caracteristicas = [];
+$stats = ['activos' => 0, 'capacidad' => 0, 'eventos' => 0, 'ocupados' => 0, 'caracteristicas' => 0];
 $busqueda = trim((string)($_GET['q'] ?? ''));
 $params = [];
 $where = '';
@@ -124,6 +125,13 @@ try {
     );
     $stats['capacidad'] = admin_a_scalar($pdo, 'SELECT COALESCE(SUM(capacidad), 0) FROM auditorio');
     $stats['eventos'] = admin_a_scalar($pdo, 'SELECT COUNT(*) FROM evento');
+    $stats['caracteristicas'] = admin_a_scalar(
+        $pdo,
+        "SELECT COUNT(*)
+         FROM caracteristica c
+         LEFT JOIN estado es ON es.id_estado = c.id_estado
+         WHERE c.id_estado IS NULL OR es.nombre_estado = 'Activo'"
+    );
     $stats['ocupados'] = admin_a_scalar(
         $pdo,
         "SELECT COUNT(DISTINCT e.id_auditorio)
@@ -136,7 +144,6 @@ try {
     $auditorios = admin_a_rows(
         $pdo,
         'SELECT a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad,
-                a.cantidad_computadores, a.tiene_aire_acondicionado, a.tiene_ventilador, a.tiene_tablero, a.tiene_televisor,
                 es.nombre_estado AS estado,
                 COUNT(e.id_evento) AS eventos_total,
                 SUM(CASE WHEN evs.nombre_estado IN (\'Activo\', \'Pendiente\') AND DATE(e.fecha_evento) >= CURDATE() THEN 1 ELSE 0 END) AS eventos_proximos
@@ -146,10 +153,17 @@ try {
          LEFT JOIN estado evs ON evs.id_estado = e.id_estado' .
             $where .
         ' GROUP BY a.id_auditorio, a.nombre_auditorio, a.bloque, a.capacidad,
-                   a.cantidad_computadores, a.tiene_aire_acondicionado, a.tiene_ventilador, a.tiene_tablero, a.tiene_televisor,
                    es.nombre_estado
           ORDER BY a.nombre_auditorio ASC',
         $params
+    );
+
+    $caracteristicas = admin_a_rows(
+        $pdo,
+        "SELECT c.id_caracteristica, c.nombre_caracteristica, COALESCE(es.nombre_estado, 'Activo') AS estado
+         FROM caracteristica c
+         LEFT JOIN estado es ON es.id_estado = c.id_estado
+         ORDER BY c.nombre_caracteristica ASC"
     );
 } catch (Throwable $exception) {
     error_log('SICA admin auditorios: ' . $exception->getMessage());
@@ -191,7 +205,7 @@ try {
         <section class="admin-metrics reservation-metrics" aria-label="Resumen de auditorios">
             <article class="admin-metric"><span>Activos</span><strong><?= admin_a_h($stats['activos']) ?></strong><small>Disponibles para solicitud</small></article>
             <article class="admin-metric"><span>Capacidad total</span><strong><?= admin_a_h($stats['capacidad']) ?></strong><small>Cupos combinados</small></article>
-            <article class="admin-metric"><span>Eventos</span><strong><?= admin_a_h($stats['eventos']) ?></strong><small>Programados historicos</small></article>
+            <article class="admin-metric"><span>Caracteristicas</span><strong><?= admin_a_h($stats['caracteristicas']) ?></strong><small>Registradas en inventario</small></article>
             <article class="admin-metric"><span>Con movimiento</span><strong><?= admin_a_h($stats['ocupados']) ?></strong><small>Activos o pendientes</small></article>
         </section>
 
@@ -203,6 +217,24 @@ try {
             <div class="admin-panel-head">
                 <div><p class="admin-eyebrow">Inventario</p><h2>Espacios registrados</h2></div>
             </div>
+
+            <section class="admin-feature-catalog" aria-label="Caracteristicas registradas">
+                <div>
+                    <p class="admin-eyebrow">Caracteristicas</p>
+                    <h3>Dotacion disponible</h3>
+                    <span>Estos datos vienen de la tabla caracteristica.</span>
+                </div>
+                <div class="admin-feature-chips">
+                    <?php if (!$caracteristicas): ?>
+                        <span class="muted">Sin caracteristicas registradas</span>
+                    <?php endif; ?>
+                    <?php foreach ($caracteristicas as $caracteristica): ?>
+                        <span class="<?= (string)$caracteristica['estado'] === 'Activo' ? '' : 'muted' ?>">
+                            <?= admin_a_h($caracteristica['nombre_caracteristica']) ?>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+            </section>
 
             <form class="admin-user-filters admin-mail-filters" method="get" action="<?= admin_a_h(app_url('admin/auditorios.php')) ?>">
                 <label><span>Busqueda rapida</span><input type="search" name="q" value="<?= admin_a_h($busqueda) ?>" placeholder="Auditorio, bloque o estado"></label>
@@ -223,15 +255,10 @@ try {
                         </div>
                         <div class="admin-reservation-meta">
                             <span>Capacidad <?= admin_a_h($auditorio['capacidad']) ?></span>
-                            <span>Computadores <?= admin_a_h($auditorio['cantidad_computadores'] ?? 'Por registrar') ?></span>
-                            <span>Aire <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_aire_acondicionado'] ?? null)) ?></span>
-                            <span>Ventilador <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_ventilador'] ?? null)) ?></span>
-                            <span>Tablero <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_tablero'] ?? null)) ?></span>
-                            <span>Televisor <?= admin_a_h(admin_a_equipment_label($auditorio['tiene_televisor'] ?? null)) ?></span>
                             <span><?= admin_a_h($auditorio['eventos_total'] ?? 0) ?> eventos</span>
                             <span><?= admin_a_h($auditorio['eventos_proximos'] ?? 0) ?> proximos</span>
                         </div>
-                        <form class="admin-equipment-form" method="post">
+                        <form class="admin-equipment-form admin-equipment-form--legacy" method="post" hidden>
                             <input type="hidden" name="csrf" value="<?= admin_a_h($_SESSION['csrf_admin_auditorios']) ?>">
                             <input type="hidden" name="action" value="update_dotacion">
                             <input type="hidden" name="id_auditorio" value="<?= admin_a_h($auditorio['id_auditorio']) ?>">

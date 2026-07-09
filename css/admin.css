@@ -2779,6 +2779,54 @@ body {
     gap: 12px;
 }
 
+.admin-feature-catalog {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.8fr) minmax(0, 2fr);
+    gap: 14px;
+    align-items: start;
+    margin: 0 0 16px;
+    padding: 16px;
+    border: 1px solid var(--admin-line);
+    border-radius: 10px;
+    background:
+        linear-gradient(135deg, rgba(22, 93, 255, 0.055), rgba(18, 166, 120, 0.06)),
+        #ffffff;
+}
+
+.admin-feature-catalog h3 {
+    margin: 2px 0 4px;
+    color: var(--admin-ink);
+    font-size: 20px;
+}
+
+.admin-feature-catalog > div:first-child span {
+    color: var(--admin-muted);
+    font-weight: 750;
+}
+
+.admin-feature-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-feature-chips span {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 999px;
+    color: #07523c;
+    background: var(--admin-green-soft);
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.admin-feature-chips span.muted {
+    color: var(--admin-muted);
+    background: #eef3f8;
+}
+
 .admin-auditorium-card {
     display: grid;
     gap: 14px;
@@ -4239,6 +4287,10 @@ body {
 
     .admin-topbar span {
         color: var(--admin-muted);
+    }
+
+    .admin-feature-catalog {
+        grid-template-columns: 1fr;
     }
 
     .admin-request-section-head {

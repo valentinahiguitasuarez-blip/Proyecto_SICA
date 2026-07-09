@@ -996,32 +996,30 @@ body {
 
 .admin-alert {
     position: fixed;
-    top: 50%;
+    top: 72px;
     left: 50%;
     z-index: 90;
-    width: min(520px, calc(100vw - 36px));
-    min-height: 94px;
+    width: min(650px, calc(100vw - 48px));
+    min-height: 116px;
     display: flex;
     align-items: center;
-    padding: 22px 24px 22px 62px;
+    padding: 22px 30px 22px 78px;
     border-radius: 8px;
     color: #08734b;
-    background:
-        linear-gradient(135deg, rgba(227, 248, 241, 0.98), rgba(255, 255, 255, 0.96)),
-        #e3f8f1;
+    background: #e3f8f1;
     border: 1px solid rgba(18, 166, 120, 0.22);
-    box-shadow: 0 26px 70px rgba(28, 45, 74, 0.22);
+    box-shadow: 0 18px 44px rgba(28, 45, 74, 0.14);
     font-size: 18px;
     font-weight: 900;
     line-height: 1.35;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     animation: adminToastIn 180ms ease-out;
 }
 
 .admin-alert::before {
     content: "";
     position: absolute;
-    left: 24px;
+    left: 30px;
     top: 50%;
     width: 18px;
     height: 18px;
@@ -1043,11 +1041,11 @@ body {
 @keyframes adminToastIn {
     from {
         opacity: 0;
-        transform: translate(-50%, calc(-50% - 10px)) scale(0.98);
+        transform: translate(-50%, -10px);
     }
     to {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, 0);
     }
 }
 
@@ -4200,11 +4198,11 @@ body {
 
 @media (max-width: 820px) {
     .admin-alert {
-        top: 50%;
+        top: 20px;
         left: 50%;
-        width: min(420px, calc(100vw - 28px));
+        width: min(520px, calc(100vw - 28px));
         min-height: 86px;
-        padding: 18px 18px 18px 54px;
+        padding: 18px 18px 18px 56px;
         font-size: 16px;
     }
 

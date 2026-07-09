@@ -2,10 +2,12 @@
 declare(strict_types=1);
 
 /**
- * CLIENTE (Valentina): copia este archivo como database.local.php
- * y cambia host por la IP del PC servidor (Kevin).
+ * Conexion remota opcional (database.local.php).
  *
- * SERVidor (Kevin): normalmente NO necesitas este archivo.
+ * - Misma WiFi: database.local.example.php (IP del PC servidor)
+ * - Cualquier lugar: database.cloud.example.php (db4free.net u otro hosting)
+ *
+ * Copia una plantilla como database.local.php (no se sube a GitHub).
  */
 return [
     'host' => '192.168.10.89',

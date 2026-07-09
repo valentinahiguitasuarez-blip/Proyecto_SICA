@@ -351,19 +351,19 @@ foreach ($solicitudes as $solicitud) {
 }
 $seccionesSolicitud = [
     'Nuevas' => [
-        'titulo' => 'Nuevas',
+        'titulo' => 'Por asignar',
         'descripcion' => 'Solicitudes que aun no tienen coordinador asignado.',
     ],
     'Coordinacion' => [
-        'titulo' => 'En coordinacion',
+        'titulo' => 'En revision',
         'descripcion' => 'Solicitudes enviadas al coordinador y en espera de respuesta.',
     ],
     'Respuesta' => [
-        'titulo' => 'Respuesta final',
+        'titulo' => 'Por notificar',
         'descripcion' => 'Solicitudes aprobadas o canceladas que deben notificarse al instructor.',
     ],
     'Cerradas' => [
-        'titulo' => 'Cerradas',
+        'titulo' => 'Finalizadas',
         'descripcion' => 'Solicitudes cuyo proceso ya esta cerrado.',
     ],
 ];
@@ -689,6 +689,18 @@ if ($estadoActivo === '') {
 </main>
 
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const alert = document.querySelector('.admin-alert');
+    if (!alert) return;
+
+    window.setTimeout(function () {
+        alert.classList.add('is-hiding');
+        window.setTimeout(function () {
+            alert.remove();
+        }, 220);
+    }, 3800);
+});
+
 document.addEventListener('click', function (event) {
     const closeButton = event.target.closest('[data-close-review]');
     if (closeButton) {

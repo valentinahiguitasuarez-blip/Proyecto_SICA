@@ -1036,6 +1036,12 @@ body {
     background: var(--admin-red);
 }
 
+.admin-alert.is-hiding {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
 @keyframes adminToastIn {
     from {
         opacity: 0;

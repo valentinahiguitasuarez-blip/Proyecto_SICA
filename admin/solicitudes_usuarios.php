@@ -28,7 +28,7 @@ function admin_access_rows(PDO $pdo, string $sql, array $params = []): array
 
 function admin_access_temp_password(): string
 {
-    return 'SICA-' . (string)random_int(100000, 999999);
+    return 'Sica-' . (string)random_int(100000, 999999) . '#';
 }
 
 function admin_access_send_credentials(array $request, string $password): bool

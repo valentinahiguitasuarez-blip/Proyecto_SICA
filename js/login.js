@@ -334,7 +334,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const feedback = passwordInput.parentElement.querySelector('.invalid-feedback');
         const value = passwordInput.value;
-        const missing = [];
         let message = 'La contraseña es válida.';
 
         passwordInput.setCustomValidity('');
@@ -342,30 +341,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (value.length === 0) {
             message = 'La contraseña no puede estar vacía.';
             passwordInput.setCustomValidity(message);
-        } else if (value.length < 8) {
-            message = 'La contrasena debe tener minimo 8 caracteres.';
-            passwordInput.setCustomValidity(message);
         } else if (value.length > 72) {
             message = 'La contraseña no puede superar 72 caracteres.';
             passwordInput.setCustomValidity(message);
-        } else {
-            if (!/[A-Z]/.test(value)) {
-                missing.push('una mayuscula');
-            }
-            if (!/[a-z]/.test(value)) {
-                missing.push('una minuscula');
-            }
-            if (!/\d/.test(value)) {
-                missing.push('un numero');
-            }
-            if (!/[^A-Za-z0-9]/.test(value)) {
-                missing.push('un caracter especial');
-            }
-
-            if (missing.length > 0) {
-                message = 'Falta ' + missing.join(', ') + '.';
-                passwordInput.setCustomValidity(message);
-            }
         }
 
         if (feedback) {

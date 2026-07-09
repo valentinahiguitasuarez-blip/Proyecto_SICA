@@ -44,9 +44,12 @@ function admin_s_status_class(string $estado): string
 {
     return match ($estado) {
         'Activo' => 'approved',
+        'Respuesta' => 'approved',
         'Coordinacion' => 'pending',
+        'Nuevas' => 'pending',
         'Pendiente' => 'pending',
         'Cancelado' => 'rejected',
+        'Cerradas' => 'finished',
         'Finalizado' => 'finished',
         default => 'neutral',
     };
@@ -316,47 +319,53 @@ try {
 
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
 $solicitudesPorEstado = [
-    'Pendiente' => [],
+    'Nuevas' => [],
     'Coordinacion' => [],
-    'Activo' => [],
-    'Cancelado' => [],
-    'Finalizado' => [],
+    'Respuesta' => [],
+    'Cerradas' => [],
 ];
 foreach ($solicitudes as $solicitud) {
     $estadoSolicitud = (string)$solicitud['estado'];
-    if ($estadoSolicitud === 'Pendiente' && !empty($solicitud['coord_documento'])) {
-        $estadoSolicitud = 'Coordinacion';
+    $tieneCoordinador = !empty($solicitud['coord_documento']);
+    $seccionSolicitud = 'Cerradas';
+
+    if ($estadoSolicitud === 'Pendiente' && !$tieneCoordinador) {
+        $seccionSolicitud = 'Nuevas';
+    } elseif ($estadoSolicitud === 'Pendiente') {
+        $seccionSolicitud = 'Coordinacion';
+    } elseif (in_array($estadoSolicitud, ['Activo', 'Cancelado'], true)) {
+        $seccionSolicitud = 'Respuesta';
     }
-    if (!isset($solicitudesPorEstado[$estadoSolicitud])) {
-        $solicitudesPorEstado[$estadoSolicitud] = [];
-    }
-    $solicitudesPorEstado[$estadoSolicitud][] = $solicitud;
+
+    $solicitudesPorEstado[$seccionSolicitud][] = $solicitud;
 }
 $seccionesSolicitud = [
-    'Pendiente' => [
-        'titulo' => 'Pendientes',
-        'descripcion' => 'Solicitudes por asignar o en espera de respuesta de coordinación.',
+    'Nuevas' => [
+        'titulo' => 'Nuevas',
+        'descripcion' => 'Solicitudes que aun no tienen coordinador asignado.',
     ],
     'Coordinacion' => [
-        'titulo' => 'Coordinacion',
+        'titulo' => 'En coordinacion',
         'descripcion' => 'Solicitudes enviadas al coordinador y en espera de respuesta.',
     ],
-    'Activo' => [
-        'titulo' => 'Aprobadas',
-        'descripcion' => 'Reservas autorizadas que ya pueden comunicarse al instructor.',
+    'Respuesta' => [
+        'titulo' => 'Respuesta final',
+        'descripcion' => 'Solicitudes aprobadas o canceladas que deben notificarse al instructor.',
     ],
-    'Cancelado' => [
-        'titulo' => 'Canceladas',
-        'descripcion' => 'Solicitudes rechazadas o no autorizadas.',
-    ],
-    'Finalizado' => [
-        'titulo' => 'Finalizadas',
-        'descripcion' => 'Eventos cerrados en el sistema.',
+    'Cerradas' => [
+        'titulo' => 'Cerradas',
+        'descripcion' => 'Solicitudes cuyo proceso ya esta cerrado.',
     ],
 ];
-$estadoActivo = isset($seccionesSolicitud[$estadoFiltro]) ? $estadoFiltro : '';
+$mapaFiltroSeccion = [
+    'Pendiente' => !empty($solicitudesPorEstado['Nuevas']) ? 'Nuevas' : 'Coordinacion',
+    'Activo' => 'Respuesta',
+    'Cancelado' => 'Respuesta',
+    'Finalizado' => 'Cerradas',
+];
+$estadoActivo = isset($mapaFiltroSeccion[$estadoFiltro]) ? $mapaFiltroSeccion[$estadoFiltro] : '';
 if ($estadoActivo === '') {
-    $estadoActivo = 'Pendiente';
+    $estadoActivo = 'Nuevas';
     foreach ($seccionesSolicitud as $claveSeccion => $seccion) {
         if (!empty($solicitudesPorEstado[$claveSeccion])) {
             $estadoActivo = (string)$claveSeccion;

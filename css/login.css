@@ -616,9 +616,13 @@ body[data-theme="dark"] .logout-cancel-btn {
 }
 
 .access-request-card {
-    width: min(860px, calc(100vw - 32px));
+    width: min(980px, calc(100vw - 32px));
     padding: clamp(26px, 3.4vw, 38px);
     border: 1px solid rgba(215, 226, 239, 0.82);
+}
+
+.access-request-shell {
+    width: min(100%, 1080px);
 }
 
 .access-request-form {
@@ -661,7 +665,7 @@ body[data-theme="dark"] .logout-cancel-btn {
 
 .access-request-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
     gap: 18px 20px;
     padding: 22px;
     border: 1px solid #e0e9f5;
@@ -687,6 +691,7 @@ body[data-theme="dark"] .logout-cancel-btn {
 .access-request-grid input,
 .access-request-grid select {
     width: 100%;
+    min-width: 0;
     min-height: 54px;
     padding: 0 16px;
     border: 1px solid #d7e2ef;
@@ -695,11 +700,16 @@ body[data-theme="dark"] .logout-cancel-btn {
     background: #ffffff;
     font: inherit;
     font-weight: 500;
+    text-overflow: ellipsis;
 }
 
 .access-request-grid input::placeholder {
-    color: transparent;
+    color: #8190a6;
     opacity: 1;
+}
+
+.access-request-doc-type {
+    grid-column: span 1;
 }
 
 .access-request-wide {
@@ -752,6 +762,16 @@ body[data-theme="dark"] .logout-cancel-btn {
     font-size: 15px;
 }
 
+@media (max-width: 760px) {
+    .access-request-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .access-request-wide {
+        grid-column: span 1;
+    }
+}
+
 @media (max-width: 640px) {
     .login-page {
         padding: 24px 14px;
@@ -785,6 +805,7 @@ body[data-theme="dark"] .logout-cancel-btn {
 
     .access-request-grid {
         grid-template-columns: 1fr;
+        padding: 18px;
     }
 
     .access-request-steps {

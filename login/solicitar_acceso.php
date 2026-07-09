@@ -142,7 +142,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
 <main class="login-page">
-    <section class="login-shell" aria-label="Solicitar acceso">
+    <section class="login-shell access-request-shell" aria-label="Solicitar acceso">
         <div class="login-card access-request-card">
             <div class="login-logo" aria-label="SICA"><span>SICA</span></div>
             <header class="login-header">
@@ -163,7 +163,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             <form class="access-request-form" method="post" action="<?= access_h(app_url('login/solicitar_acceso.php')) ?>">
                 <input type="hidden" name="csrf_access_request" value="<?= access_h($_SESSION['csrf_access_request']) ?>">
                 <div class="access-request-grid">
-                    <label><span>Tipo documento</span><select name="tipo_documento" required>
+                    <label class="access-request-doc-type"><span>Tipo documento</span><select name="tipo_documento" required>
                         <?php foreach (['CC' => 'Cedula de ciudadania', 'TI' => 'Tarjeta de identidad', 'CE' => 'Cedula de extranjeria', 'PEP' => 'PEP'] as $key => $label): ?>
                             <option value="<?= access_h($key) ?>" <?= ($old['tipo_documento'] ?? 'CC') === $key ? 'selected' : '' ?>><?= access_h($label) ?></option>
                         <?php endforeach; ?>
@@ -178,7 +178,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             <option value="<?= access_h($role['id_rol']) ?>" <?= (int)($old['id_rol'] ?? 4) === (int)$role['id_rol'] ? 'selected' : '' ?>><?= access_h($role['nombre_rol']) ?></option>
                         <?php endforeach; ?>
                     </select></label>
-                    <label class="access-request-wide" data-ficha-field><span>Ficha</span><div class="access-ficha-field"><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" value="<?= access_h($old['id_ficha'] ?? '') ?>"></div></label>
+                    <label class="access-request-wide" data-ficha-field><span>Ficha</span><div class="access-ficha-field"><input type="text" name="id_ficha" list="fichasSolicitud" inputmode="numeric" placeholder="Buscar por numero de ficha o programa" value="<?= access_h($old['id_ficha'] ?? '') ?>"></div></label>
                 </div>
                 <button type="submit" class="login-submit access-request-submit">Enviar solicitud</button>
             </form>

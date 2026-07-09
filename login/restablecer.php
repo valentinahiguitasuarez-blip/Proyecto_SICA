@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/paths.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/conexion.php';
 session_start();
 
@@ -31,6 +32,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $messageType = 'danger';
     } elseif (strlen($password) < 6 || strlen($password) > 72) {
         $message = 'La contrasena debe tener entre 6 y 72 caracteres.';
+        $messageType = 'danger';
+    } elseif (!password_meets_policy($password)) {
+        $message = password_policy_message();
         $messageType = 'danger';
     } elseif ($password !== $passwordConfirm) {
         $message = 'Las contrasenas no coinciden.';
@@ -145,7 +149,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                             <path d="M17 9V7A5 5 0 0 0 7 7v2H5.75A1.75 1.75 0 0 0 4 10.75v8.5C4 20.22 4.78 21 5.75 21h12.5c.97 0 1.75-.78 1.75-1.75v-8.5C20 9.78 19.22 9 18.25 9H17Zm-8.5 0V7a3.5 3.5 0 1 1 7 0v2h-7Z" fill="currentColor"/>
                         </svg>
                     </span>
-                    <input type="password" class="form-control" name="contrasena" placeholder="Nueva contrase&ntilde;a" required minlength="6" maxlength="72">
+                    <input type="password" class="form-control" name="contrasena" placeholder="Nueva contrase&ntilde;a" required minlength="6" maxlength="72" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,72}" title="Debe incluir mayúscula, minúscula, número y carácter especial.">
                 </div>
 
                 <div class="login-field password-field">

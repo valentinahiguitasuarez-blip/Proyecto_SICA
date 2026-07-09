@@ -136,6 +136,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         } elseif (strlen($newPassword) < 6 || strlen($newPassword) > 72) {
             $_SESSION['admin_users_message'] = 'La contrasena temporal debe tener entre 6 y 72 caracteres.';
             $_SESSION['admin_users_message_type'] = 'danger';
+        } elseif (!password_meets_policy($newPassword)) {
+            $_SESSION['admin_users_message'] = password_policy_message();
+            $_SESSION['admin_users_message_type'] = 'danger';
         } elseif (!in_array($newRole, $roleIds, true) || !in_array($newState, $accountStateIds, true)) {
             $_SESSION['admin_users_message'] = 'Selecciona un rol y estado validos.';
             $_SESSION['admin_users_message_type'] = 'danger';

@@ -78,9 +78,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
         if ($contrasena !== '' || $confirmarContrasena !== '') {
 
-            if (strlen($contrasena) < 6 || strlen($contrasena) > 72) {
+            if ($contrasena === '' || strlen($contrasena) < 6 || strlen($contrasena) > 72) {
 
                 throw new RuntimeException('La contraseña debe tener entre 6 y 72 caracteres.');
+
+            }
+
+            if (!password_meets_policy($contrasena)) {
+
+                throw new RuntimeException(password_policy_message());
 
             }
 

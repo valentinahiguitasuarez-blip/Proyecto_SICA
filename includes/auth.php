@@ -6,6 +6,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+function password_meets_policy(string $password): bool
+{
+    return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,72}$/', $password) === 1;
+}
+
+function password_policy_message(): string
+{
+    return 'La contraseña debe tener entre 6 y 72 caracteres, incluir una mayúscula, una minúscula, un número y un carácter especial.';
+}
+
 function iniciarSesionSegura(): void
 {
     if (session_status() === PHP_SESSION_NONE) {

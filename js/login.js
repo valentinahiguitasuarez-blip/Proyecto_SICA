@@ -327,23 +327,29 @@ document.addEventListener('DOMContentLoaded', function () {
             feedback.textContent = message;
         }
     };
-    const setPasswordMessage = function () {
-        if (!passwordInput) {
+    const passwordPolicyRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,72}$/;
+    const passwordPolicyMessage = 'La contraseña debe tener entre 6 y 72 caracteres, incluir una mayúscula, una minúscula, un número y un carácter especial.';
+
+    const setPasswordMessage = function (field) {
+        if (!field) {
             return;
         }
 
-        const feedback = passwordInput.parentElement.querySelector('.invalid-feedback');
-        const value = passwordInput.value;
+        const feedback = field.parentElement && field.parentElement.querySelector('.invalid-feedback');
+        const value = field.value;
         let message = 'La contraseña es válida.';
 
-        passwordInput.setCustomValidity('');
+        field.setCustomValidity('');
 
         if (value.length === 0) {
             message = 'La contraseña no puede estar vacía.';
-            passwordInput.setCustomValidity(message);
+            field.setCustomValidity(message);
         } else if (value.length > 72) {
             message = 'La contraseña no puede superar 72 caracteres.';
-            passwordInput.setCustomValidity(message);
+            field.setCustomValidity(message);
+        } else if (!passwordPolicyRegex.test(value)) {
+            message = passwordPolicyMessage;
+            field.setCustomValidity(message);
         }
 
         if (feedback) {
@@ -360,8 +366,8 @@ document.addEventListener('DOMContentLoaded', function () {
             setEmailMessage();
         }
 
-        if (field === passwordInput) {
-            setPasswordMessage();
+        if (field === passwordInput || field.name && field.name.toLowerCase().includes('contrasena')) {
+            setPasswordMessage(field);
         }
 
         field.classList.toggle('is-invalid', field.value.length > 0 && !field.checkValidity());
@@ -389,6 +395,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         validateField(emailInput);
         validateField(passwordInput);
+
+        const passwordFields = form.querySelectorAll('input[name*="contrasena"]');
+        passwordFields.forEach(function (field) {
+            validateField(field);
+        });
 
         if (!form.checkValidity()) {
             event.preventDefault();

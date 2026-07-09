@@ -5,6 +5,7 @@ iniciarSesionSegura();
 requireRole([3]);
 require_once __DIR__ . '/../config/conexion.php';
 require_once __DIR__ . '/../includes/instructor_panel.php';
+require_once __DIR__ . '/../includes/admin_request_notifications.php';
 
 $pageTitle = 'Disponibilidad - Instructor SICA';
 $pageStyles = ['css/instructor.css'];
@@ -201,8 +202,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         ':estado' => $estadoPendiente,
     ]);
 
-    $_SESSION['instructor_message'] = 'Solicitud enviada. El administrador la verá en Solicitudes de Reserva > Por asignar.';
-    header('Location: ' . app_url('instructor/detalle_solicitud.php?id=' . (int)$pdo->lastInsertId()));
+    $idEvento = (int)$pdo->lastInsertId();
+    sica_notify_admins_new_reservation($pdo, $idEvento);
+
+    $_SESSION['instructor_message'] = 'Solicitud enviada. El administrador recibira una notificacion por correo y la vera en Solicitudes de Reserva > Por asignar.';
+    header('Location: ' . app_url('instructor/detalle_solicitud.php?id=' . $idEvento));
     exit;
 }
 

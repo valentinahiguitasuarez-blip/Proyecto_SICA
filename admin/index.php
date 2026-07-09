@@ -186,7 +186,20 @@ try {
 
 $monthLabels = [1 => 'Ene', 2 => 'Feb', 3 => 'Mar', 4 => 'Abr', 5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago', 9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dic'];
 $totalReservas = max(1, array_sum($reservas));
-$notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_pendientes'] ?? 0);
+$nuevasSolicitudes = 0;
+try {
+    $nuevasSolicitudes = scalarQuery(
+        $pdo,
+        "SELECT COUNT(*)
+         FROM evento e
+         INNER JOIN estado es ON es.id_estado = e.id_estado
+         WHERE e.id_coordinador IS NULL
+           AND es.nombre_estado = 'Pendiente'"
+    );
+} catch (Throwable $exception) {
+    error_log('SICA admin dashboard nuevas solicitudes: ' . $exception->getMessage());
+}
+$notificationTotal = $nuevasSolicitudes + (int)($stats['correos_pendientes'] ?? 0);
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -229,7 +242,7 @@ $notificationTotal = (int)($reservas['Pendiente'] ?? 0) + (int)($stats['correos_
                 <div class="admin-notification-center" aria-label="Centro de notificaciones">
                     <strong><?= h($notificationTotal) ?></strong>
                     <span>Alertas</span>
-                    <small><?= h($reservas['Pendiente']) ?> solicitudes - <?= h($stats['correos_pendientes'] ?? 0) ?> correos</small>
+                    <small><?= h($nuevasSolicitudes) ?> nuevas - <?= h($stats['correos_pendientes'] ?? 0) ?> correos</small>
                 </div>
                 <a class="admin-logout" href="<?= h(app_url('login/logout.php')) ?>">Cerrar sesion</a>
             </div>

@@ -616,34 +616,34 @@ body[data-theme="dark"] .logout-cancel-btn {
 }
 
 .access-request-card {
-    width: min(900px, calc(100vw - 32px));
-    padding: clamp(22px, 2.8vw, 30px);
+    width: min(820px, calc(100vw - 32px));
+    padding: clamp(18px, 2.4vw, 24px);
     border: 1px solid rgba(215, 226, 239, 0.82);
 }
 
 .access-request-shell {
-    width: min(100%, 980px);
+    width: min(100%, 900px);
 }
 
 .access-request-form {
     display: grid;
-    gap: 14px;
+    gap: 12px;
 }
 
 .access-request-steps {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin: 0 0 16px;
+    gap: 8px;
+    margin: 0 0 12px;
 }
 
 .access-request-steps span {
-    min-height: 40px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0 12px;
+    padding: 0 10px;
     border-radius: 8px;
     color: #25416f;
     background: #eef5ff;
@@ -653,8 +653,8 @@ body[data-theme="dark"] .logout-cancel-btn {
 }
 
 .access-request-steps strong {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     display: grid;
     place-items: center;
     border-radius: 50%;
@@ -666,8 +666,8 @@ body[data-theme="dark"] .logout-cancel-btn {
 .access-request-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(240px, 1fr));
-    gap: 14px 16px;
-    padding: 18px;
+    gap: 12px 14px;
+    padding: 16px;
     border: 1px solid #e0e9f5;
     border-radius: 8px;
     background:
@@ -692,8 +692,8 @@ body[data-theme="dark"] .logout-cancel-btn {
 .access-request-grid select {
     width: 100%;
     min-width: 0;
-    min-height: 48px;
-    padding: 0 14px;
+    min-height: 44px;
+    padding: 0 12px;
     border: 1px solid #d7e2ef;
     border-radius: 8px;
     color: #101b33;
@@ -758,8 +758,8 @@ body[data-theme="dark"] .logout-cancel-btn {
 }
 
 .access-request-submit {
-    min-height: 50px;
-    font-size: 15px;
+    min-height: 46px;
+    font-size: 14px;
 }
 
 @media (max-width: 760px) {

@@ -193,7 +193,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     $_SESSION['admin_requests_message_type'] = 'success';
                 }
             } else {
-                if (!in_array((string)$evento['nombre_estado'], ['Activo', 'Cancelado', 'Finalizado'], true)
+                if (!in_array((string)$evento['nombre_estado'], ['Activo', 'Cancelado'], true)
                     || empty($evento['fecha_aprobacion'])) {
                     throw new RuntimeException('Aun no hay una decision de coordinacion para notificar.');
                 }
@@ -218,6 +218,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 if (!sica_send_mail((string)$evento['correo'], 'Respuesta a tu solicitud de auditorio - SICA', $body)) {
                     throw new RuntimeException('No se pudo enviar el correo al instructor. Revisa la configuracion SMTP.');
                 }
+
+                $closeStmt = $pdo->prepare(
+                    'UPDATE evento
+                     SET id_estado = :estado_finalizado
+                     WHERE id_evento = :id_evento'
+                );
+                $closeStmt->execute([
+                    ':estado_finalizado' => $estadoIds['Finalizado'],
+                    ':id_evento' => $idEvento,
+                ]);
 
                 $_SESSION['admin_requests_message'] = 'Respuesta enviada al instructor correctamente.';
                 $_SESSION['admin_requests_message_type'] = 'success';
@@ -652,7 +662,7 @@ if ($estadoActivo === '') {
                                                         data-confirm-text="<?= $enviadoCoordinacion ? 'Si, reenviar' : 'Si, enviar' ?>">
                                                     <?= $enviadoCoordinacion ? 'Reenviar correo' : 'Enviar a coordinador' ?>
                                                 </button>
-                                            <?php elseif ($tieneDecision): ?>
+                                            <?php elseif ($tieneDecision && in_array($estado, ['Activo', 'Cancelado'], true)): ?>
                                                 <small class="admin-flow-note">Coordinacion ya respondio. Informa al instructor.</small>
                                                 <button type="submit" name="accion" value="notificar_instructor"
                                                         data-confirm-kicker="Notificacion"
@@ -660,7 +670,7 @@ if ($estadoActivo === '') {
                                                         data-confirm-message="El instructor recibira por correo la decision registrada por coordinacion."
                                                         data-confirm-text="Si, notificar">Notificar instructor</button>
                                             <?php else: ?>
-                                                <small class="admin-flow-note">Solicitud cerrada.</small>
+                                                <small class="admin-flow-note">Solicitud cerrada. La respuesta final ya fue gestionada.</small>
                                             <?php endif; ?>
                                         </div>
                                     </form>

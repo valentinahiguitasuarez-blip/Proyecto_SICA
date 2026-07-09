@@ -1347,10 +1347,18 @@ body {
     height: 44px;
     display: grid;
     place-items: center;
+    overflow: hidden;
     border-radius: 8px;
     color: #ffffff;
     background: linear-gradient(135deg, var(--admin-blue), #39c6a5);
     font-weight: 900;
+}
+
+.admin-user-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
 }
 
 .admin-user-main {

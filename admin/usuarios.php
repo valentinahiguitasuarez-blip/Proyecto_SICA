@@ -349,7 +349,7 @@ try {
 
     $users = admin_rows(
         $pdo,
-        'SELECT u.id_documento, ' . $documentTypeSelect . ' u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
+        'SELECT u.id_documento, ' . $documentTypeSelect . ' u.nombre, u.apellido, u.correo, u.telefono, u.foto_perfil, u.fecha_registro,
                 u.id_rol, u.id_estado, u.id_ficha, r.nombre_rol, es.nombre_estado,
                 p.nombre_programa, j.nombre_jornada,
                 COUNT(pr.id_preregistro) AS preregistros,
@@ -362,7 +362,7 @@ try {
          LEFT JOIN jornada j ON j.id_jornada = p.id_jornada
          LEFT JOIN preregistro pr ON pr.id_documento = u.id_documento' .
             $whereSql .
-        ' GROUP BY u.id_documento, ' . ($hasDocumentTypeColumn ? 'u.tipo_documento, ' : '') . 'u.nombre, u.apellido, u.correo, u.telefono, u.fecha_registro,
+        ' GROUP BY u.id_documento, ' . ($hasDocumentTypeColumn ? 'u.tipo_documento, ' : '') . 'u.nombre, u.apellido, u.correo, u.telefono, u.foto_perfil, u.fecha_registro,
                  u.id_rol, u.id_estado, u.id_ficha, r.nombre_rol, es.nombre_estado,
                  p.nombre_programa, j.nombre_jornada
           ORDER BY u.fecha_registro DESC, u.nombre ASC',
@@ -501,9 +501,16 @@ try {
                     $initials = $initials !== '' ? $initials : 'US';
                     $isCurrentAdmin = (int)$item['id_documento'] === $adminDocument;
                     $isApprenticeUser = str_contains(mb_strtolower((string)$item['nombre_rol'], 'UTF-8'), 'aprendiz');
+                    $photo = trim((string)($item['foto_perfil'] ?? ''));
                     ?>
                     <article class="admin-user-card">
-                        <div class="admin-user-avatar"><?= admin_h($initials) ?></div>
+                        <div class="admin-user-avatar">
+                            <?php if ($photo !== ''): ?>
+                                <img src="<?= admin_h(app_url($photo)) ?>" alt="">
+                            <?php else: ?>
+                                <?= admin_h($initials) ?>
+                            <?php endif; ?>
+                        </div>
                         <div class="admin-user-main">
                             <div class="admin-user-title">
                                 <div>

@@ -11,7 +11,7 @@ $eventoRaw = trim((string)($_GET['evento'] ?? ''));
 $idEvento = ctype_digit($eventoRaw) ? (int)$eventoRaw : 0;
 $tipo = (string)($_GET['tipo'] ?? 'csv');
 
-if (!in_array($tipo, ['csv', 'pdf'], true) || $idEvento <= 0) {
+if (!in_array($tipo, ['csv', 'excel', 'pdf'], true) || $idEvento <= 0) {
     http_response_code(400);
     exit('Solicitud de exportación inválida.');
 }
@@ -27,11 +27,12 @@ if (!$evento) {
 
 $participantes = instructor_rows(
     $pdo,
-    'SELECT p.fecha_registro, p.asistencia, p.hora, u.id_documento, u.nombre, u.apellido, u.correo, f.id_ficha, pr.nombre_programa
+    'SELECT p.fecha_registro, p.asistencia, p.hora, u.id_documento, u.nombre, u.apellido, u.correo, f.id_ficha, pr.nombre_programa, j.nombre_jornada
      FROM preregistro p
      INNER JOIN usuario u ON u.id_documento = p.id_documento
      LEFT JOIN ficha f ON f.id_ficha = u.id_ficha
      LEFT JOIN programa pr ON pr.id_programa = f.id_programa
+     LEFT JOIN jornada j ON j.id_jornada = pr.id_jornada
      WHERE p.id_evento = :evento
      ORDER BY u.nombre ASC, u.apellido ASC',
     [':evento' => (int)$evento['id_evento']]
@@ -102,13 +103,14 @@ if ($tipo === 'pdf') {
         $stream .= "0.04 0.09 0.20 rg BT /F1 10 Tf 300 764 Td (" . instructor_pdf_text('Fecha: ' . $fechaEvento . ' - ' . $horarioEvento) . ") Tj ET\n";
 
         // Table header background
-        $stream .= "0.94 0.95 0.98 rg 44 714 515 28 re f\n"; // light row background
-        // Column titles (dark text)
-        $stream .= "0 0 0 rg BT /F1 10 Tf 50 732 Td (" . instructor_pdf_text('N°') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 110 732 Td (" . instructor_pdf_text('Documento') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 220 732 Td (" . instructor_pdf_text('Nombre completo') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 405 732 Td (" . instructor_pdf_text('Ficha') . ") Tj ET\n";
-        $stream .= "0 0 0 rg BT /F1 10 Tf 485 732 Td (" . instructor_pdf_text('Asistencia') . ") Tj ET\n";
+        $stream .= "0.94 0.95 0.98 rg 44 714 515 28 re f\n";
+        // Column titles — N° | Documento | Nombre | Ficha | Jornada | Asistencia
+        $stream .= "0 0 0 rg BT /F1 9 Tf 50 732 Td (" . instructor_pdf_text('N') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 9 Tf 90 732 Td (" . instructor_pdf_text('Documento') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 9 Tf 185 732 Td (" . instructor_pdf_text('Nombre completo') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 9 Tf 330 732 Td (" . instructor_pdf_text('Ficha') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 9 Tf 390 732 Td (" . instructor_pdf_text('Jornada') . ") Tj ET\n";
+        $stream .= "0 0 0 rg BT /F1 9 Tf 460 732 Td (" . instructor_pdf_text('Asistencia') . ") Tj ET\n";
 
         // horizontal separator line under header
         $stream .= "0.8 G 44 710 m 559 710 l S\n";
@@ -119,12 +121,13 @@ if ($tipo === 'pdf') {
         foreach ($chunk as $localIndex => $p) {
             $num = $indexBase + $localIndex + 1;
             $nombre = trim((string)$p['nombre'] . ' ' . (string)$p['apellido']);
-            $ficha = !empty($p['id_ficha']) ? (string)$p['id_ficha'] : 'Sin ficha';
+            $ficha = !empty($p['id_ficha']) ? (string)$p['id_ficha'] : '-';
+            $jornada = !empty($p['nombre_jornada']) ? (string)$p['nombre_jornada'] : '-';
 
-            // Truncate long fields to avoid overlap in PDF columns
-            $nombreDisplay = instructor_pdf_trim_raw($nombre, 34);
-            $fichaDisplay = instructor_pdf_trim_raw($ficha, 11);
-            $asistenciaDisplay = instructor_pdf_trim_raw((string)$p['asistencia'], 12);
+            $nombreDisplay = instructor_pdf_trim_raw($nombre, 26);
+            $fichaDisplay = instructor_pdf_trim_raw($ficha, 10);
+            $jornadaDisplay = instructor_pdf_trim_raw($jornada, 10);
+            $asistenciaDisplay = instructor_pdf_trim_raw((string)$p['asistencia'], 10);
 
             // alternate row background
             if ($localIndex % 2 === 0) {
@@ -132,10 +135,11 @@ if ($tipo === 'pdf') {
             }
 
             $stream .= "0 0 0 rg BT /F1 9 Tf 50 {$y} Td (" . instructor_pdf_text((string)$num) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 110 {$y} Td (" . instructor_pdf_text((string)$p['id_documento']) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 220 {$y} Td (" . instructor_pdf_text($nombreDisplay) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 405 {$y} Td (" . instructor_pdf_text($fichaDisplay) . ") Tj ET\n";
-            $stream .= "0 0 0 rg BT /F1 9 Tf 485 {$y} Td (" . instructor_pdf_text($asistenciaDisplay) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 90 {$y} Td (" . instructor_pdf_text((string)$p['id_documento']) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 185 {$y} Td (" . instructor_pdf_text($nombreDisplay) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 330 {$y} Td (" . instructor_pdf_text($fichaDisplay) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 390 {$y} Td (" . instructor_pdf_text($jornadaDisplay) . ") Tj ET\n";
+            $stream .= "0 0 0 rg BT /F1 9 Tf 460 {$y} Td (" . instructor_pdf_text($asistenciaDisplay) . ") Tj ET\n";
 
             // small separator
             $stream .= "0.9 G 44 " . ($y - 8) . " m 559 " . ($y - 8) . " l S\n";
@@ -195,28 +199,161 @@ if ($tipo === 'pdf') {
     exit;
 }
 
+if ($tipo === 'excel') {
+    $fechaEvento = date('d/m/Y', strtotime((string)$evento['fecha_evento']));
+    $horario = instructor_hora12((string)$evento['hora_inicio']) . ' - ' . instructor_hora12((string)$evento['hora_fin']);
+
+    function xlsx_escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+    }
+
+    function xlsx_col(int $index): string
+    {
+        $name = '';
+        while ($index > 0) {
+            $index--;
+            $name = chr(65 + ($index % 26)) . $name;
+            $index = intdiv($index, 26);
+        }
+        return $name;
+    }
+
+    function xlsx_cell(int $column, int $row, string $value, int $style = 0): string
+    {
+        $reference = xlsx_col($column) . $row;
+        $styleAttr = $style > 0 ? ' s="' . $style . '"' : '';
+        return '<c r="' . $reference . '" t="inlineStr"' . $styleAttr . '><is><t>' . xlsx_escape($value) . '</t></is></c>';
+    }
+
+    function xlsx_row(int $row, array $values, int $style = 0): string
+    {
+        $cells = '';
+        foreach (array_values($values) as $index => $value) {
+            $cells .= xlsx_cell($index + 1, $row, (string)$value, $style);
+        }
+        return '<row r="' . $row . '">' . $cells . '</row>';
+    }
+
+    $sheetRows = [];
+    $rowNumber = 1;
+    $sheetRows[] = xlsx_row($rowNumber++, ['SICA - Participantes Registrados'], 1);
+    $sheetRows[] = xlsx_row($rowNumber++, ['Exportado el ' . date('d/m/Y H:i')], 2);
+    $sheetRows[] = xlsx_row($rowNumber++, ['Evento', (string)$evento['nombre_evento'], 'Codigo', (string)$evento['codigo_evento']]);
+    $sheetRows[] = xlsx_row($rowNumber++, ['Auditorio', (string)$evento['nombre_auditorio'] . ' / Bloque ' . (string)$evento['bloque'], 'Fecha', $fechaEvento]);
+    $sheetRows[] = xlsx_row($rowNumber++, ['Horario', $horario, 'Total', count($participantes) . ' participante(s)']);
+    $rowNumber++;
+    $sheetRows[] = xlsx_row($rowNumber++, ['N', 'Documento', 'Nombre completo', 'Correo', 'Ficha', 'Programa', 'Jornada', 'Asistencia', 'Fecha registro', 'Hora ingreso'], 3);
+
+    if (!$participantes) {
+        $sheetRows[] = xlsx_row($rowNumber++, ['Sin participantes registrados.'], 2);
+    }
+
+    foreach ($participantes as $i => $p) {
+        $nombre = trim((string)$p['nombre'] . ' ' . (string)$p['apellido']);
+        $sheetRows[] = xlsx_row($rowNumber++, [
+            (string)($i + 1),
+            (string)$p['id_documento'],
+            $nombre,
+            (string)($p['correo'] ?? '-'),
+            !empty($p['id_ficha']) ? (string)$p['id_ficha'] : '-',
+            !empty($p['nombre_programa']) ? (string)$p['nombre_programa'] : '-',
+            !empty($p['nombre_jornada']) ? (string)$p['nombre_jornada'] : '-',
+            !empty($p['asistencia']) ? (string)$p['asistencia'] : '-',
+            !empty($p['fecha_registro']) ? date('d/m/Y', strtotime((string)$p['fecha_registro'])) : '-',
+            instructor_hora12((string)($p['hora'] ?? '')),
+        ]);
+    }
+
+    $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<cols>
+<col min="1" max="1" width="8" customWidth="1"/>
+<col min="2" max="2" width="18" customWidth="1"/>
+<col min="3" max="3" width="30" customWidth="1"/>
+<col min="4" max="4" width="34" customWidth="1"/>
+<col min="5" max="5" width="14" customWidth="1"/>
+<col min="6" max="6" width="36" customWidth="1"/>
+<col min="7" max="10" width="16" customWidth="1"/>
+</cols>
+<sheetData>' . implode('', $sheetRows) . '</sheetData>
+</worksheet>';
+
+    $xlsxFiles = [
+        '[Content_Types].xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>',
+        '_rels/.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>',
+        'xl/workbook.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets><sheet name="Participantes" sheetId="1" r:id="rId1"/></sheets>
+</workbook>',
+        'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>',
+        'xl/styles.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FF1A3A6B"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1A3A6B"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9E2EF"/></left><right style="thin"><color rgb="FFD9E2EF"/></right><top style="thin"><color rgb="FFD9E2EF"/></top><bottom style="thin"><color rgb="FFD9E2EF"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0"/></cellXfs>
+</styleSheet>',
+        'xl/worksheets/sheet1.xml' => $sheetXml,
+    ];
+
+    $tmpFile = tempnam(sys_get_temp_dir(), 'sica_xlsx_');
+    if ($tmpFile === false) {
+        http_response_code(500);
+        exit('No fue posible preparar el archivo Excel.');
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($tmpFile, ZipArchive::OVERWRITE) !== true) {
+        @unlink($tmpFile);
+        http_response_code(500);
+        exit('No fue posible generar el archivo Excel.');
+    }
+
+    foreach ($xlsxFiles as $path => $content) {
+        $zip->addFromString($path, $content);
+    }
+    $zip->close();
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . instructor_export_filename($evento, 'xlsx') . '"');
+    header('Content-Length: ' . filesize($tmpFile));
+    header('Cache-Control: no-cache');
+    readfile($tmpFile);
+    @unlink($tmpFile);
+    exit;
+}
+
 header('Content-Type: text/csv; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . instructor_export_filename($evento, 'csv') . '"');
 $out = fopen('php://output', 'w');
 fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));
-fputcsv($out, ['SICA - Participantes registrados']);
-fputcsv($out, ['Evento', $evento['nombre_evento']]);
-fputcsv($out, ['Código', $evento['codigo_evento']]);
-fputcsv($out, ['Auditorio', $evento['nombre_auditorio'] . ' / Bloque ' . $evento['bloque']]);
-fputcsv($out, ['Fecha', date('d/m/Y', strtotime((string)$evento['fecha_evento']))]);
-fputcsv($out, ['Horario', instructor_hora12((string)$evento['hora_inicio']) . ' - ' . instructor_hora12((string)$evento['hora_fin'])]);
-fputcsv($out, ['Total participantes', count($participantes)]);
-fputcsv($out, []);
-fputcsv($out, ['Documento', 'Nombre completo', 'Correo', 'Ficha', 'Programa', 'Asistencia', 'Fecha registro', 'Hora ingreso']);
-foreach ($participantes as $p) {
+fputcsv($out, ['N°', 'Documento', 'Nombre completo', 'Correo', 'Ficha', 'Programa', 'Asistencia', 'Fecha registro', 'Hora ingreso']);
+foreach ($participantes as $i => $p) {
     fputcsv($out, [
+        $i + 1,
         $p['id_documento'],
         trim((string)$p['nombre'] . ' ' . (string)$p['apellido']),
         $p['correo'],
-        $p['id_ficha'],
-        $p['nombre_programa'],
-        $p['asistencia'],
-        $p['fecha_registro'],
+        !empty($p['id_ficha']) ? $p['id_ficha'] : '-',
+        !empty($p['nombre_programa']) ? $p['nombre_programa'] : '-',
+        !empty($p['asistencia']) ? $p['asistencia'] : '-',
+        !empty($p['fecha_registro']) ? date('d/m/Y', strtotime((string)$p['fecha_registro'])) : '-',
         instructor_hora12((string)($p['hora'] ?? '')),
     ]);
 }

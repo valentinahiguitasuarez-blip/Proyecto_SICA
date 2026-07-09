@@ -765,16 +765,16 @@ body {
 
 .metric-tile.navy strong,
 .metric-tile.navy em {
-    color: var(--ins-ink);
+    color: var(--ins-blue);
 }
 
 .metric-tile.navy::before {
-    background: var(--ins-ink);
+    background: var(--ins-blue);
 }
 
 .metric-tile.navy::after,
 .metric-tile.navy em {
-    background: #eef3f8;
+    background: var(--ins-blue-soft);
 }
 
 .dashboard-grid {
@@ -1666,10 +1666,10 @@ body {
     background: var(--ins-blue-soft);
 }
 
-/* Navy / purple variant used for Activo on instructor pages */
+/* Active state uses the module blue, matching the Activos metric. */
 .status-pill.navy {
-    color: #5b21b6;
-    background: #f4f3ff;
+    color: var(--ins-blue);
+    background: var(--ins-blue-soft);
 }
 
 .progress-bar {
@@ -2450,6 +2450,216 @@ body {
     gap: 14px;
 }
 
+.ficha-directory {
+    display: grid;
+    gap: 14px;
+}
+
+.ficha-dropdown-list {
+    display: grid;
+    gap: 10px;
+}
+
+.ficha-dropdown {
+    border: 1px solid var(--ins-line);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(28, 45, 74, 0.05);
+    overflow: hidden;
+}
+
+.ficha-dropdown summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+    gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.ficha-dropdown summary::-webkit-details-marker {
+    display: none;
+}
+
+.ficha-dropdown summary::after {
+    content: "Desplegar";
+    justify-self: end;
+    grid-column: 1 / -1;
+    color: var(--ins-blue);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.ficha-dropdown[open] summary::after {
+    content: "Ocultar";
+}
+
+.ficha-dropdown summary span,
+.ficha-dropdown summary strong,
+.ficha-dropdown summary small {
+    display: block;
+}
+
+.ficha-dropdown summary span {
+    color: var(--ins-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.ficha-dropdown summary strong {
+    color: var(--ins-blue);
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.ficha-dropdown summary small {
+    color: var(--ins-ink);
+    font-weight: 800;
+}
+
+.ficha-dropdown-body {
+    display: grid;
+    gap: 12px;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--ins-line);
+}
+
+.ficha-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 14px;
+}
+
+.ficha-card {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid var(--ins-line);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(28, 45, 74, 0.06);
+}
+
+.ficha-card-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+}
+
+.ficha-card-head span,
+.ficha-card-head strong,
+.ficha-card-head small {
+    display: block;
+}
+
+.ficha-card-head span {
+    color: var(--ins-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.ficha-card-head strong {
+    color: var(--ins-blue);
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.ficha-card-head small {
+    color: var(--ins-ink);
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.ficha-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.ficha-stats span {
+    display: grid;
+    gap: 2px;
+    padding: 10px;
+    border: 1px solid var(--ins-line);
+    border-radius: 8px;
+    color: var(--ins-muted);
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.ficha-stats strong {
+    color: var(--ins-ink);
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.ficha-card .ficha-add-form {
+    grid-template-columns: 1fr;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.ficha-learners {
+    display: grid;
+    gap: 8px;
+    max-height: 360px;
+    overflow: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--ins-line);
+}
+
+.ficha-learner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eef3f8;
+}
+
+.ficha-learner:last-child {
+    border-bottom: 0;
+}
+
+.ficha-learner strong,
+.ficha-learner small {
+    display: block;
+    min-width: 0;
+}
+
+.ficha-learner strong {
+    color: var(--ins-ink);
+    font-weight: 900;
+}
+
+.ficha-learner small {
+    color: var(--ins-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.ficha-learner form {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled,
+.danger-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+    transform: none;
+}
+
 .available-learner-row form {
     display: flex;
     justify-content: flex-end;
@@ -2466,6 +2676,9 @@ body {
 @media (max-width: 900px) {
     .search-toolbar,
     .ficha-add-form,
+    .ficha-dropdown summary,
+    .ficha-card-head,
+    .ficha-stats,
     .participant-summary-grid {
         grid-template-columns: 1fr;
     }
@@ -2480,6 +2693,18 @@ body {
 
     .available-learner-row form {
         grid-column: 1 / -1;
+    }
+
+    .ficha-learner {
+        grid-template-columns: 1fr;
+    }
+
+    .ficha-learner form {
+        justify-content: stretch;
+    }
+
+    .ficha-learner .secondary-btn {
+        width: 100%;
     }
 }
 

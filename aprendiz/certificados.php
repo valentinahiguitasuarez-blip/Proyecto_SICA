@@ -178,10 +178,9 @@ $ultimoCertificado = $listos[0] ?? null;
                         $estadoDetalle = $asistencia === 'Asistió'
                             ? 'Tu asistencia ya fue registrada. Estamos preparando tu certificado.'
                             : 'Asiste al evento y confirma tu ingreso en el auditorio.';
-                        $accionTexto = $tieneCertificado ? 'Descargar certificado' : 'Ver pre-registro';
-                        $accionUrl = $tieneCertificado
-                            ? app_url('aprendiz/descargar_certificado.php?id=' . (int)$item['id_certificado'])
-                            : app_url('aprendiz/preregistro.php');
+                        $accionTexto = $tieneCertificado
+                            ? 'Descargar certificado'
+                            : ($estadoClase === 'issuing' ? 'Certificado en proceso' : 'Disponible después de asistir');
                         ?>
                         <article class="certificate-card <?= cert_e($estadoClase) ?>">
                             <div class="certificate-date">
@@ -205,7 +204,14 @@ $ultimoCertificado = $listos[0] ?? null;
                                     <span><?= cert_e($estadoTexto) ?></span>
                                     <small><?= cert_e($estadoDetalle) ?></small>
                                 </div>
-                                <a class="<?= cert_e($tieneCertificado ? 'primary' : 'secondary') ?>" href="<?= cert_e($accionUrl) ?>"><?= cert_e($accionTexto) ?></a>
+                                <?php if ($tieneCertificado): ?>
+                                    <a class="primary" href="<?= cert_e(app_url('aprendiz/descargar_certificado.php?id=' . (int)$item['id_certificado'])) ?>"><?= cert_e($accionTexto) ?></a>
+                                <?php else: ?>
+                                    <span class="certificate-unavailable <?= cert_e($estadoClase) ?>" aria-label="<?= cert_e($accionTexto) ?>">
+                                        <span aria-hidden="true"><?= $estadoClase === 'issuing' ? '&#8987;' : '&#128274;' ?></span>
+                                        <?= cert_e($accionTexto) ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </article>
                     <?php endforeach; ?>

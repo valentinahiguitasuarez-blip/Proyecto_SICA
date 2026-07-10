@@ -3,7 +3,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/paths.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/conexion.php';
-session_start();
 
 $pageTitle = 'Restablecer contrasena - SICA';
 $correo = mb_strtolower(trim((string)($_GET['correo'] ?? $_POST['correo'] ?? '')), 'UTF-8');
@@ -105,24 +104,35 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 ?>
 <?php include_once __DIR__ . '/../includes/header.php'; ?>
 
-<main class="login-page">
-    <section class="login-shell" aria-label="Restablecer contrasena">
-        <div class="login-card">
+<main class="login-page reset-password-page">
+    <section class="login-shell reset-password-shell" aria-label="Restablecer contrasena">
+        <div class="login-card reset-password-card">
+            <div class="access-signature" aria-hidden="true">
+                <svg viewBox="0 0 320 56">
+                    <path class="signature-path" d="M18 36 H72 L92 16 H136 L152 36 H206 L226 16 H302" />
+                    <path class="signature-glow" d="M18 36 H72 L92 16 H136 L152 36 H206 L226 16 H302" />
+                    <circle cx="92" cy="16" r="4" />
+                    <circle cx="152" cy="36" r="4" />
+                    <circle cx="226" cy="16" r="4" />
+                </svg>
+            </div>
             <div class="login-logo" aria-label="SICA">
                 <span>SICA</span>
             </div>
             <header class="login-header">
-                <h1>Codigo de seguridad</h1>
-                <p>Escribe el codigo enviado a tu correo y crea una nueva contrase&ntilde;a.</p>
+                <span class="reset-password-step">Verificaci&oacute;n segura</span>
+                <h1>Crear nueva contrase&ntilde;a</h1>
+                <p>Ingresa el c&oacute;digo recibido y define una contrase&ntilde;a segura.</p>
             </header>
 
             <?php if ($message !== ''): ?>
-                <div class="alert alert-<?= htmlspecialchars($messageType, ENT_QUOTES, 'UTF-8') ?> shadow-sm" role="alert">
-                    <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>
-                </div>
+                <div hidden data-page-modal
+                     data-modal-title="<?= $messageType === 'danger' ? 'No fue posible continuar' : 'Código enviado' ?>"
+                     data-modal-message="<?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?>"
+                     data-modal-type="<?= $messageType === 'danger' ? 'error' : 'success' ?>"></div>
             <?php endif; ?>
 
-            <form method="post" action="<?= htmlspecialchars(app_url('login/restablecer.php'), ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
+            <form class="reset-password-form" method="post" action="<?= htmlspecialchars(app_url('login/restablecer.php'), ENT_QUOTES, 'UTF-8') ?>" autocomplete="off" novalidate>
                 <input type="hidden" name="csrf_reset" value="<?= htmlspecialchars($_SESSION['csrf_reset'], ENT_QUOTES, 'UTF-8') ?>">
 
                 <div class="login-field">
@@ -142,6 +152,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     </span>
                     <input type="text" class="form-control" name="codigo" placeholder="Codigo de 6 digitos" required minlength="6" maxlength="6" inputmode="numeric" pattern="[0-9]{6}">
                 </div>
+                <span class="field-hint">El c&oacute;digo contiene exactamente 6 n&uacute;meros.</span>
 
                 <div class="login-field password-field">
                     <span class="field-icon" aria-hidden="true">
@@ -164,8 +175,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 <button type="submit" class="login-submit">Actualizar contrase&ntilde;a</button>
             </form>
 
-            <p class="login-register"><a href="<?= htmlspecialchars(app_url('login/recuperar.php'), ENT_QUOTES, 'UTF-8') ?>">Enviar otro codigo</a></p>
-            <p class="login-register"><a href="<?= htmlspecialchars(app_url('login/index.php'), ENT_QUOTES, 'UTF-8') ?>">Volver al inicio de sesi&oacute;n</a></p>
+            <nav class="reset-password-links" aria-label="Opciones de recuperaci&oacute;n">
+                <a href="<?= htmlspecialchars(app_url('login/recuperar.php'), ENT_QUOTES, 'UTF-8') ?>">Enviar otro c&oacute;digo</a>
+                <a href="<?= htmlspecialchars(app_url('login/index.php'), ENT_QUOTES, 'UTF-8') ?>">Volver al inicio</a>
+            </nav>
         </div>
     </section>
 </main>

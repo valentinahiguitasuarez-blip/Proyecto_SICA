@@ -59,7 +59,7 @@ $participantesDestacados = $eventoDestacado
         <p>SICA concentra tus solicitudes, el estado de aprobaci?n, los participantes y el c?digo de ingreso para que cada evento avance sin perder trazabilidad.</p>
         <div class="hero-actions">
             <a class="primary-btn" href="<?= instructor_h(app_url('instructor/disponibilidad.php')) ?>">Crear solicitud</a>
-            <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/asistencia.php')) ?>">Abrir c?digos</a>
+            <a class="secondary-btn" href="<?= instructor_h(app_url('instructor/asistencia.php')) ?>">Gestionar asistencia</a>
         </div>
     </div>
     <div class="dashboard-command" aria-label="Resumen operativo">

@@ -1188,6 +1188,63 @@ body {
     font-weight: 800;
 }
 
+.calendar-month-nav {
+    display: grid;
+    grid-template-columns: auto minmax(220px, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--ins-line);
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.calendar-month-nav .calendar-nav-btn {
+    min-width: 116px;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 14px;
+    border-color: rgba(22, 93, 255, 0.18);
+    color: var(--ins-blue);
+    background: #ffffff;
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.calendar-month-nav .calendar-nav-btn span {
+    color: currentColor;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.calendar-month-nav .calendar-nav-btn:hover,
+.calendar-month-nav .calendar-nav-btn:focus {
+    border-color: var(--ins-blue);
+    background: var(--ins-blue-soft);
+    transform: translateY(-1px);
+}
+
+.calendar-auditorium-select {
+    display: grid;
+    gap: 5px;
+}
+
+.calendar-auditorium-select > span {
+    color: var(--ins-muted);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.calendar-month-nav .calendar-auditorium-select select {
+    width: 100%;
+    min-height: 48px;
+}
+
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1221,6 +1278,47 @@ body {
 
 .auditorium-feature-card small {
     font-weight: 800;
+}
+
+/* En disponibilidad se muestran solo los datos esenciales para no recargar el calendario. */
+.calendar-layout .auditorium-feature-card > div:first-child > span,
+.calendar-layout .auditorium-feature-card > small,
+.calendar-layout .auditorium-feature-grid > span:nth-child(n + 3):nth-child(-n + 7) {
+    display: none;
+}
+
+.calendar-layout .auditorium-feature-card {
+    grid-template-columns: minmax(180px, 0.8fr) minmax(280px, 1.2fr);
+    align-items: center;
+    padding: 16px 18px;
+    background: #f7faff;
+}
+
+.calendar-layout .auditorium-feature-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.calendar-layout .auditorium-feature-grid span {
+    min-height: 58px;
+}
+
+@media (max-width: 760px) {
+    .calendar-month-nav {
+        grid-template-columns: 52px minmax(0, 1fr) 52px;
+    }
+
+    .calendar-month-nav .calendar-nav-btn {
+        min-width: 52px;
+        padding: 0;
+    }
+
+    .calendar-month-nav .calendar-nav-btn b {
+        display: none;
+    }
+
+    .calendar-layout .auditorium-feature-card {
+        grid-template-columns: 1fr;
+    }
 }
 
 .auditorium-feature-grid {

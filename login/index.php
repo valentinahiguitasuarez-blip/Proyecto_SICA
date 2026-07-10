@@ -101,14 +101,15 @@ if (empty($_SESSION['csrf_login'])) {
             </header>
 
             <?php if ($error): ?>
-                <div class="alert alert-danger shadow-sm" role="alert">
-                    <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            <?php endif; ?>
-            <?php if ($success): ?>
-                <div class="alert alert-success shadow-sm" role="alert">
-                    <?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?>
-                </div>
+                <div hidden data-page-modal
+                     data-modal-title="<?= htmlspecialchars($error === 'Correo o contrasena incorrectos.' ? 'Error de autenticación' : 'No fue posible iniciar sesión', ENT_QUOTES, 'UTF-8') ?>"
+                     data-modal-message="<?= htmlspecialchars($error === 'Correo o contrasena incorrectos.' ? 'El correo o la contraseña son incorrectos.' : $error, ENT_QUOTES, 'UTF-8') ?>"
+                     data-modal-type="error"></div>
+            <?php elseif ($success): ?>
+                <div hidden data-page-modal
+                     data-modal-title="Operación exitosa"
+                     data-modal-message="<?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?>"
+                     data-modal-type="success"></div>
             <?php endif; ?>
 
             <form id="loginForm" action="validar_login.php" method="post" autocomplete="off" novalidate>
@@ -119,7 +120,7 @@ if (empty($_SESSION['csrf_login'])) {
                             <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.2 0-7 2.12-7 5.28A1.72 1.72 0 0 0 6.72 21h10.56A1.72 1.72 0 0 0 19 19.28C19 16.12 16.2 14 12 14Z" fill="currentColor"/>
                         </svg>
                     </span>
-                    <input type="email" class="form-control" id="correo" name="correo" placeholder="Correo personal" value="<?= htmlspecialchars($oldCorreo, ENT_QUOTES, 'UTF-8') ?>" required maxlength="60" autocomplete="new-password" autocapitalize="none" inputmode="email" spellcheck="false" readonly data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other">
+                    <input type="email" class="form-control" id="correo" name="correo" placeholder="Correo personal" value="" required maxlength="60" autocomplete="off" autocapitalize="none" inputmode="email" spellcheck="false" readonly>
                     <div class="invalid-feedback">Ingresa un correo personal v&aacute;lido, m&aacute;ximo 60 caracteres.</div>
                 </div>
 
@@ -127,7 +128,7 @@ if (empty($_SESSION['csrf_login'])) {
                         <svg viewBox="0 0 24 24" width="20" height="20">
                             <path d="M17 9V7A5 5 0 0 0 7 7v2H5.75A1.75 1.75 0 0 0 4 10.75v8.5C4 20.22 4.78 21 5.75 21h12.5c.97 0 1.75-.78 1.75-1.75v-8.5C20 9.78 19.22 9 18.25 9H17Zm-8.5 0V7a3.5 3.5 0 1 1 7 0v2h-7Z" fill="currentColor"/>
                         </svg>
-                    </span><input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contrase&ntilde;a" required maxlength="72" autocomplete="new-password" readonly data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"><button type="button" class="password-eye" aria-label="Mostrar contrase&ntilde;a">
+                    </span><input type="password" class="form-control" id="contrasena" name="contrasena" placeholder="Contrase&ntilde;a" required minlength="6" maxlength="72" autocomplete="off" readonly><button type="button" class="password-eye" aria-label="Mostrar contrase&ntilde;a">
                         <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
                             <path d="M12 5.5c5.2 0 8.48 4.4 9.55 6.1a.75.75 0 0 1 0 .8c-1.07 1.7-4.35 6.1-9.55 6.1s-8.48-4.4-9.55-6.1a.75.75 0 0 1 0-.8C3.52 9.9 6.8 5.5 12 5.5Zm0 2c-3.8 0-6.43 3-7.5 4.5 1.07 1.5 3.7 4.5 7.5 4.5s6.43-3 7.5-4.5C18.43 10.5 15.8 7.5 12 7.5Zm0 1.75a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5Z" fill="currentColor"/>
                         </svg>

@@ -1746,13 +1746,28 @@ body {
     font-family: "Segoe UI", Arial, sans-serif;
     font-size: 15px;
     font-weight: 600;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.profile-form input:focus,
+.profile-form select:focus {
+    border-color: var(--ap-blue);
+    box-shadow: 0 0 0 3px rgba(3, 1, 210, 0.1);
 }
 
 .profile-form input.is-invalid,
 .profile-form select.is-invalid {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.04);
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+    border-color: #dc2626;
+    background: #fffafa;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.profile-form input.is-invalid:focus,
+.profile-form select.is-invalid:focus {
+    border-color: #dc2626;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.13);
 }
 
 .profile-form label small {
@@ -1764,7 +1779,9 @@ body {
 .profile-form .profile-field-error {
     min-height: 16px;
     color: #dc2626;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.35;
 }
 
 .profile-form select option {
@@ -2332,6 +2349,39 @@ body {
     border-color: rgba(3, 1, 210, 0.36);
     background: rgba(3, 1, 210, 0.04);
     transform: translateY(-1px);
+}
+
+.certificate-unavailable {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 14px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    color: #64748b;
+    background: #f8fafc;
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.2;
+    text-align: center;
+    cursor: default;
+}
+
+.certificate-unavailable > span {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.certificate-unavailable.issuing {
+    border-color: #fde2a7;
+    color: #9a6700;
+    background: #fffbeb;
+}
+
+.certificate-unavailable.issuing > span {
+    color: #d49714;
 }
 
 @media (max-width: 1050px) {

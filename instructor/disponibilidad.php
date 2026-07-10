@@ -249,28 +249,23 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
     </div>
 </header>
 
-<?php if ($message !== ''): ?><div class="form-message <?= instructor_h($messageType) ?>"><?= instructor_h($message) ?></div><?php endif; ?>
-<?php if (is_array($conflictDetails)): ?>
-    <article class="schedule-conflict-card" aria-label="Detalle del horario ocupado">
-        <div>
-            <p class="eyebrow">Horario ocupado</p>
-            <h2><?= instructor_h($conflictDetails['evento'] ?? 'Evento programado') ?></h2>
-            <span>Ese cruce corresponde a <?= instructor_h($conflictDetails['instructor'] ?? 'otro instructor') ?>.</span>
-        </div>
-        <dl>
-            <div>
-                <dt>Auditorio</dt>
-                <dd><?= instructor_h($conflictDetails['auditorio'] ?? 'Auditorio SICA') ?></dd>
-            </div>
-            <div>
-                <dt>Horario</dt>
-                <dd><?= instructor_h($conflictDetails['horario'] ?? 'Horario no disponible') ?></dd>
-            </div>
-        </dl>
-        <strong>Elige otra franja horaria para enviar la solicitud.</strong>
-    </article>
+<?php if ($message !== ''): ?>
+    <?php
+    $modalTitle = is_array($conflictDetails) ? 'Horario no disponible' : ($messageType === 'danger' ? 'No fue posible crear el evento' : 'Solicitud enviada');
+    $modalMessage = $message;
+    if (is_array($conflictDetails)) {
+        $modalMessage = 'No puedes crear el evento en esa fecha y hora porque el auditorio ya está reservado.' . "\n\n" .
+            'Evento: ' . ($conflictDetails['evento'] ?? 'Evento programado') . "\n" .
+            'Auditorio: ' . ($conflictDetails['auditorio'] ?? 'Auditorio SICA') . "\n" .
+            'Horario ocupado: ' . ($conflictDetails['horario'] ?? 'No disponible') . "\n\n" .
+            'Selecciona otra hora para continuar.';
+    }
+    ?>
+    <div hidden data-page-modal
+         data-modal-title="<?= instructor_h($modalTitle) ?>"
+         data-modal-message="<?= instructor_h($modalMessage) ?>"
+         data-modal-type="<?= $messageType === 'danger' ? 'error' : 'success' ?>"></div>
 <?php endif; ?>
-
 <section class="calendar-layout">
     <article class="panel">
         <div class="panel-head">
@@ -279,17 +274,17 @@ if ($prefillDate !== '' && isset($eventsByDay[$prefillDate])) {
                 <h2><?= instructor_h($monthLabels[(int)$start->format('n')] . ' ' . $start->format('Y')) ?></h2>
             </div>
         </div>
-        <form class="calendar-toolbar" method="get">
-            <a href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $prevMonth)) ?>">Anterior</a>
-            <select name="auditorio" onchange="this.form.submit()">
+        <form class="calendar-toolbar calendar-month-nav" method="get">
+            <a class="calendar-nav-btn" aria-label="Mes anterior" title="Mes anterior" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $prevMonth)) ?>"><span aria-hidden="true">&#8249;</span><b>Anterior</b></a>
+            <label class="calendar-auditorium-select"><span>Auditorio</span><select name="auditorio" onchange="this.form.submit()">
                 <?php foreach ($auditorios as $auditorio): ?>
                     <option value="<?= instructor_h($auditorio['id_auditorio']) ?>" <?= (int)$auditorio['id_auditorio'] === $selectedAuditorio ? 'selected' : '' ?>>
                         <?= instructor_h($auditorio['nombre_auditorio']) ?> / Bloque <?= instructor_h($auditorio['bloque']) ?>
                     </option>
                 <?php endforeach; ?>
-            </select>
+            </select></label>
             <input type="hidden" name="mes" value="<?= instructor_h($month) ?>">
-            <a href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $nextMonth)) ?>">Siguiente</a>
+            <a class="calendar-nav-btn" aria-label="Mes siguiente" title="Mes siguiente" href="<?= instructor_h(app_url('instructor/disponibilidad.php?auditorio=' . $selectedAuditorio . '&mes=' . $nextMonth)) ?>"><b>Siguiente</b><span aria-hidden="true">&#8250;</span></a>
         </form>
         <?php if ($selectedAuditorioData): ?>
             <article class="auditorium-feature-card" aria-label="Características del auditorio seleccionado">

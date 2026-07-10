@@ -119,7 +119,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     </span>
                     <input type="email" class="form-control" name="correo" placeholder="Correo personal" value="<?= htmlspecialchars($oldCorreo, ENT_QUOTES, 'UTF-8') ?>" required maxlength="100">
                 </div>
-                <button type="submit" class="login-submit">Enviar codigo</button>
+                <button type="submit" class="login-submit" data-validation-action="generar el código">Enviar codigo</button>
             </form>
 
             <p class="login-register"><a href="<?= htmlspecialchars(app_url('login/index.php'), ENT_QUOTES, 'UTF-8') ?>">Volver al inicio de sesi&oacute;n</a></p>
